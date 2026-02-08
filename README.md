@@ -363,6 +363,259 @@ InnoVision/
 
 ---
 
+## Component Library
+
+### CurriculumSelector
+
+A component for selecting curriculum details including class, board, stream, and displaying available subjects.
+
+**Props:**
+- `onSelectionChange` (function): Callback function called when selection changes. Receives an object with `class`, `board`, `stream`, and `subjects`.
+
+**Usage:**
+```jsx
+import CurriculumSelector from '@/components/CurriculumSelector';
+
+function MyComponent() {
+  const handleSelection = (selection) => {
+    console.log('Selected:', selection);
+  };
+
+  return <CurriculumSelector onSelectionChange={handleSelection} />;
+}
+```
+
+**Customization:**
+- Uses Shadcn UI components (Select, Card, Badge)
+- Responsive grid layout for subjects
+- Supports CBSE and STATE boards
+
+### LeaderBoard
+
+Displays a leaderboard with top 3 users prominently and a list of all users with their XP.
+
+**Props:**
+- `leaderboard` (array): Array of user objects with `name`, `xp`, `image`, `email` properties.
+
+**Usage:**
+```jsx
+import LeaderBoard from '@/components/LeaderBoard';
+
+const leaderboardData = [
+  { name: 'John Doe', xp: 1500, image: 'url', email: 'john@example.com' },
+  // ... more users
+];
+
+function MyComponent() {
+  return <LeaderBoard leaderboard={leaderboardData} />;
+}
+```
+
+**Features:**
+- Top 3 users displayed with larger avatars
+- Current user highlighted as "You"
+- Skeleton loading state
+- Responsive design
+
+### AchievementConfetti
+
+Provides confetti effects for achievements, level ups, and milestones.
+
+**Hook Usage:**
+```jsx
+import { useAchievementConfetti } from '@/components/gamification/AchievementConfetti';
+
+function MyComponent() {
+  const { fireConfetti, checkXPMilestone, checkLevelMilestone } = useAchievementConfetti();
+
+  const handleAchievement = () => {
+    fireConfetti('level_up');
+  };
+
+  return <button onClick={handleAchievement}>Celebrate!</button>;
+}
+```
+
+**Component Usage:**
+```jsx
+import AchievementConfetti from '@/components/gamification/AchievementConfetti';
+
+function MyComponent() {
+  const [trigger, setTrigger] = useState(false);
+
+  return (
+    <>
+      <button onClick={() => setTrigger(true)}>Trigger Confetti</button>
+      <AchievementConfetti trigger={trigger} type="xp_milestone" />
+    </>
+  );
+}
+```
+
+**Types:**
+- `default`: Basic confetti
+- `xp_milestone`: Gold confetti for XP milestones
+- `level_up`: Multi-burst celebration
+- `badge`: Star-shaped burst
+- `streak`: Fire colors
+- `course_complete`: Big celebration
+
+### LevelUpModal
+
+Animated modal displayed when user levels up, with confetti and badge reveals.
+
+**Props:**
+- `isOpen` (boolean): Controls modal visibility
+- `onClose` (function): Callback when modal is closed
+- `newLevel` (number): The new level achieved
+- `xpGained` (number, optional): XP gained in this level up
+- `totalXP` (number, optional): Total XP of the user
+
+**Usage:**
+```jsx
+import LevelUpModal from '@/components/gamification/LevelUpModal';
+
+function MyComponent() {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <LevelUpModal
+      isOpen={showModal}
+      onClose={() => setShowModal(false)}
+      newLevel={5}
+      totalXP={1250}
+    />
+  );
+}
+```
+
+**Features:**
+- Animated level number reveal
+- Badge unlock for milestone levels (5, 10, 15, 20, 25, 50, 100)
+- Progress bar to next level
+- Confetti celebration
+- Particle effects
+
+### Button
+
+Standard button component with multiple variants and sizes, built on top of Shadcn UI.
+
+**Props:**
+- `variant` (string): `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`
+- `size` (string): `default`, `sm`, `lg`, `icon`
+- `asChild` (boolean): Render as child component
+- Other standard button props
+
+**Usage:**
+```jsx
+import { Button } from '@/components/ui/button';
+
+function MyComponent() {
+  return (
+    <div>
+      <Button>Default Button</Button>
+      <Button variant="outline" size="sm">Outline Small</Button>
+      <Button variant="destructive">Delete</Button>
+    </div>
+  );
+}
+```
+
+**Variants:**
+- `default`: Primary button with shadow
+- `destructive`: Red button for dangerous actions
+- `outline`: Bordered button
+- `secondary`: Muted button
+- `ghost`: Transparent hover effect
+- `link`: Text link style
+
+### GamificationDashboard
+
+Comprehensive dashboard showing user's gamification stats, progress, badges, and achievements.
+
+**Props:**
+- `userId` (string): User ID to fetch stats for
+
+**Usage:**
+```jsx
+import GamificationDashboard from '@/components/gamification/GamificationDashboard';
+
+function ProfilePage() {
+  return <GamificationDashboard userId="user123" />;
+}
+```
+
+**Features:**
+- Level, streak, rank, and badges overview
+- XP progress bar to next level
+- Badge collection grid
+- Recent achievements list
+- Responsive grid layout
+
+### Content
+
+Displays chapter content with reading time estimation and formatted text.
+
+**Props:**
+- `currentTopic` (object): Topic object with `title` and `content` array
+
+**Usage:**
+```jsx
+import Content from '@/components/chapter_content/Content';
+
+const topic = {
+  title: "Introduction to React",
+  content: [
+    { type: "para", content: "React is a JavaScript library..." },
+    { type: "code", content: "```jsx\nconsole.log('Hello');\n```" },
+    { type: "points", content: ["Point 1", "Point 2"] }
+  ]
+};
+
+function ChapterPage() {
+  return <Content currentTopic={topic} />;
+}
+```
+
+**Content Types:**
+- `header1`, `header2`, `header3`: Headings
+- `para`: Paragraphs (supports HTML)
+- `code`: Code blocks (rendered with MarkDown)
+- `points`: Bullet lists
+
+### MarkDown
+
+Renders markdown content with syntax highlighting and copy-to-clipboard functionality.
+
+**Props:**
+- `content` (string): Markdown content to render
+
+**Usage:**
+```jsx
+import MarkDown from '@/components/MarkDown';
+
+function MyComponent() {
+  const markdown = `
+    # Hello World
+
+    \`\`\`javascript
+    console.log('Hello, World!');
+    \`\`\`
+  `;
+
+  return <MarkDown content={markdown} />;
+}
+```
+
+**Features:**
+- GitHub Flavored Markdown support
+- Syntax highlighting with Prism
+- Copy button for code blocks
+- Language badges
+- Inline code styling
+
+---
+
 ## API Routes
 
 ### Course Management
