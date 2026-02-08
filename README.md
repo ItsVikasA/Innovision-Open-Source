@@ -366,35 +366,584 @@ InnoVision/
 ## API Routes
 
 ### Course Management
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/roadmap/all` | GET | Get all user courses |
-| `/api/roadmap/[id]` | GET | Get specific course |
-| `/api/generate` | POST | Generate new course |
-| `/api/youtube/generate` | POST | Generate course from YouTube |
-| `/api/studio/create` | POST | Create studio course |
+
+#### Get All User Courses
+**Endpoint:** `GET /api/roadmap/all`  
+**Authentication:** Required (Session-based)  
+**Description:** Retrieves all courses created by the authenticated user, sorted by creation date.
+
+**Response Schema:**
+```json
+{
+  "docs": [
+    {
+      "id": "string",
+      "courseTitle": "string",
+      "courseDescription": "string",
+      "completed": "boolean",
+      "createdAt": "string (ISO date)",
+      "process": "string",
+      "difficulty": "string (fast|balanced|inDepth)"
+    }
+  ],
+  "difficultyArray": [0, 0, 0] // [fast, balanced, inDepth] counts
+}
+```
+
+**Error Codes:**
+- `401`: Unauthorized - User not logged in
+- `500`: Internal server error
+
+**Example:**
+```bash
+curl -X GET "https://your-domain.com/api/roadmap/all" \
+  -H "Cookie: session=your-session-cookie"
+```
+
+#### Get Specific Course
+**Endpoint:** `GET /api/roadmap/[id]`  
+**Authentication:** Not required  
+**Description:** Retrieves a specific course by its ID.
+
+**Query Parameters:**
+- `id` (string, required): Course ID
+
+**Response Schema:**
+```json
+{
+  "courseTitle": "string",
+  "courseDescription": "string",
+  "chapters": [...],
+  "createdAt": "string (ISO date)",
+  // ... other course data
+}
+```
+
+**Error Codes:**
+- `404`: Roadmap not found
+
+**Example:**
+```bash
+curl -X GET "https://your-domain.com/api/roadmap/abc123"
+```
+
+#### Generate New Course
+**Endpoint:** `POST /api/generate`  
+**Authentication:** Required (Session-based)  
+**Description:** Generates a new AI-powered course on any topic using Google Gemini.
+
+**Request Body:**
+```json
+{
+  "topic": "string (required)",
+  "difficulty": "string (fast|balanced|inDepth)",
+  "chapters": "number (optional, default varies by difficulty)"
+}
+```
+
+**Response Schema:**
+```json
+{
+  "success": true,
+  "roadmapId": "string",
+  "courseTitle": "string",
+  "chapters": [...]
+}
+```
+
+**Error Codes:**
+- `401`: Unauthorized
+- `400`: Invalid request parameters
+- `500`: Generation failed
+
+#### Generate Course from YouTube
+**Endpoint:** `POST /api/youtube/generate`  
+**Authentication:** Required (Session-based)  
+**Description:** Creates a course from a YouTube video URL.
+
+**Request Body:**
+```json
+{
+  "url": "string (required, YouTube URL)",
+  "difficulty": "string (optional)"
+}
+```
+
+**Response Schema:**
+```json
+{
+  "success": true,
+  "roadmapId": "string",
+  "courseTitle": "string",
+  "chapters": [...]
+}
+```
+
+#### Create Studio Course
+**Endpoint:** `POST /api/studio/create`  
+**Authentication:** Required (Session-based)  
+**Description:** Creates a custom course using the instructor studio.
+
+**Request Body:**
+```json
+{
+  "title": "string (required)",
+  "description": "string (required)",
+  "chapters": [...]
+}
+```
 
 ### Gamification
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/gamification/stats` | GET/POST | Get/Update user stats & award XP |
-| `/api/gamification/streak` | GET/POST | Get/Update streak |
-| `/api/gamification/badges` | GET | Get user badges |
-| `/api/gamification/leaderboard` | GET | Get leaderboard |
+
+#### Get/Update User Stats
+**Endpoint:** `GET /api/gamification/stats`  
+**Authentication:** Not required for GET, Required for POST  
+**Description:** Retrieves or updates user gamification statistics including XP, level, streak, and badges.
+
+**Query Parameters (GET):**
+- `userId` (string, required): User ID
+
+**Request Body (POST):**
+```json
+{
+  "userId": "string (required)",
+  "action": "string (required, e.g., 'complete_chapter', 'correct_answer')",
+  "value": "number (optional)"
+}
+```
+
+**Response Schema (GET):**
+```json
+{
+  "xp": 1500,
+  "level": 3,
+  "streak": 7,
+  "badges": ["first_course", "week_streak"],
+  "rank": 0,
+  "achievements": [...],
+  "lastActive": "2024-01-15T10:30:00Z"
+}
+```
+
+**Response Schema (POST):**
+```json
+{
+  "success": true,
+  "xpGained": 5,
+  "currentStreak": 8,
+  "newLevel": false,
+  "newBadges": []
+}
+```
+
+**XP Rewards:**
+- Correct Answer: 2 XP
+- Perfect Quiz: 2 XP
+- Complete Lesson: 5 XP
+- Complete Chapter: 5 XP
+- View Course: 10 XP
+- Generate Course: 10 XP
+- Complete Course: 50 XP
+
+**Error Codes:**
+- `400`: Missing user ID
+- `404`: User not found
+- `500`: Failed to fetch/update stats
+
+#### Get Leaderboard
+**Endpoint:** `GET /api/gamification/leaderboard`  
+**Authentication:** Not required  
+**Description:** Retrieves daily, weekly, and all-time leaderboards based on XP.
+
+**Response Schema:**
+```json
+{
+  "daily": [
+    {
+      "id": "user@example.com",
+      "name": "John Doe",
+      "avatar": "url",
+      "xp": 250,
+      "level": 2,
+      "streak": 3,
+      "coursesCompleted": 5,
+      "lastActive": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "weekly": [...],
+  "allTime": [...]
+}
+```
+
+**Error Codes:**
+- `500`: Failed to fetch leaderboard
 
 ### Premium & Payments
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/premium/status` | GET | Check premium status |
-| `/api/premium/create-order` | POST | Create Razorpay order |
-| `/api/premium/verify-payment` | POST | Verify payment |
+
+#### Check Premium Status
+**Endpoint:** `GET /api/premium/status`  
+**Authentication:** Required (Session-based)  
+**Description:** Checks if user has premium access, including trial status and course limits.
+
+**Response Schema:**
+```json
+{
+  "isPremium": true,
+  "courseCount": 5,
+  "maxCourses": 100,
+  "isInTrial": false,
+  "trialDaysRemaining": 0,
+  "trialExpired": false,
+  "hasFullAccess": true
+}
+```
+
+**Error Codes:**
+- `401`: Unauthorized
+- `500`: Failed to check status
+
+#### Create Razorpay Order
+**Endpoint:** `POST /api/premium/create-order`  
+**Authentication:** Required (Session-based)  
+**Description:** Creates a Razorpay payment order for premium subscription.
+
+**Request Body:**
+```json
+{
+  "planType": "string (optional, 'premium' or 'education')",
+  "couponCode": "string (optional)"
+}
+```
+
+**Response Schema:**
+```json
+{
+  "orderId": "order_xyz123",
+  "amount": 10000,
+  "originalAmount": 10000,
+  "discountApplied": 0,
+  "couponValid": false,
+  "currency": "INR",
+  "keyId": "rzp_test_xxx",
+  "planType": "premium"
+}
+```
+
+**Pricing:**
+- Premium Plan: ₹100/month (10000 paise)
+- Education Plan: ₹50/month (5000 paise, 50% discount)
+
+**Available Coupons:**
+- `VICKY1`, `SANJANA04`, etc.: 100% off (FREE)
+- `VICKY15`: 15% off
+- `STUDENT25`: 25% off
+
+**Error Codes:**
+- `401`: Unauthorized
+- `500`: Payment gateway not configured or order creation failed
+
+#### Verify Payment
+**Endpoint:** `POST /api/premium/verify-payment`  
+**Authentication:** Required (Session-based)  
+**Description:** Verifies Razorpay payment and activates premium subscription.
+
+**Request Body:**
+```json
+{
+  "razorpay_order_id": "string (required)",
+  "razorpay_payment_id": "string (required)",
+  "razorpay_signature": "string (required)"
+}
+```
+
+**Response Schema:**
+```json
+{
+  "success": true,
+  "message": "Premium activated successfully!"
+}
+```
+
+**Error Codes:**
+- `400`: Invalid payment signature
+- `401`: Unauthorized
+- `500`: Failed to activate premium
 
 ### User Features
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/getuser` | GET | Get user profile data |
-| `/api/getrank` | GET | Get user rank & leaderboard |
-| `/api/bookmarks` | GET/POST/DELETE | Manage bookmarks |
+
+#### Get User Profile
+**Endpoint:** `GET /api/getuser`  
+**Authentication:** Required (Session-based)  
+**Description:** Retrieves authenticated user's profile data including XP tracking.
+
+**Response Schema:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "photoURL": "url",
+  "createdAt": 1705123456789,
+  "xptrack": {
+    "0": 150,
+    "1": 200,
+    // ... monthly XP data
+  },
+  "coursesCompleted": 5,
+  // ... other profile data
+}
+```
+
+**Error Codes:**
+- `401`: Unauthorized
+- `404`: User not found
+- `500`: Internal server error
+
+#### Get User Rank
+**Endpoint:** `GET /api/getrank`  
+**Authentication:** Not required  
+**Description:** Retrieves user's rank and leaderboard position.
+
+**Response Schema:**
+```json
+{
+  "rank": 42,
+  "totalUsers": 1000,
+  "leaderboard": [...]
+}
+```
+
+#### Manage Bookmarks
+**Endpoint:** `GET /api/bookmarks`  
+**Authentication:** Required (Session-based)  
+**Description:** Retrieves user's bookmarked chapters.
+
+**Response Schema:**
+```json
+{
+  "bookmarks": [
+    {
+      "id": "roadmap123_5",
+      "roadmapId": "roadmap123",
+      "chapterNumber": 5,
+      "chapterTitle": "Advanced Topics",
+      "roadmapTitle": "Machine Learning",
+      "createdAt": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+**Endpoint:** `POST /api/bookmarks`  
+**Description:** Adds or removes a bookmark.
+
+**Request Body:**
+```json
+{
+  "roadmapId": "string (required)",
+  "chapterNumber": "number (required)",
+  "chapterTitle": "string (optional)",
+  "roadmapTitle": "string (optional)",
+  "action": "string ('add' or 'remove', default 'add')"
+}
+```
+
+**Response Schema:**
+```json
+{
+  "success": true,
+  "bookmarks": [...],
+  "isBookmarked": true
+}
+```
+
+**Error Codes:**
+- `400`: Missing required fields
+- `401`: Unauthorized
+- `500`: Failed to update bookmark
+
+### Additional API Endpoints
+
+#### Generate Chapter Content
+**Endpoint:** `POST /api/chapter-prompt`  
+**Authentication:** Required (Session-based)  
+**Description:** Generates content for a specific chapter using AI.
+
+**Request Body:**
+```json
+{
+  "prompt": "string (required)",
+  "number": "number (required, chapter number)",
+  "roadmapId": "string (required)"
+}
+```
+
+#### Get Chapter Content
+**Endpoint:** `POST /api/get-chapter`  
+**Authentication:** Required (Session-based)  
+**Description:** Retrieves content for a specific chapter.
+
+**Request Body:**
+```json
+{
+  "roadmapId": "string (required)",
+  "chapterNumber": "number (required)"
+}
+```
+
+#### YouTube Integration
+**Endpoint:** `POST /api/youtube/transcript`  
+**Description:** Extracts transcript from YouTube video.
+
+**Endpoint:** `POST /api/youtube/summarize`  
+**Description:** Summarizes YouTube video content.
+
+**Endpoint:** `POST /api/youtube/info`  
+**Description:** Gets YouTube video information.
+
+#### Studio Course Management
+**Endpoint:** `POST /api/studio/save`  
+**Authentication:** Required  
+**Description:** Saves a studio course draft.
+
+**Endpoint:** `POST /api/studio/publish`  
+**Authentication:** Required  
+**Description:** Publishes a studio course.
+
+**Endpoint:** `POST /api/studio/enhance`  
+**Authentication:** Required  
+**Description:** Enhances course content using AI.
+
+#### Analytics
+**Endpoint:** `GET /api/analytics`  
+**Authentication:** Required  
+**Description:** Retrieves user learning analytics and statistics.
+
+#### LMS Integration
+**Endpoint:** `POST /api/lms/sync`  
+**Authentication:** Required  
+**Description:** Syncs course data with LMS platforms (Moodle, Canvas).
+
+#### Multimodal Content
+**Endpoint:** `POST /api/multimodal/audio`  
+**Authentication:** Required  
+**Description:** Generates audio scripts for courses.
+
+**Endpoint:** `POST /api/multimodal/video`  
+**Authentication:** Required  
+**Description:** Creates video storyboards.
+
+#### Personalization
+**Endpoint:** `POST /api/personalization`  
+**Authentication:** Required  
+**Description:** Updates user learning preferences and recommendations.
+
+#### Progress Tracking
+**Endpoint:** `POST /api/progress/sync`  
+**Authentication:** Required  
+**Description:** Syncs learning progress across devices.
+
+#### Research Platform
+**Endpoint:** `GET /api/research/export`  
+**Authentication:** Required (Admin)  
+**Description:** Exports anonymized learning data for research purposes.
+
+#### Code Generation
+**Endpoint:** `POST /api/code/generate-website`  
+**Authentication:** Required  
+**Description:** Generates website code using AI.
+
+**Endpoint:** `POST /api/code/execute`  
+**Authentication:** Required  
+**Description:** Executes code snippets safely.
+
+#### Tasks and Quizzes
+**Endpoint:** `POST /api/tasks`  
+**Authentication:** Required  
+**Description:** Processes quiz submissions and task completions.
+
+#### User Profile Management
+**Endpoint:** `POST /api/user/update-profile`  
+**Authentication:** Required  
+**Description:** Updates user profile information.
+
+**Endpoint:** `GET /api/user/profile`  
+**Authentication:** Required  
+**Description:** Retrieves detailed user profile.
+
+**Endpoint:** `PUT /api/user/profile`  
+**Authentication:** Required  
+**Description:** Updates user profile data.
+
+#### Authentication
+**Endpoint:** `POST /api/auth/session`  
+**Description:** Manages user authentication sessions.
+
+#### Content Ingestion
+**Endpoint:** `POST /api/content/ingest`  
+**Authentication:** Required  
+**Description:** Imports content from PDFs, documents, and textbooks.
+
+#### Courses Management
+**Endpoint:** `GET /api/courses/[id]`  
+**Authentication:** Not required  
+**Description:** Retrieves public course information.
+
+**Endpoint:** `GET /api/courses/public`  
+**Description:** Lists all public courses.
+
+**Endpoint:** `POST /api/courses/[id]/enroll`  
+**Authentication:** Required  
+**Description:** Enrolls user in a course.
+
+**Endpoint:** `GET /api/courses/[id]/check-enrollment`  
+**Authentication:** Required  
+**Description:** Checks if user is enrolled in a course.
+
+#### Roadmap Management
+**Endpoint:** `DELETE /api/roadmap/[id]`  
+**Authentication:** Required  
+**Description:** Deletes a user-created course.
+
+**Endpoint:** `DELETE /api/roadmap/[id]/unenroll`  
+**Authentication:** Required  
+**Description:** Unenrolls user from a course.
+
+#### Gamification Extensions
+**Endpoint:** `POST /api/gamification/reset`  
+**Authentication:** Admin  
+**Description:** Resets user gamification data.
+
+**Endpoint:** `GET /api/gamification/xp-history`  
+**Authentication:** Required  
+**Description:** Retrieves XP earning history.
+
+**Endpoint:** `GET /api/gamification/test`  
+**Description:** Test gamification endpoints.
+
+**Endpoint:** `POST /api/gamification/award-badge`  
+**Authentication:** Admin  
+**Description:** Manually awards badges to users.
+
+**Endpoint:** `GET /api/gamification/daily-quests`  
+**Authentication:** Required  
+**Description:** Retrieves user's daily quest progress.
+
+**Endpoint:** `POST /api/gamification/daily-quests`  
+**Authentication:** Required  
+**Description:** Updates daily quest progress.
+
+**Endpoint:** `GET /api/gamification/activity`  
+**Authentication:** Required  
+**Description:** Retrieves user activity heatmap data.
+
+**Endpoint:** `POST /api/gamification/fix-streak`  
+**Authentication:** Admin  
+**Description:** Fixes streak calculation issues.
+
+#### Debug Endpoints
+**Endpoint:** `GET /api/debug-chapter/[roadmapId]/[chapter]`  
+**Authentication:** Required  
+**Description:** Debug chapter content generation.
 
 ---
 
