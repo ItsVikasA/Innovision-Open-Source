@@ -7,8 +7,65 @@ import CTA from "./CTA";
 import FAQ from "./FAQ";
 import Link from "next/link";
 import BackToTop from "./BackToTop";
+import { useAuth } from "@/contexts/auth";
+import { useRef, useState } from "react";
+import emailjs from "emailjs-com";
 
 export default function Landing() {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const formRef = useRef(null)
+  const { user } = useAuth();
+
+   function sendEmail(formData) {
+    const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+    const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+    const userId = process.env.NEXT_PUBLIC_EMAILJS_USER_ID;
+
+    if (!serviceId || !templateId || !userId) {
+      console.error("EmailJS configuration missing");
+      toast.error("Email service not configured. Please contact support.");
+      formRef.current.removeAttribute("disabled");
+      return;
+    }
+
+    emailjs.send(serviceId, templateId, formData, userId)
+      .then((response) => {
+        console.log("Email sent successfully:", response);
+        toast.success("Message sent successfully!");
+        formRef.current.removeAttribute("disabled");
+      })
+      .catch((error) => {
+        console.error("Failed to send email.", error);
+
+        // Specific error handling for Gmail API issues
+        if (error.text && error.text.includes("Gmail_API")) {
+          toast.error("Email service temporarily unavailable. Please try again later or contact us directly.");
+        } else if (error.status === 412) {
+          toast.error("Email service needs reconnection. Please contact support.");
+        } else {
+          toast.error("Failed to send message. Please try again.");
+        }
+
+        formRef.current.removeAttribute("disabled");
+      });
+  }
+
+  //handle contact form
+  const handleSubmit = async() => {
+    e.preventDefault();
+    formRef.current.setAttribute("disabled", "true");
+    const formData = { email, message };
+    sendEmail(formData);
+    setEmail("");
+    setMessage("");
+    toast.success("Message sent successfully!", { type: "success" });
+    setTimeout(() => {
+      formRef.current.removeAttribute("disabled");
+    }, 2000);
+  }
+
+
   return (
     <div className="relative flex min-h-screen overflow-x-hidden flex-col scroll-smooth bg-background text-foreground">
       {/* Animated dots background */}
@@ -27,7 +84,7 @@ export default function Landing() {
         ))}
       </div>
 
-      <div className="relative z-[2] flex flex-col items-center w-full">
+      <div className="relative z-2 flex flex-col items-center w-full">
         <Hero />
         <Features />
         <HowItWorks />
@@ -36,7 +93,10 @@ export default function Landing() {
         <CTA />
 
         {/* Contact Section */}
-        <section id="contact" className="relative w-screen py-20 md:py-32 bg-background">
+        <section
+          id="contact"
+          className="relative w-screen py-20 md:py-32 bg-background"
+        >
           <div className="container relative z-10 px-4 md:px-6 mx-auto">
             <div className="max-w-3xl mx-auto text-center mb-12">
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight mb-4 text-foreground">
@@ -48,43 +108,82 @@ export default function Landing() {
             </div>
 
             <div className="max-w-xl mx-auto">
-              <form className="space-y-5">
-                <div>
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    className="w-full px-5 py-3.5 rounded-full bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-light"
-                    required
-                  />
-                </div>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <fieldset
+                  disabled={!user}
+                  className={`space-y-5 transition-all
+      ${!user ? "cursor-not-allowed opacity-60" : ""}
+    `}
+                >
+                  <div>
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      className="w-full px-5 py-3.5 rounded-full bg-background border border-border
+        text-foreground placeholder:text-muted-foreground
+        focus:outline-none focus:ring-2 focus:ring-blue-500/50
+        focus:border-blue-500/50 transition-all font-light
+        disabled:cursor-not-allowed"
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <textarea
-                    placeholder="Message"
-                    rows="5"
-                    className="w-full px-5 py-3.5 rounded-2xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none font-light"
-                    required
-                  />
-                </div>
+                  <div>
+                    <textarea
+                      placeholder="Message"
+                      rows="5"
+                      className="w-full px-5 py-3.5 rounded-2xl bg-background border border-border
+        text-foreground placeholder:text-muted-foreground
+        focus:outline-none focus:ring-2 focus:ring-blue-500/50
+        focus:border-blue-500/50 transition-all resize-none font-light
+        disabled:cursor-not-allowed"
+        onChange={(e) => setMessage(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <div className="flex justify-center pt-2">
-                  <button
-                    type="submit"
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full font-light transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                  >
-                    Send Message
-                  </button>
-                </div>
+                  <div className="flex justify-center pt-2">
+                    <button
+                      type="submit"
+                      ref={formRef}
+                      disabled={!user}
+                      className={`bg-blue-500 text-white px-8 py-3 rounded-full font-light
+          transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50
+          ${user ? "hover:bg-blue-600 hover:scale-105" : "cursor-not-allowed"}
+        `}
+                    >
+                      {user
+                        ? "Send Message"
+                        : "Please login first to send messages!"}
+                    </button>
+                  </div>
+                </fieldset>
               </form>
 
               <div className="flex justify-center text-muted-foreground space-x-6 mt-12">
-                <a href="https://github.com/ItsVikasA/InnoVision" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                <a
+                  href="https://github.com/ItsVikasA/InnoVision"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors"
+                >
                   GitHub
                 </a>
-                <a href="https://www.linkedin.com/in/vikas028/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                <a
+                  href="https://www.linkedin.com/in/vikas028/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors"
+                >
                   LinkedIn
                 </a>
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                <a
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors"
+                >
                   Twitter
                 </a>
               </div>
@@ -108,7 +207,8 @@ export default function Landing() {
                   <span className="text-foreground">InnoVision</span>
                 </div>
                 <p className="text-sm text-muted-foreground font-light">
-                  AI-powered learning platform that creates personalized courses on any topic.
+                  AI-powered learning platform that creates personalized courses
+                  on any topic.
                 </p>
               </div>
 
@@ -116,10 +216,38 @@ export default function Landing() {
               <div className="space-y-4">
                 <h4 className="font-light text-foreground">Quick Links</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link href="/features" className="hover:text-foreground transition-colors">Features</Link></li>
-                  <li><Link href="/demo" className="hover:text-foreground transition-colors">Demo</Link></li>
-                  <li><Link href="/premium" className="hover:text-foreground transition-colors">Premium</Link></li>
-                  <li><Link href="/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
+                  <li>
+                    <Link
+                      href="/features"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      Features
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/demo"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      Demo
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/premium"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      Premium
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/contact"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      Contact
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
@@ -127,8 +255,22 @@ export default function Landing() {
               <div className="space-y-4">
                 <h4 className="font-light text-foreground">Legal</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
-                  <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
+                  <li>
+                    <Link
+                      href="/privacy"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/terms"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      Terms of Service
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
@@ -162,7 +304,8 @@ export default function Landing() {
 
             {/* Bottom bar */}
             <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground font-light">
-              Made with <span className="text-red-500">❤️</span> for learners everywhere
+              Made with <span className="text-red-500">❤️</span> for learners
+              everywhere
             </div>
           </div>
         </footer>
