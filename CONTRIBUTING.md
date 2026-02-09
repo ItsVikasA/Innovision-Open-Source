@@ -131,6 +131,10 @@ NEXTAUTH_URL=http://localhost:3000
 
 ```
 
+
+
+
+
 ### 3. Run Development Server
 
 ```bash
