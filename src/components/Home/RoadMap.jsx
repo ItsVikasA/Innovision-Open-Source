@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+// Added Share and Check icons
 import { useEffect, useState, useContext } from "react";
-import { CircleCheckIcon } from "lucide-react";
+import { CircleCheckIcon, Share2, Check } from "lucide-react"; 
 import xpContext from "@/contexts/xp";
 import { useAuth } from "@/contexts/auth";
 
@@ -10,6 +11,20 @@ function Roadmap({ roadMap, id }) {
   const { awardXP } = useContext(xpContext);
   const { user } = useAuth();
   const [viewAwarded, setViewAwarded] = useState(false);
+  
+  // New state for copy feedback
+  const [copied, setCopied] = useState(false);
+
+  // Function to handle link copying
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    } catch (err) {
+      console.error("Failed to copy link: ", err);
+    }
+  };
 
   useEffect(() => {
     function updateHeight() {
@@ -19,14 +34,11 @@ function Roadmap({ roadMap, id }) {
         setHeight((roadMap.chapters.length - 1) * 34 * 4);
       }
     }
-
     updateHeight();
     window.addEventListener("resize", updateHeight);
-
     return () => window.removeEventListener("resize", updateHeight);
   }, [roadMap.chapters.length]);
 
-  // Award XP for viewing the course (only once per session)
   useEffect(() => {
     if (user && awardXP && !viewAwarded) {
       awardXP("view_course");
@@ -36,10 +48,33 @@ function Roadmap({ roadMap, id }) {
 
   return (
     <div className="flex flex-col justify-center max-w-3xl">
-      <div className="ml-3 mb-3">
-        <h1 className="text-2xl font-semibold">{roadMap.courseTitle}</h1>
-        <p className="text-primary ml-2">{roadMap.courseDescription}</p>
+      {/* Header section with Share Button */}
+      <div className="ml-3 mb-3 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-semibold">{roadMap.courseTitle}</h1>
+          <p className="text-primary ml-2">{roadMap.courseDescription}</p>
+        </div>
+        
+        {/* NEW SHARE BUTTON */}
+        <button
+          onClick={handleCopyLink}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm border rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95"
+          title="Share Course"
+        >
+          {copied ? (
+            <>
+              <Check className="w-4 h-4 text-green-500" />
+              <span className="text-green-500 font-medium">Copied!</span>
+            </>
+          ) : (
+            <>
+              <Share2 className="w-4 h-4 text-zinc-500" />
+              <span className="text-zinc-500">Share</span>
+            </>
+          )}
+        </button>
       </div>
+
       <div className="relative flex flex-col">
         <div
           className="absolute w-1 top-1 left-7.5 bg-zinc-100 dark:bg-zinc-900"
@@ -59,7 +94,7 @@ function Roadmap({ roadMap, id }) {
               <span className="text-secondary-foreground font-semibold">
                 {chapter.chapterNumber || index + 1} . {chapter.chapterTitle || chapter.title || `Chapter ${index + 1}`}
               </span>
-              <span className="text-secondary-foreground">
+              <span className="text-secondary-foreground text-sm">
                 {chapter.chapterDescription || chapter.description || ""}
               </span>
             </Link>
