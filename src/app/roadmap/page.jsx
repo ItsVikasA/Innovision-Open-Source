@@ -1,4 +1,3 @@
-
 "use client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Plus, BookOpen, Sparkles } from "lucide-react";
@@ -10,31 +9,16 @@ import { loader } from "@/components/ui/Custom/ToastLoader";
 import { PageBackground, GridPattern, PageHeader, ScrollReveal, HoverCard } from "@/components/ui/PageWrapper";
 
 export default function page() {
-    const [error, setError] = useState(null);
     const [roadmaps, setRoadmaps] = useState([]);
     const [loading, setLoading] = useState(true);
     const { hideLoader } = loader();
 
     async function fetchRoadmaps() {
         setLoading(true);
-        setError(null);
-
-        try {
-            const response = await fetch("/api/roadmap/all");
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch roadmaps");
-            }
-
-            const data = await response.json();
-            setRoadmaps(data?.docs || []);
-        } catch (err) {
-            console.error("Roadmap fetch error:", err);
-            setError("Unable to load your courses.");
-            setRoadmaps([]);
-        } finally {
-            setLoading(false);
-        }
+        const response = await fetch("/api/roadmap/all");
+        const data = await response.json();
+        setRoadmaps(data.docs);
+        setLoading(false);
     }
     useEffect(() => {
         fetchRoadmaps();
@@ -55,80 +39,68 @@ export default function page() {
                 />
 
                 <div className="flex gap-6 justify-center flex-wrap w-full">
-
                     {loading ? (
                         Array(6)
                             .fill(0)
-                            .map((_, i) => (
-                                <Skeleton
-                                    key={i}
-                                    className="w-[320px] h-64 rounded-xl"
-                                />
-                            ))
-                    ) : error ? (
-                        <div className="w-full text-center py-16 text-muted-foreground">
-                            <div className="flex flex-col items-center">
-                                <BookOpen className="h-12 w-12 mb-4 opacity-50" />
-                                <p className="text-lg font-semibold">
-                                    We couldn’t load your courses
-                                </p>
-                                <p className="text-sm mt-2">
-                                    Please try again or refresh the page.
-                                </p>
-                                <button
-                                    onClick={fetchRoadmaps}
-                                    className="mt-4 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
-                                >
-                                    Retry
-                                </button>
-                            </div>
-                        </div>
-                    ) : roadmaps?.filter(r => r.process === "completed")?.length === 0 ? (
-                        <div className="w-full text-center py-16 text-muted-foreground">
-                            <div className="flex flex-col items-center">
-                                <BookOpen className="h-12 w-12 mb-4 opacity-50" />
-                                <p className="text-lg font-medium">
-                                    You don’t have any courses yet
-                                </p>
-                                <p className="text-sm mt-2">
-                                    Start by generating your first roadmap
-                                </p>
-                                <Link href="/generate" className="mt-4">
-                                    <Button>Create Course</Button>
-                                </Link>
-                            </div>
-                        </div>
+                            .map((_, i) => {
+                                return (
+                                    <Skeleton
+                                        key={i}
+                                        className={"w-[320px] h-64 rounded-xl"}
+                                    ></Skeleton>
+                                );
+                            })
                     ) : (
                         <>
-                            {roadmaps
-                                .filter(r => r.process === "completed")
-                                .map((roadmap, index) => (
-                                    <ScrollReveal>
+                            {roadmaps?.map((roadmap, index) => {
+
+                                if (roadmap.process === "completed") return (
+                                    <ScrollReveal key={roadmap.id} delay={index * 80}>
                                         <HoverCard>
-                                            <Card className="w-[320px] h-[200px] relative flex items-center justify-center border-2 border-dashed border-border/50 bg-card/30 backdrop-blur-sm hover:border-blue-500/50 transition-colors">
-                                                <div className="flex flex-col items-center text-muted-foreground">
-                                                    <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-3">
-                                                        <Plus strokeWidth={1.5} className="w-8 h-8 text-blue-500" />
+                                            <Card
+                                                className={"w-[320px] h-50 relative bg-card/50 backdrop-blur-sm border-border/50 flex flex-col"}
+                                            >
+                                                <CardHeader className="pb-2">
+                                                    <CardTitle className="line-clamp-2">
+                                                        {roadmap?.courseTitle?.split(
+                                                            ":"
+                                                        )[0] || ""}
+                                                    </CardTitle>
+                                                    <div className="absolute z-10 top-0 right-0">
+                                                        <DeleteRoadmap
+                                                            id={roadmap.id}
+                                                            onDelete={() => {
+                                                                fetchRoadmaps();
+                                                                hideLoader();
+                                                            }}
+                                                        ></DeleteRoadmap>
                                                     </div>
-                                                    <p className="text-lg text-center font-medium">
-                                                        Create your course
-                                                    </p>
-                                                </div>
-                                                <Link href={`/generate`} scroll={false}>
+                                                </CardHeader>
+                                                <CardContent className="text-muted-foreground text-sm line-clamp-3 flex-1">
+                                                    {roadmap.courseDescription}
+                                                </CardContent>
+
+                                                <Link href={`/roadmap/${roadmap.id}`}>
                                                     <span className="absolute inset-0"></span>
                                                 </Link>
                                             </Card>
                                         </HoverCard>
                                     </ScrollReveal>
-                                ))}
-
-                            {/* Create Card */}
-                            <ScrollReveal>
+                                );
+                            })}
+                            <ScrollReveal delay={roadmaps?.filter(r => r.process === "completed").length * 80}>
                                 <HoverCard>
-                                    <Card className="w-[320px] h-[200px] relative flex items-center justify-center border-2 border-dashed border-border/50 bg-card/30 backdrop-blur-sm hover:border-blue-500/50 transition-colors">
+                                    <Card
+                                        className={
+                                            "w-[320px] h-50 relative flex items-center justify-center border-2 border-dashed border-border/50 bg-card/30 backdrop-blur-sm hover:border-blue-500/50 transition-colors"
+                                        }
+                                    >
                                         <div className="flex flex-col items-center text-muted-foreground">
                                             <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-3">
-                                                <Plus strokeWidth={1.5} className="w-8 h-8 text-blue-500" />
+                                                <Plus
+                                                    strokeWidth={1.5}
+                                                    className="w-8 h-8 text-blue-500"
+                                                ></Plus>
                                             </div>
                                             <p className="text-lg text-center font-medium">
                                                 Create your course
