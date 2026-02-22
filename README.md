@@ -18,6 +18,7 @@
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#installation">Installation</a> •
   <a href="#pricing">Pricing</a>
+  <a href="#contributors">Contributors</a>
 </p>
 
 <p align="center">
@@ -486,6 +487,16 @@ InnoVision contributes to the following UN SDGs:
 ## License
 
 This project is licensed under the ISC License.
+
+---
+
+--- 
+
+## Contributors
+
+Thanks to all the amazing people who have contributed to this project!  
+
+[See contributors on GitHub](https://github.com/ItsVikasA/Innovision-Open-Source/graphs/contributors)
 
 ---
 
