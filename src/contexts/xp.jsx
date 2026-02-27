@@ -13,6 +13,7 @@ const xpContext = createContext();
 const XP_MILESTONES = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
 
 export const XpProvider = ({ children }) => {
+  const [streak, setStreak] = useState(0);
   const { user } = useAuth();
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
@@ -23,7 +24,7 @@ export const XpProvider = ({ children }) => {
   const prevXpRef = useRef(0);
   const prevLevelRef = useRef(1);
   const shownMilestonesRef = useRef(new Set());
-  
+
   // Combo multiplier state
   const [combo, setCombo] = useState(0);
   const [showCombo, setShowCombo] = useState(false);
@@ -46,7 +47,7 @@ export const XpProvider = ({ children }) => {
       case "level_up":
         // Level up modal handles its own confetti
         break;
-        
+
       case "combo":
         confetti({
           ...defaults,
@@ -64,7 +65,7 @@ export const XpProvider = ({ children }) => {
   // Award a badge to the user
   const awardBadge = useCallback(async (badgeId) => {
     if (!user?.email) return;
-    
+
     try {
       const res = await fetch("/api/gamification/award-badge", {
         method: "POST",
@@ -72,7 +73,7 @@ export const XpProvider = ({ children }) => {
         body: JSON.stringify({ userId: user.email, badgeId }),
       });
       const data = await res.json();
-      
+
       if (data.success) {
         // Show achievement toast for new badge
         showAchievementToast({
@@ -95,22 +96,22 @@ export const XpProvider = ({ children }) => {
     setCombo(prev => {
       const newCombo = prev + 1;
       console.log("Combo incremented to:", newCombo);
-      
+
       // Show combo popup when reaching 2+ streak
       if (newCombo >= 2) {
         setShowCombo(true);
-        
+
         // Fire confetti at tier thresholds
         if (newCombo === 2 || newCombo === 5 || newCombo === 10 || newCombo === 20) {
           fireConfetti("combo");
         }
-        
+
         setTimeout(() => setShowCombo(false), 3000);
       }
-      
+
       return newCombo;
     });
-    
+
     // Reset combo after 60 seconds of inactivity (longer for better UX)
     if (comboTimeoutRef.current) {
       clearTimeout(comboTimeoutRef.current);
@@ -141,7 +142,7 @@ export const XpProvider = ({ children }) => {
       if (oldXP < milestone && newXP >= milestone && !shownMilestonesRef.current.has(`xp_${milestone}`)) {
         shownMilestonesRef.current.add(`xp_${milestone}`);
         fireConfetti("xp_milestone");
-        
+
         // Show achievement toast for XP milestones
         if (milestone === 100) achievements.xp100();
         else if (milestone === 500) achievements.xp500();
@@ -163,12 +164,12 @@ export const XpProvider = ({ children }) => {
     // Check level up - show modal and achievement toast
     if (newLevel > oldLevel && !shownMilestonesRef.current.has(`level_${newLevel}`)) {
       shownMilestonesRef.current.add(`level_${newLevel}`);
-      
+
       // Show level achievement toasts for milestone levels
       if (newLevel === 5) setTimeout(() => achievements.level5(), 3500);
       else if (newLevel === 10) setTimeout(() => achievements.level10(), 3500);
       else if (newLevel === 25) setTimeout(() => achievements.level25(), 3500);
-      
+
       setLevelUpData({
         newLevel,
         xpGained: newXP - oldXP,
@@ -191,28 +192,35 @@ export const XpProvider = ({ children }) => {
 
     try {
       const res = await fetch(`/api/gamification/stats?userId=${user.email}`);
+
+      if (!res.ok) {
+        console.error("XP fetch failed:", res.status);
+        return; // Stop on failure
+      }
+
       const data = await res.json();
 
       if (data && typeof data.xp === "number") {
-        const xpDiff = data.xp - xp;
+        const oldXp = prevXpRef.current;
+        const xpDiff = data.xp - oldXp;
         const newLevel = data.level || Math.floor(data.xp / 500) + 1;
-        
-        if (xpDiff > 0 && xp > 0) {
+
+        if (xpDiff > 0 && oldXp > 0) {
           setChanged(xpDiff);
           change();
-          // Check for milestone achievements
-          checkMilestones(prevXpRef.current, data.xp, prevLevelRef.current, newLevel);
+          checkMilestones(oldXp, data.xp, prevLevelRef.current, newLevel);
         }
-        
+
         prevXpRef.current = data.xp;
         prevLevelRef.current = newLevel;
         setXp(data.xp);
         setLevel(newLevel);
+        setStreak(data.streak || 0);
       }
     } catch (error) {
       console.error("Error fetching XP:", error);
     }
-  }, [user, xp, checkMilestones]);
+  }, [user?.email, checkMilestones]);
 
   const awardXP = useCallback(
     async (action, value = null, useComboMultiplier = false) => {
@@ -222,7 +230,7 @@ export const XpProvider = ({ children }) => {
         // Apply combo multiplier if enabled
         let finalValue = value;
         let multiplier = 1;
-        
+
         if (useComboMultiplier && combo >= 2) {
           multiplier = getMultiplier(combo);
           if (typeof value === "number") {
@@ -255,35 +263,35 @@ export const XpProvider = ({ children }) => {
   );
 
   useEffect(() => {
-    if (user?.email) {
+    if (!user?.email) return;
       getXp();
 
       // Poll for XP updates every 10 seconds for real-time feel
       const interval = setInterval(getXp, 10000);
       return () => clearInterval(interval);
-    }
-  }, [user, getXp]);
+  }, [user?.email, getXp]);
 
   // Listen for test combo event
   useEffect(() => {
     const handleTestCombo = () => {
       incrementCombo();
     };
-    
+
     window.addEventListener("testCombo", handleTestCombo);
     return () => window.removeEventListener("testCombo", handleTestCombo);
   }, [incrementCombo]);
 
   return (
-    <xpContext.Provider value={{ 
-      getXp, 
-      awardXP, 
-      xp, 
-      level, 
-      show, 
-      changed, 
-      fireConfetti, 
-      showAchievementToast, 
+    <xpContext.Provider value={{
+      getXp,
+      awardXP,
+      xp,
+      level,
+      streak,
+      show,
+      changed,
+      fireConfetti,
+      showAchievementToast,
       achievements,
       // Combo multiplier
       combo,

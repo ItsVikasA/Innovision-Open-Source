@@ -60,10 +60,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 const Navbar = () => {
   const { user, logout } = useAuth();
   const [theme, setTheme] = useState("light");
-  const [streak, setStreak] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { xp, show, changed } = useContext(xpContext);
+  const { xp, show, changed, streak } = useContext(xpContext);
   const { nightMode, toggleNightMode } = useNightMode();
   const router = useRouter();
   const pathname = usePathname();
@@ -91,10 +90,9 @@ const Navbar = () => {
 
   useEffect(() => {
     if (user?.email) {
-      fetchStreak(user.email);
       fetchPremiumStatus(user.email);
     }
-  }, [user]);
+  }, [user?.email]);
 
   const fetchPremiumStatus = async (email) => {
     try {
@@ -103,16 +101,6 @@ const Navbar = () => {
       setIsPremium(data.isPremium || false);
     } catch (error) {
       console.error("Error fetching premium status:", error);
-    }
-  };
-
-  const fetchStreak = async (email) => {
-    try {
-      const res = await fetch(`/api/gamification/stats?userId=${email}`);
-      const data = await res.json();
-      setStreak(data.streak || 0);
-    } catch (error) {
-      console.error("Error fetching streak:", error);
     }
   };
 
