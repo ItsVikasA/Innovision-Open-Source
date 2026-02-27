@@ -6,6 +6,7 @@ import LoaderProvider from "@/components/ui/Custom/ToastLoader";
 import { AuthProvider } from "@/contexts/auth";
 import { XpProvider } from "@/contexts/xp";
 import { NightModeProvider } from "@/contexts/nightMode";
+import { NotificationProvider } from "@/contexts/notifications";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import NotificationChecker from "@/components/NotificationChecker";
 import { Analytics } from "@vercel/analytics/next";
@@ -65,13 +66,15 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <XpProvider>
             <NightModeProvider>
-              <LoaderProvider>
-                <Navbar />
-                <main className="pt-16 relative">{children}</main>
-                <OfflineIndicator />
-                <NotificationChecker />
-                <Toaster richColors />
-              </LoaderProvider>
+              <NotificationProvider>
+                <LoaderProvider>
+                  <Navbar />
+                  <main className="pt-16 relative">{children}</main>
+                  <OfflineIndicator />
+                  <NotificationChecker />
+                  <Toaster richColors />
+                </LoaderProvider>
+              </NotificationProvider>
             </NightModeProvider>
           </XpProvider>
         </AuthProvider>

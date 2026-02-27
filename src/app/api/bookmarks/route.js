@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
+import { createNotification } from "@/lib/create-notification";
 
 // GET - Fetch user's bookmarks
 export async function GET(request) {
@@ -33,9 +34,13 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { roadmapId, chapterNumber, chapterTitle, roadmapTitle, action } = await request.json();
+    const { roadmapId, courseId, chapterNumber, chapterTitle, roadmapTitle, courseTitle, courseType, action, chapterId } = await request.json();
 
-    if (!roadmapId || !chapterNumber) {
+    const id = courseId || roadmapId;
+    const title = courseTitle || roadmapTitle || "Course";
+    const type = courseType || "roadmap";
+
+    if (!id) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -43,7 +48,7 @@ export async function POST(request) {
     const userDoc = await userRef.get();
 
     let bookmarks = userDoc.exists ? (userDoc.data().bookmarks || []) : [];
-    const bookmarkId = `${roadmapId}_${chapterNumber}`;
+    const bookmarkId = chapterNumber !== undefined ? `${type}_${id}_${chapterNumber}` : `${type}_${id}_course`;
 
     if (action === "remove") {
       // Remove bookmark
@@ -54,10 +59,14 @@ export async function POST(request) {
       if (!exists) {
         bookmarks.push({
           id: bookmarkId,
-          roadmapId,
-          chapterNumber,
-          chapterTitle: chapterTitle || `Chapter ${chapterNumber}`,
-          roadmapTitle: roadmapTitle || "Course",
+          roadmapId: id,
+          courseId: id,
+          chapterNumber: chapterNumber || 0,
+          chapterId: chapterId || null,
+          chapterTitle: chapterTitle || (chapterNumber ? `Chapter ${chapterNumber}` : "Course Overview"),
+          roadmapTitle: title,
+          courseTitle: title,
+          courseType: type,
           createdAt: new Date().toISOString(),
         });
       }
@@ -65,8 +74,42 @@ export async function POST(request) {
 
     await userRef.set({ bookmarks }, { merge: true });
 
-    return NextResponse.json({ 
-      success: true, 
+    if (action !== "remove") {
+      const chapterLabel = chapterTitle || (chapterNumber ? `Chapter ${chapterNumber}` : null);
+      const notifBody = chapterLabel
+        ? `You bookmarked "${chapterLabel}" in ${title}.`
+        : `You bookmarked the course "${title}".`;
+
+      let notifLink = "/roadmap";
+      if (type === "ingested") {
+        if (chapterId) {
+          notifLink = `/ingested-course/${id}/${chapterId}`;
+        } else if (chapterNumber && chapterNumber !== 0) {
+          notifLink = `/ingested-course/${id}/${chapterNumber}`;
+        } else {
+          notifLink = `/ingested-course/${id}`;
+        }
+      } else if (type === "youtube") {
+        notifLink = `/youtube-course/${id}`;
+      } else {
+        if (chapterNumber && chapterNumber !== 0) {
+          notifLink = `/chapter-test/${id}/${chapterNumber}`;
+        } else {
+          notifLink = `/roadmap/${id}`;
+        }
+      }
+
+      createNotification(adminDb, {
+        userId: session.user.email,
+        title: "Bookmark Saved",
+        body: notifBody,
+        type: "progress",
+        link: notifLink,
+      }).catch(() => { });
+    }
+
+    return NextResponse.json({
+      success: true,
       bookmarks,
       isBookmarked: action !== "remove"
     });

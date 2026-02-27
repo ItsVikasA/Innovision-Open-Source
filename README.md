@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="/public/OSCG26-Label.jpg" alt="OSCG26" width=""/>
+</p>
+
+<p align="center">
   <img src="./public/InnoVision_LOGO-removebg-preview.png" alt="InnoVision Logo" width="200"/>
 </p>
 
@@ -47,6 +51,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 - Responsive design with mobile hamburger menu
 - Visual indicators for active pages
 
+---
+
 ### Navigation Icons
 | Icon | Feature | Description |
 |------|---------|-------------|
@@ -76,6 +82,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 | **Curriculum Browser** | Pre-built curriculum from LKG to Class 12 (CBSE & State Boards) |
 | **Engineering Courses** | Specialized courses for all engineering branches and semesters |
 
+---
+
 ### Enhanced Learning Experience
 | Feature | Description |
 |---------|-------------|
@@ -87,6 +95,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 | **Bookmark System** | Save favorite chapters for quick access |
 | **Offline Learning** | Download courses for offline access using IndexedDB |
 | **Multi-language Translation** | Learn in 100+ languages with real-time translation |
+
+---
 
 ### Advanced Gamification System
 | Feature | Description |
@@ -100,6 +110,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 | **Level Up Celebrations** | Confetti animations and modals on level up |
 | **Achievement Toasts** | Real-time notifications for unlocked achievements |
 | **Badge Gallery** | View all earned and locked badges with progress |
+
+---
 
 ### Premium Features
 | Feature | Description |
@@ -116,6 +128,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 | **Research Platform** | Export anonymized datasets for research |
 | **7-Day Free Trial** | Full access to premium features for 7 days |
 
+---
+
 ### User Experience
 | Feature | Description |
 |---------|-------------|
@@ -127,6 +141,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 | **Responsive Design** | Works on desktop, tablet, and mobile |
 | **PWA Support** | Install as a Progressive Web App |
 | **Icon Navigation** | Clean icon-based navbar with hover tooltips |
+
+---
 
 ### Platform Features
 | Feature | Description |
@@ -171,6 +187,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 | canvas-confetti | Latest | Celebration animations |
 | react-calendar-heatmap | Latest | GitHub-style activity heatmap |
 
+---
+
 ### Backend & Database
 | Technology | Purpose |
 |------------|---------|
@@ -179,6 +197,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 | Firebase Storage | Media and document storage |
 | Next.js API Routes | Backend API endpoints |
 | Firebase Admin SDK | Server-side Firebase operations |
+
+---
 
 ### AI & Services
 | Technology | Purpose |
@@ -201,6 +221,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 - Basic gamification (XP, streaks, badges)
 - 7-day free trial of premium features
 
+---
+
 ### Premium Plan - ₹100/month
 - ✅ Unlimited custom courses
 - ✅ Unlimited YouTube courses
@@ -220,6 +242,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 - ✅ Priority support
 - ✅ PRO badge
 
+---
+
 ### Education Plan - ₹50/month (50% OFF)
 - ✅ All Premium features
 - ✅ For schools, colleges & students
@@ -236,6 +260,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 - Node.js 18+
 - npm, yarn, pnpm, or bun
 - Git
+
+---
 
 ### Quick Start
 
@@ -256,6 +282,8 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
 
 ### Environment Variables
 
@@ -374,6 +402,8 @@ InnoVision/
 | `/api/youtube/generate` | POST | Generate course from YouTube |
 | `/api/studio/create` | POST | Create studio course |
 
+---
+
 ### Gamification
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -382,12 +412,16 @@ InnoVision/
 | `/api/gamification/badges` | GET | Get user badges |
 | `/api/gamification/leaderboard` | GET | Get leaderboard |
 
+---
+
 ### Premium & Payments
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/premium/status` | GET | Check premium status |
 | `/api/premium/create-order` | POST | Create Razorpay order |
 | `/api/premium/verify-payment` | POST | Verify payment |
+
+---
 
 ### User Features
 | Endpoint | Method | Description |

@@ -11,13 +11,37 @@ import { useContext } from "react";
 import xpContext from "@/contexts/xp";
 import { ComboIndicator } from "@/components/gamification/ComboMultiplier";
 
-export default function Quiz({ task, roadmapId, chapterNumber }) {
+export default function Quiz({ task, roadmapId, chapterNumber, onCourseComplete }) {
   const [selectedOption, setSelectedOption] = useState("");
   const [isAnswered, setIsAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { getXp, awardXP, combo, incrementCombo, resetCombo, getCurrentMultiplier } = useContext(xpContext);
-  
+
+  // Debug log to check task structure
+  useEffect(() => {
+    if (!Array.isArray(task.options) || task.options.length === 0) {
+      console.error("Quiz task has invalid options:");
+      console.error("Task object:", JSON.stringify(task, null, 2));
+      console.error("Options value:", task.options);
+      console.error("Options type:", typeof task.options);
+    }
+  }, [task]);
+
+  // Convert options object to array if needed
+  const optionsArray = Array.isArray(task.options) 
+    ? task.options 
+    : task.options && typeof task.options === 'object'
+    ? Object.values(task.options)
+    : [];
+
+  // Get the correct answer value (handle both array and object formats)
+  const correctAnswer = Array.isArray(task.options)
+    ? task.answer
+    : task.options && typeof task.options === 'object' && task.answer
+    ? task.options[task.answer]
+    : task.answer;
+
   const handleOptionSelect = (value) => {
     if (isAnswered) return;
     setSelectedOption(value);
@@ -25,44 +49,58 @@ export default function Quiz({ task, roadmapId, chapterNumber }) {
 
   const checkAnswer = async () => {
     setSubmitting(true);
-    const correct = selectedOption === task.answer;
-    const res = await fetch(`/api/tasks`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        task,
-        isCorrect: correct,
-        roadmap: roadmapId,
-        chapter: chapterNumber,
-        userAnswer: selectedOption,
-      }),
-    });
-    if (res.ok) {
-      setIsCorrect(correct);
-      setIsAnswered(true);
+    const correct = selectedOption === correctAnswer;
 
-      // Handle combo system
-      if (correct) {
-        incrementCombo();
-        // Show toast for combo XP after a small delay so combo updates first
-        setTimeout(() => {
-          const multiplier = getCurrentMultiplier();
-          if (multiplier > 1) {
-            toast.success(`+${2 * multiplier} XP (${multiplier}x combo!)`, {
-              icon: <Zap className="h-4 w-4 text-yellow-500" />,
-            });
-          }
-        }, 100);
+    try {
+      const res = await fetch(`/api/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          task,
+          isCorrect: correct,
+          roadmap: roadmapId,
+          chapter: chapterNumber,
+          userAnswer: selectedOption,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setIsCorrect(correct);
+        setIsAnswered(true);
+
+        // Handle combo system
+        if (correct) {
+          incrementCombo();
+          // Show toast for combo XP after a small delay so combo updates first
+          setTimeout(() => {
+            const multiplier = getCurrentMultiplier();
+            if (multiplier > 1) {
+              toast.success(`+${2 * multiplier} XP (${multiplier}x combo!)`, {
+                icon: <Zap className="h-4 w-4 text-yellow-500" />,
+              });
+            }
+          }, 100);
+        } else {
+          resetCombo();
+        }
+
+        // XP is now awarded server-side in /api/tasks
+        getXp();
+
+        // Auto-trigger certificate dialog if entire course is complete
+        if (data.courseCompleted && onCourseComplete) {
+          setTimeout(() => onCourseComplete(), 800);
+        }
       } else {
-        resetCombo();
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.error || "Failed to submit task. Try again.");
       }
-
-      // XP is now awarded server-side in /api/tasks
-      getXp();
-    } else {
-      toast.error("Failed to submit task, Try again.");
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
+      toast.error("Network error. Please check your connection and try again.");
     }
     setSubmitting(false);
   };
@@ -91,20 +129,26 @@ export default function Quiz({ task, roadmapId, chapterNumber }) {
             <h2 className="mb-0 text-lg ">Question</h2>
             <h3 className="text-lg select-none">{task.question || task.content}</h3>
             <RadioGroup value={selectedOption} className="space-y-3 text-sm">
-              {task.options.map((option) => (
+              {!optionsArray || optionsArray.length === 0 ? (
+                <div className="p-4 border-2 border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
+                  <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                    No answer options available for this question. Please contact support or try regenerating the quiz.
+                  </p>
+                </div>
+              ) : (
+                optionsArray.map((option) => (
                 <div
                   key={option}
-                  className={`flex items-center space-x-2 rounded-lg border-2 p-4 transition-all duration-200 ${
-                    isAnswered
-                      ? option === task.answer
-                        ? "border-green-500 dark:bg-green-950/30 bg-green-50"
-                        : option === selectedOption && option !== task.answer
+                  className={`flex items-center space-x-2 rounded-lg border-2 p-4 transition-all duration-200 ${isAnswered
+                    ? option === correctAnswer
+                      ? "border-green-500 dark:bg-green-950/30 bg-green-50"
+                      : option === selectedOption && option !== correctAnswer
                         ? "border-red-500 dark:bg-red-950/30 bg-red-50"
                         : "border-gray-200 opacity-70"
-                      : option === selectedOption
+                    : option === selectedOption
                       ? "border-blue-300 bg-blue-50 dark:bg-blue-950"
                       : "hover:border-blue-300 hover:bg-blue-50/10 dark:hover:bg-blue-950/20 cursor-pointer"
-                  }`}
+                    }`}
                   onClick={() => handleOptionSelect(option)}
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-border bg-white dark:bg-zinc-900 shrink-0">
@@ -115,28 +159,28 @@ export default function Quiz({ task, roadmapId, chapterNumber }) {
                       checked={selectedOption === option}
                       className="sr-only  text-sm"
                     />
-                    {isAnswered && option === task.answer ? (
+                    {isAnswered && option === correctAnswer ? (
                       <CheckCircle className="h-6 w-6 text-green-500" />
-                    ) : isAnswered && option === selectedOption && option !== task.answer ? (
+                    ) : isAnswered && option === selectedOption && option !== correctAnswer ? (
                       <XCircle className="h-6 w-6 text-red-500" />
                     ) : (
                       <span className="text-base font-medium">
-                        {String.fromCharCode(65 + task.options.indexOf(option))}
+                        {String.fromCharCode(65 + optionsArray.indexOf(option))}
                       </span>
                     )}
                   </div>
-                  <Label htmlFor={option} className="flex-grow cursor-pointer ml-2 text-sm">
+                  <Label htmlFor={option} className="grow cursor-pointer ml-2 text-sm">
                     {option}
                   </Label>
                 </div>
-              ))}
+              )))}
             </RadioGroup>
           </div>
 
           {isAnswered && (
             <div>
               <div className="flex items-center mt-4">
-                <div className="flex-shrink-0 mr-3">
+                <div className="shrink-0 mr-3">
                   {isCorrect ? (
                     <CheckCircle className="h-6 w-6 text-green-500" />
                   ) : (
@@ -146,17 +190,16 @@ export default function Quiz({ task, roadmapId, chapterNumber }) {
                 <div>
                   <div className="font-semibold">{isCorrect ? "Correct!" : "Incorrect!"}</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {isCorrect ? "Great job!" : `The correct answer is: ${task.answer}`}
+                    {isCorrect ? "Great job!" : `The correct answer is: ${correctAnswer}`}
                   </div>
                 </div>
               </div>
               <div className="mt-6 space-y-4 animate-fadeIn">
                 <div
-                  className={`p-4 rounded-lg border-l-4 ${
-                    isCorrect
-                      ? "bg-green-50 dark:bg-green-950/30 border-green-500 text-green-700 dark:text-green-400"
-                      : "bg-red-50 dark:bg-red-950/30 border-red-500 text-red-700 dark:text-red-400"
-                  }`}
+                  className={`p-4 rounded-lg border-l-4 ${isCorrect
+                    ? "bg-green-50 dark:bg-green-950/30 border-green-500 text-green-700 dark:text-green-400"
+                    : "bg-red-50 dark:bg-red-950/30 border-red-500 text-red-700 dark:text-red-400"
+                    }`}
                 >
                   <div className="font-bold text-lg mb-1">Explanation</div>
                   <p>{task.explanation}</p>

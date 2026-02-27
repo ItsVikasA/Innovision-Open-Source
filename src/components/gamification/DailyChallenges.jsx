@@ -26,13 +26,13 @@ export default function DailyChallenges({ userId }) {
           <Badge variant="secondary" className="text-xs">{completedCount}/{challenges.length}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-5">
         {challenges.map((challenge) => {
           const isComplete = challenge.progress >= challenge.goal;
           const progressPercent = (challenge.progress / challenge.goal) * 100;
 
           return (
-            <div key={challenge.id} className="space-y-1.5">
+            <div key={challenge.id} className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`p-1.5 rounded bg-slate-100 dark:bg-slate-800 ${challenge.color}`}>
@@ -54,7 +54,7 @@ export default function DailyChallenges({ userId }) {
           );
         })}
 
-        <div className="pt-2 border-t">
+        <div className="pt-4 border-t">
           <div className="flex items-center justify-between text-xs">
             <span className="font-medium">Total Daily XP</span>
             <Badge className="bg-green-500 text-xs">{totalXP} XP</Badge>

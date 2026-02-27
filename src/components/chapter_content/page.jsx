@@ -13,11 +13,13 @@ import ChapterLoading from "./ChapterLoading";
 import BookmarkButton from "./BookmarkButton";
 import { toast } from "sonner";
 import { loader } from "../ui/Custom/ToastLoader";
+import CertificateDialog from "@/components/certificates/CertificateDialog";
+import { useAuth } from "@/contexts/auth";
 
 // Calculate reading time based on word count (200 words per minute average)
 const calculateReadingTime = (content) => {
     if (!content) return 0;
-    
+
     // Handle different content types
     let text = "";
     if (typeof content === "string") {
@@ -35,11 +37,11 @@ const calculateReadingTime = (content) => {
             text += " " + content.chapterTitle;
         }
     }
-    
+
     // Remove HTML tags and extra whitespace
     const cleanText = text.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
     const wordCount = cleanText.split(" ").filter(word => word.length > 0).length;
-    
+
     // Calculate minutes (200 words per minute)
     const minutes = Math.ceil(wordCount / 200);
     return Math.max(1, minutes); // Minimum 1 minute
@@ -64,7 +66,9 @@ const Page = ({ chapter, roadmapId }) => {
     const [error, setError] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [roadmap, setRoadmap] = useState({});
+    const [certDialogOpen, setCertDialogOpen] = useState(false);
     const { showLoader, hideLoader } = loader();
+    const { user } = useAuth();
 
     async function getRoadmap() {
         try {
@@ -152,6 +156,11 @@ const Page = ({ chapter, roadmapId }) => {
                         setTasks(chapterData.chapter.tasks);
                         setGenerating(false);
                         resolve();
+                    } else if (chapterData.chapter.process === "failed") {
+                        clearInterval(fetchInterval);
+                        setError(chapterData.chapter.error || "Chapter generation failed");
+                        setGenerating(false);
+                        reject(new Error("Chapter generation failed"));
                     }
                 } catch (error) {
                     clearInterval(fetchInterval);
@@ -224,15 +233,14 @@ const Page = ({ chapter, roadmapId }) => {
             window.scrollTo(0, 0);
         } else if (
             selectedIndex ===
-                chapterData?.subtopics?.length + tasks?.length - 1 &&
+            chapterData?.subtopics?.length + tasks?.length - 1 &&
             chapter < roadmap.chapters.length
         ) {
             showLoader();
             const params = new URLSearchParams(searchParams);
             params.set("subtopic", 0);
             router.push(
-                `/chapter-test/${roadmapId}/${
-                    Number(chapter) + 1
+                `/chapter-test/${roadmapId}/${Number(chapter) + 1
                 }/?${params.toString()}`,
                 { scroll: false }
             );
@@ -339,143 +347,159 @@ const Page = ({ chapter, roadmapId }) => {
     const currentTopic = subtopics[selectedIndex] || {};
 
     return (
-        <div className="min-h-[calc(100vh-64px)] bg-background ">
-            <div className="flex flex-col md:flex-row">
-                <Sidebar roadmap={roadmap} id={roadmapId} />
-                <div className="flex-1 p-8 lg:ml-96 lg:w-[60vw] max-sm:p-4 bg-background ">
-                    {chapterData.chapterTitle && (
-                        <div className="mb-4">
-                            <div className="flex items-start justify-between gap-4">
-                                <h1 className="text-4xl font-bold">
-                                    {chapterData.chapterTitle}
-                                </h1>
-                                <BookmarkButton
-                                    roadmapId={roadmapId}
-                                    chapterNumber={chapter}
-                                    chapterTitle={chapterData.chapterTitle}
-                                    roadmapTitle={roadmap?.title}
-                                    size="lg"
+        <>
+            <div className="min-h-[calc(100vh-64px)] bg-background ">
+                <div className="flex flex-col md:flex-row">
+                    <Sidebar roadmap={roadmap} id={roadmapId} courseTitle={roadmap?.courseTitle || roadmap?.title || ""} />
+                    <div className="flex-1 p-8 lg:ml-96 lg:w-[60vw] max-sm:p-4 bg-background ">
+                        {chapterData.chapterTitle && (
+                            <div className="mb-4">
+                                <div className="flex items-start justify-between gap-4">
+                                    <h1 className="text-4xl font-bold">
+                                        {chapterData.chapterTitle}
+                                    </h1>
+                                    <BookmarkButton
+                                        roadmapId={roadmapId}
+                                        chapterNumber={chapter}
+                                        chapterTitle={chapterData.chapterTitle}
+                                        roadmapTitle={roadmap?.title}
+                                        size="lg"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+                                    <Clock className="h-4 w-4" />
+                                    <span className="text-sm">
+                                        {formatReadingTime(calculateReadingTime(chapterData))}
+                                    </span>
+                                    <span className="text-sm">•</span>
+                                    <span className="text-sm">
+                                        {subtopics.length} topics
+                                    </span>
+                                    {tasks.length > 0 && (
+                                        <>
+                                            <span className="text-sm">•</span>
+                                            <span className="text-sm">
+                                                {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedIndex < chapterData.subtopics.length ? (
+                            <div className="mb-6">
+                                <div className="flex justify-between text-sm text-gray-500 mb-2">
+                                    <span>
+                                        Topic {selectedIndex + 1} of{" "}
+                                        {subtopics.length}
+                                    </span>
+                                    <span>
+                                        {Math.round(
+                                            ((selectedIndex + 1) /
+                                                subtopics.length) *
+                                            100
+                                        )}
+                                        % complete
+                                    </span>
+                                </div>
+                                <AnimatedProgress
+                                    value={((selectedIndex + 1) / subtopics.length) * 100}
+                                    color="blue"
+                                    size="default"
+                                    delay={200}
                                 />
                             </div>
-                            <div className="flex items-center gap-2 mt-2 text-muted-foreground">
-                                <Clock className="h-4 w-4" />
-                                <span className="text-sm">
-                                    {formatReadingTime(calculateReadingTime(chapterData))}
-                                </span>
-                                <span className="text-sm">•</span>
-                                <span className="text-sm">
-                                    {subtopics.length} topics
-                                </span>
-                                {tasks.length > 0 && (
-                                    <>
-                                        <span className="text-sm">•</span>
-                                        <span className="text-sm">
-                                            {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
-                                        </span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {selectedIndex < chapterData.subtopics.length ? (
-                        <div className="mb-6">
-                            <div className="flex justify-between text-sm text-gray-500 mb-2">
-                                <span>
-                                    Topic {selectedIndex + 1} of{" "}
-                                    {subtopics.length}
-                                </span>
-                                <span>
-                                    {Math.round(
-                                        ((selectedIndex + 1) /
-                                            subtopics.length) *
+                        ) : (
+                            <div className="mb-6">
+                                <div className="flex justify-between text-sm text-gray-500 mb-2">
+                                    <span>
+                                        Task {selectedIndex - subtopics.length + 1}{" "}
+                                        of {tasks.length}
+                                    </span>
+                                    <span>
+                                        {Math.round(
+                                            ((selectedIndex -
+                                                subtopics.length +
+                                                1) /
+                                                tasks.length) *
                                             100
-                                    )}
-                                    % complete
-                                </span>
+                                        )}
+                                        % complete
+                                    </span>
+                                </div>
+                                <AnimatedProgress
+                                    value={((selectedIndex - subtopics.length + 1) / tasks.length) * 100}
+                                    color="green"
+                                    size="default"
+                                    delay={200}
+                                />
                             </div>
-                            <AnimatedProgress 
-                                value={((selectedIndex + 1) / subtopics.length) * 100}
-                                color="blue"
-                                size="default"
-                                delay={200}
-                            />
-                        </div>
-                    ) : (
-                        <div className="mb-6">
-                            <div className="flex justify-between text-sm text-gray-500 mb-2">
-                                <span>
-                                    Task {selectedIndex - subtopics.length + 1}{" "}
-                                    of {tasks.length}
-                                </span>
-                                <span>
-                                    {Math.round(
-                                        ((selectedIndex -
-                                            subtopics.length +
-                                            1) /
-                                            tasks.length) *
-                                            100
-                                    )}
-                                    % complete
-                                </span>
+                        )}
+                        {selectedIndex < subtopics.length ? (
+                            <Content currentTopic={currentTopic}></Content>
+                        ) : (
+                            <div>
+                                <TaskDecider
+                                    roadmapId={roadmapId}
+                                    chapterNumber={chapter}
+                                    task={tasks[selectedIndex - subtopics.length]}
+                                    onCourseComplete={() => {
+                                        // Mark roadmap as completed in local state so sidebar button enables immediately
+                                        setRoadmap(prev => ({ ...prev, completed: true }));
+                                        setCertDialogOpen(true);
+                                    }}
+                                ></TaskDecider>
                             </div>
-                            <AnimatedProgress 
-                                value={((selectedIndex - subtopics.length + 1) / tasks.length) * 100}
-                                color="green"
-                                size="default"
-                                delay={200}
-                            />
-                        </div>
-                    )}
-                    {selectedIndex < subtopics.length ? (
-                        <Content currentTopic={currentTopic}></Content>
-                    ) : (
-                        <div>
-                            <TaskDecider
-                                roadmapId={roadmapId}
-                                chapterNumber={chapter}
-                                task={tasks[selectedIndex - subtopics.length]}
-                            ></TaskDecider>
-                        </div>
-                    )}
+                        )}
 
-                    <div className="flex justify-between mt-12 mb-4">
-                        <Button
-                            variant={"outline"}
-                            onClick={handlePrev}
-                            disabled={selectedIndex === 0}
-                        >
-                            <ArrowLeft className="h-5 w-5 mr-2" />
-                            <span>Previous</span>
-                        </Button>
+                        <div className="flex justify-between mt-12 mb-4">
+                            <Button
+                                variant={"outline"}
+                                onClick={handlePrev}
+                                disabled={selectedIndex === 0}
+                            >
+                                <ArrowLeft className="h-5 w-5 mr-2" />
+                                <span>Previous</span>
+                            </Button>
 
-                        <Button
-                            onClick={handleNext}
-                            variant={"outline"}
-                            disabled={
-                                selectedIndex ===
+                            <Button
+                                onClick={handleNext}
+                                variant={"outline"}
+                                disabled={
+                                    selectedIndex ===
                                     chapterData?.subtopics?.length +
-                                        tasks?.length -
-                                        1 && chapter >= roadmap.chapters.length
-                            }
-                        >
-                            <span>
-                                {selectedIndex ===
-                                chapterData?.subtopics?.length - 1
-                                    ? "Go to task"
-                                    : selectedIndex ===
-                                      chapterData?.subtopics?.length +
-                                          tasks?.length -
-                                          1
-                                    ? "Next Chapter"
-                                    : "Next"}
-                            </span>
-                            <ArrowRight className="h-5 w-5 ml-2" />
-                        </Button>
+                                    tasks?.length -
+                                    1 && chapter >= roadmap.chapters.length
+                                }
+                            >
+                                <span>
+                                    {selectedIndex ===
+                                        chapterData?.subtopics?.length - 1
+                                        ? "Go to task"
+                                        : selectedIndex ===
+                                            chapterData?.subtopics?.length +
+                                            tasks?.length -
+                                            1
+                                            ? "Next Chapter"
+                                            : "Next"}
+                                </span>
+                                <ArrowRight className="h-5 w-5 ml-2" />
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Certificate dialog — auto opens on 100% course completion */}
+            <CertificateDialog
+                open={certDialogOpen}
+                onOpenChange={setCertDialogOpen}
+                userId={user?.email}
+                courseId={roadmapId}
+                courseTitle={roadmap?.courseTitle || roadmap?.title || ""}
+            />
+        </>
     );
 };
 
