@@ -4,10 +4,12 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "./ui/skeleton";
 import { useAuth } from "@/contexts/auth";
 import { useEffect, useState } from "react";
-const LeaderAvatar = ({ position, image, name, xp }) => {
+import Link from "next/link";
+const LeaderAvatar = ({ position, image, name, xp, email }) => {
   let size = position === 0 ? "w-16 h-16" : position === 1 ? "w-14 h-14" : position === 2 ? "w-12 h-12" : "";
+  const profileHref = name === "You" ? "/profile" : `/profile/${encodeURIComponent(email)}`;
   return (
-    <div className="text-center flex flex-col items-center">
+    <Link href={profileHref} className="text-center flex flex-col items-center hover:opacity-80 transition-opacity">
       <div className={cn("rounded-full", size)}>
         <Avatar className={cn(size)}>
           <AvatarImage src={image} />
@@ -20,7 +22,7 @@ const LeaderAvatar = ({ position, image, name, xp }) => {
         <p>{name.split(" ")[0]}</p>
       </div>
       <p>{xp} xp</p>
-    </div>
+    </Link>
   );
 };
 
@@ -45,18 +47,21 @@ const LeaderBoard = ({ leaderboard }) => {
             image={leader[1]?.image}
             name={leader[1]?.name || " "}
             xp={leader[1]?.xp}
+            email={leader[1]?.email}
           ></LeaderAvatar>
           <LeaderAvatar
             position={0}
             image={leader[0]?.image}
             name={leader[0]?.name || " "}
             xp={leader[0]?.xp}
+            email={leader[0]?.email}
           ></LeaderAvatar>
           <LeaderAvatar
             position={2}
             image={leader[2]?.image}
             name={leader[2]?.name || " "}
             xp={leader[2]?.xp}
+            email={leader[2]?.email}
           ></LeaderAvatar>
         </div>
       ) : (
@@ -70,11 +75,12 @@ const LeaderBoard = ({ leaderboard }) => {
         {leader[0]?.email
           ? leader.map((user, index) => {
             if (index > 2) {
+              const profileLink = user.name === "You" ? "/profile" : `/profile/${encodeURIComponent(user.email)}`;
               return (
                 <div key={user.email} className="border-t flex justify-between py-1.5 px-2 last-of-type:border-b-0">
-                  <div className="flex gap-3">
+                  <Link href={profileLink} className="flex gap-3 hover:text-primary transition-colors">
                     <span>#{index + 1}</span> {user.name.split(" ")[0]}
-                  </div>
+                  </Link>
                   <div>{user.xp} xp</div>
                 </div>
               );

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, TrendingUp, TrendingDown, Calendar, Users, Crown, Medal, Award, Minus } from "lucide-react";
 import LeaderboardSkeleton from "@/components/skeletons/LeaderboardSkeleton";
+import Link from "next/link";
 
 export default function Leaderboard({ currentUserId }) {
   const [leaderboard, setLeaderboard] = useState({
@@ -179,7 +180,12 @@ export default function Leaderboard({ currentUserId }) {
                 {rankChange}
               </div>
 
-              {/* Avatar */}
+              {/* Avatar & User info - clickable */}
+              <Link
+                href={isCurrentUser ? "/profile" : `/profile/${encodeURIComponent(user.id)}`}
+                className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                onClick={(e) => e.stopPropagation()}
+              >
               <div className="relative">
                 <Avatar className={`${rank <= 3 ? "ring-2 ring-yellow-400" : ""} ${isCurrentUser ? "ring-2 ring-blue-500" : ""}`}>
                   <AvatarImage src={user.avatar} />
@@ -212,6 +218,7 @@ export default function Leaderboard({ currentUserId }) {
                   <span>{user.coursesCompleted || 0} courses</span>
                 </div>
               </div>
+              </Link>
 
               {/* XP */}
               <div className="text-right shrink-0">
