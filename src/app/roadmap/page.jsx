@@ -362,7 +362,7 @@ export default function page() {
                                     <SelectItem value="all">All Difficulties</SelectItem>
                                     <SelectItem value="fast">Fast-paced</SelectItem>
                                     <SelectItem value="balanced">Balanced</SelectItem>
-                                    <SelectItem value="in-depth">In-depth</SelectItem>
+                                    <SelectItem value="inDepth">In-depth</SelectItem>
                                 </SelectContent>
                             </Select>
 
