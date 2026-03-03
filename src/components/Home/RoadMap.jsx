@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState, useContext } from "react";
-import { CircleCheckIcon, Clock, Copy } from "lucide-react";
+import { CircleCheckIcon, Clock, Copy, Trophy } from "lucide-react";
 import xpContext from "@/contexts/xp";
 import { useAuth } from "@/contexts/auth";
 import { calculateEstimatedTime } from "@/lib/time-utils";
+import { AnimatedProgress } from "@/components/ui/animated-progress";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { loader } from "@/components/ui/Custom/ToastLoader";
@@ -111,6 +112,42 @@ function Roadmap({ roadMap, id }) {
             </Button>
           </div>
         </div>
+
+        {/* Course Progress Bar */}
+        {(() => {
+          const completedChapters = roadMap.chapters.filter(ch => ch.completed).length;
+          const totalChapters = roadMap.chapters.length;
+          const progress = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+          const progressColor = progress === 100 ? "green" : progress >= 50 ? "blue" : progress > 0 ? "yellow" : "default";
+          return (
+            <div className="mt-4 ml-2 mr-2 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground font-medium">
+                  {completedChapters} of {totalChapters} chapters completed
+                </span>
+                <span className={`font-semibold ${
+                  progress === 100 ? "text-green-600 dark:text-green-400" :
+                  progress > 0 ? "text-blue-600 dark:text-blue-400" :
+                  "text-muted-foreground"
+                }`}>
+                  {progress}%
+                </span>
+              </div>
+              <AnimatedProgress
+                value={progress}
+                color={progressColor}
+                size="default"
+                delay={300}
+              />
+              {progress === 100 && (
+                <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
+                  <Trophy className="h-4 w-4" />
+                  <span>Course completed! Certificate unlocked.</span>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Estimated Time Badge */}
         <div className="flex items-center gap-2 mt-3 ml-2">

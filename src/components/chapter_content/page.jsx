@@ -352,6 +352,36 @@ const Page = ({ chapter, roadmapId }) => {
                 <div className="flex flex-col md:flex-row">
                     <Sidebar roadmap={roadmap} id={roadmapId} courseTitle={roadmap?.courseTitle || roadmap?.title || ""} />
                     <div className="flex-1 p-8 lg:ml-96 lg:w-[60vw] max-sm:p-4 bg-background ">
+                        {/* Overall Course Progress */}
+                        {roadmap?.chapters && roadmap.chapters.length > 0 && (() => {
+                            const completedChapters = roadmap.chapters.filter(ch => ch.completed).length;
+                            const totalChapters = roadmap.chapters.length;
+                            const courseProgress = Math.round((completedChapters / totalChapters) * 100);
+                            const progressColor = courseProgress === 100 ? "green" : courseProgress >= 50 ? "blue" : courseProgress > 0 ? "yellow" : "default";
+                            return (
+                                <div className="mb-6 p-4 rounded-lg border bg-card/50 backdrop-blur-sm">
+                                    <div className="flex items-center justify-between text-sm mb-2">
+                                        <span className="text-muted-foreground font-medium">
+                                            Course Progress: {completedChapters} of {totalChapters} chapters
+                                        </span>
+                                        <span className={`font-semibold ${
+                                            courseProgress === 100 ? "text-green-600 dark:text-green-400" :
+                                            courseProgress > 0 ? "text-blue-600 dark:text-blue-400" :
+                                            "text-muted-foreground"
+                                        }`}>
+                                            {courseProgress}%
+                                        </span>
+                                    </div>
+                                    <AnimatedProgress
+                                        value={courseProgress}
+                                        color={progressColor}
+                                        size="sm"
+                                        delay={200}
+                                    />
+                                </div>
+                            );
+                        })()}
+
                         {chapterData.chapterTitle && (
                             <div className="mb-4">
                                 <div className="flex items-start justify-between gap-4">

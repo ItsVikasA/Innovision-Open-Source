@@ -79,23 +79,29 @@ async function completeChapter(chapter, roadmapId, user) {
 
     const allDone = completedChapters.length === updatedChapters.length;
     if (allDone) {
+      // Update chapters and completion flag atomically to prevent race conditions
       await docRef.update({
+        chapters: updatedChapters,
         completed: true,
       });
 
-      // Trigger completion email if just finished
-      if (!wasCompleted) {
+      // Trigger completion email if just finished (guard with completionEmailSent flag)
+      if (!wasCompleted && !roadmap.completionEmailSent) {
         try {
+          // Mark email as sent first to prevent duplicate sends from concurrent requests
+          await docRef.update({ completionEmailSent: true });
           const { sendCourseCompletionEmail } = await import("@/lib/brevo");
           await sendCourseCompletionEmail(user.email, user.name, roadmap.courseTitle || "Your Roadmap");
         } catch (emailError) {
           console.error("Failed to send roadmap completion email:", emailError);
+          // Don't revert the flag — we'd rather skip the email than send it twice
         }
       }
+    } else {
+      await docRef.update({
+        chapters: updatedChapters,
+      });
     }
-    await docRef.update({
-      chapters: updatedChapters,
-    });
     return allDone;
   }
   return false;
