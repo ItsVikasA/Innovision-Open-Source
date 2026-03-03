@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   Zap,
+  Compass,
 } from "lucide-react";
 import { Sun, Moon } from "lucide-react";
 import Image from "next/image";
@@ -139,6 +140,7 @@ const Navbar = () => {
   const learnMenuItems = [
     { href: "/roadmap", label: "My Courses", icon: Home, description: "Your learning dashboard" },
     { href: "/courses", label: "Browse Courses", icon: BookOpen, description: "Explore all courses" },
+    { href: "/career-path", label: "Career Paths", icon: Compass, description: "AI career guidance" },
     { href: "/code-editor", label: "Code Editor", icon: Code2, description: "Practice coding" },
   ];
 

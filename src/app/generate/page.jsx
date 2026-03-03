@@ -36,7 +36,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/contexts/auth";
 import { useNotifications } from "@/contexts/notifications";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loader } from "@/components/ui/Custom/ToastLoader";
 
 //Select Card component
@@ -91,6 +91,7 @@ export default function Page() {
   const { user } = useAuth();
   const { fetchNotifications } = useNotifications();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showLoader } = loader();
 
   // Fetch premium status on mount
@@ -365,7 +366,7 @@ export default function Page() {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      concept: "",
+      concept: searchParams.get("topic") || "",
       knowledgeLevel: "",
       timeCommitment: "1-2-hours",
       difficultyLevel: "",
