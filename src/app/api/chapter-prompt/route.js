@@ -49,7 +49,10 @@ async function updateDatabase(content, chapter, roadmapId, session) {
     await taskDocRef.set({ ...tasks });
   } catch (error) {
     console.error("Error updating database:", error);
-    await docRef.delete();
+    await docRef.update({
+      process: "failed",
+      error: "Failed to save generated content. Please try again.",
+    });
   }
 }
 
@@ -119,6 +122,13 @@ export async function POST(req) {
 
   if (!session) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!prompt || !number || !roadmapId) {
+    return NextResponse.json(
+      { message: "Missing required fields: prompt, number, and roadmapId are required" },
+      { status: 400 }
+    );
   }
 
   try {

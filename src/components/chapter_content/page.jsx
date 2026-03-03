@@ -105,8 +105,13 @@ const Page = ({ chapter, roadmapId }) => {
                 const data = await response.json();
 
                 if (data.chapter.process === "pending") {
-                    await handleNotFoundChapter();
+                    // Chapter is already being generated — just poll, don't re-trigger
                     await handlePendingChapter();
+                } else if (data.chapter.process === "failed") {
+                    setError(
+                        data.chapter.error ||
+                            "Chapter generation failed. Please try again."
+                    );
                 } else {
                     setChapterData(data.chapter.content);
                     setTasks(data.chapter.tasks);
@@ -118,7 +123,11 @@ const Page = ({ chapter, roadmapId }) => {
             }
         } catch (error) {
             console.error("Error fetching chapter:", error);
-            setError("Failed to load chapter content. Please try again later.");
+            if (!error._preserveMessage) {
+                setError(
+                    "Failed to load chapter content. Please try again later."
+                );
+            }
         } finally {
             setIsLoading(false);
         }
@@ -127,8 +136,25 @@ const Page = ({ chapter, roadmapId }) => {
     async function handlePendingChapter() {
         setGenerating(true);
 
+        const MAX_POLLS = 60; // 60 polls × 3s = 3 minute client-side timeout
+        let pollCount = 0;
+
         return new Promise((resolve, reject) => {
             const fetchInterval = setInterval(async () => {
+                pollCount++;
+
+                if (pollCount > MAX_POLLS) {
+                    clearInterval(fetchInterval);
+                    const err = new Error(
+                        "Chapter generation is taking too long. Please try again later."
+                    );
+                    err._preserveMessage = true;
+                    setError(err.message);
+                    setGenerating(false);
+                    reject(err);
+                    return;
+                }
+
                 try {
                     const res = await fetch(
                         `/api/get-chapter/${roadmapId}/${chapter}`
@@ -136,11 +162,13 @@ const Page = ({ chapter, roadmapId }) => {
 
                     if (res.status === 404) {
                         clearInterval(fetchInterval);
-                        toast.error(
-                            "There was an error while generating your chapter"
+                        const err = new Error(
+                            "Chapter could not be generated. The content may have been lost during processing."
                         );
+                        err._preserveMessage = true;
+                        setError(err.message);
                         setGenerating(false);
-                        reject(new Error("Chapter generation failed"));
+                        reject(err);
                         return;
                     }
 
@@ -158,15 +186,25 @@ const Page = ({ chapter, roadmapId }) => {
                         resolve();
                     } else if (chapterData.chapter.process === "failed") {
                         clearInterval(fetchInterval);
-                        setError(chapterData.chapter.error || "Chapter generation failed");
+                        const errorMsg =
+                            chapterData.chapter.error ||
+                            "Chapter generation failed. Please try again.";
+                        const err = new Error(errorMsg);
+                        err._preserveMessage = true;
+                        setError(errorMsg);
                         setGenerating(false);
-                        reject(new Error("Chapter generation failed"));
+                        reject(err);
                     }
                 } catch (error) {
                     clearInterval(fetchInterval);
                     setGenerating(false);
                     console.error("Error during polling:", error);
-                    toast.error("Error checking chapter generation status");
+                    if (!error._preserveMessage) {
+                        setError(
+                            "Error checking chapter generation status. Please try again."
+                        );
+                    }
+                    error._preserveMessage = true;
                     reject(error);
                 }
             }, 3000);
@@ -212,7 +250,13 @@ const Page = ({ chapter, roadmapId }) => {
             }
         } catch (error) {
             console.error("Error starting chapter generation:", error);
-            toast.error("Failed to start chapter generation.");
+            setGenerating(false);
+            const err = new Error(
+                "Failed to start chapter generation. Please try again."
+            );
+            err._preserveMessage = true;
+            setError(err.message);
+            throw err;
         }
     }
 

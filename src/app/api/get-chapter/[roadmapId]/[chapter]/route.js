@@ -29,17 +29,31 @@ export async function GET(req, { params }) {
       .doc("task");
 
     const docSnap = await docRef.get();
-    const taskSnap = await taskDocRef.get();
-    if (docSnap.exists && docSnap.data().process === "pending") {
-      return NextResponse.json({ chapter: { process: "pending" } });
-    }
+
     if (!docSnap.exists) {
       return NextResponse.json({ message: "Chapter not found" }, { status: 404 });
     }
+
+    const data = docSnap.data();
+
+    if (data.process === "pending") {
+      return NextResponse.json({ chapter: { process: "pending" } });
+    }
+
+    if (data.process === "failed") {
+      return NextResponse.json({
+        chapter: {
+          process: "failed",
+          error: data.error || "Chapter generation failed. Please try again.",
+        },
+      });
+    }
+
+    const taskSnap = await taskDocRef.get();
     const tasks = Object.values(taskSnap?.data() || {});
 
     return NextResponse.json({
-      chapter: { ...docSnap.data(), tasks },
+      chapter: { ...data, tasks },
     });
   } catch (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
