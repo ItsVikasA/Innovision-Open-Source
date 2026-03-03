@@ -366,18 +366,6 @@ export default function page() {
                                 </SelectContent>
                             </Select>
 
-                            {/* Archive Filter */}
-                            <Select value={archiveFilter} onValueChange={setArchiveFilter}>
-                                <SelectTrigger className="w-35 h-9 bg-card/50 backdrop-blur-sm border-border/50">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="archived">Archived</SelectItem>
-                                    <SelectItem value="all">All Courses</SelectItem>
-                                </SelectContent>
-                            </Select>
-
                             {/* Sort By */}
                             <Select value={sortBy} onValueChange={setSortBy}>
                                 <SelectTrigger className="w-40 h-9 bg-card/50 backdrop-blur-sm border-border/50">
