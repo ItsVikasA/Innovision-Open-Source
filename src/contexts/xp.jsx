@@ -281,6 +281,9 @@ export const XpProvider = ({ children }) => {
           }
         }
 
+        // Generate idempotency key to prevent duplicate XP awards
+        const idempotencyKey = `${action}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
         const res = await fetch("/api/gamification/stats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -288,6 +291,7 @@ export const XpProvider = ({ children }) => {
             userId: user.email,
             action,
             value: finalValue,
+            idempotencyKey,
           }),
         });
 

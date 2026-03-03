@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { getAdminDb, FieldValue } from "@/lib/firebase-admin";
 import { createNotification } from "@/lib/create-notification";
 
 export async function GET(request) {
@@ -27,50 +27,53 @@ export async function GET(request) {
     }
 
     const userRef = adminDb.collection("gamification").doc(userId);
-    const userDoc = await userRef.get();
 
-    if (!userDoc.exists) {
-      const initialStats = {
-        xp: 0,
-        level: 1,
-        streak: 1,
-        badges: [],
-        rank: 0,
-        achievements: [],
-        lastActive: new Date().toISOString(),
-      };
+    // Use a transaction to atomically read and update streak
+    const stats = await adminDb.runTransaction(async (transaction) => {
+      const userDoc = await transaction.get(userRef);
 
-      await userRef.set(initialStats);
-      return NextResponse.json(initialStats);
-    }
+      if (!userDoc.exists) {
+        const initialStats = {
+          xp: 0,
+          level: 1,
+          streak: 1,
+          badges: [],
+          rank: 0,
+          achievements: [],
+          lastActive: new Date().toISOString(),
+        };
+        transaction.set(userRef, initialStats);
+        return initialStats;
+      }
 
-    const stats = userDoc.data();
-    const lastActive = new Date(stats.lastActive);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    lastActive.setHours(0, 0, 0, 0);
-    const daysDiff = Math.floor((today - lastActive) / (1000 * 60 * 60 * 24));
+      const data = userDoc.data();
+      const lastActive = new Date(data.lastActive);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      lastActive.setHours(0, 0, 0, 0);
+      const daysDiff = Math.floor((today - lastActive) / (1000 * 60 * 60 * 24));
 
-    if (daysDiff === 1) {
-      stats.streak = (stats.streak || 0) + 1;
-      stats.lastActive = new Date().toISOString();
-      await userRef.update({
-        streak: stats.streak,
-        lastActive: stats.lastActive,
-      });
-    } else if (daysDiff > 1) {
-      stats.streak = 1;
-      stats.lastActive = new Date().toISOString();
-      await userRef.update({
-        streak: 1,
-        lastActive: stats.lastActive,
-      });
-    } else if (daysDiff === 0 && (!stats.streak || stats.streak === 0)) {
-      stats.streak = 1;
-      await userRef.update({
-        streak: 1,
-      });
-    }
+      if (daysDiff === 1) {
+        data.streak = (data.streak || 0) + 1;
+        data.lastActive = new Date().toISOString();
+        transaction.update(userRef, {
+          streak: data.streak,
+          lastActive: data.lastActive,
+        });
+      } else if (daysDiff > 1) {
+        data.streak = 1;
+        data.lastActive = new Date().toISOString();
+        transaction.update(userRef, {
+          streak: 1,
+          lastActive: data.lastActive,
+        });
+      } else if (daysDiff === 0 && (!data.streak || data.streak === 0)) {
+        data.streak = 1;
+        transaction.update(userRef, { streak: 1 });
+      }
+
+      return data;
+    });
 
     return NextResponse.json(stats);
   } catch (error) {
@@ -81,7 +84,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { userId, action, value } = await request.json();
+    const { userId, action, value, idempotencyKey } = await request.json();
 
     const adminDb = getAdminDb();
 
@@ -92,14 +95,21 @@ export async function POST(request) {
       }, { status: 503 });
     }
 
-    const userRef = adminDb.collection("gamification").doc(userId);
-    const userDoc = await userRef.get();
+    // Idempotency check — reject duplicate requests
+    if (idempotencyKey) {
+      const idempotencyRef = adminDb
+        .collection("idempotency")
+        .doc(`${userId}_${idempotencyKey}`);
+      const idempotencyDoc = await idempotencyRef.get();
 
-    if (!userDoc.exists) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      if (idempotencyDoc.exists) {
+        // Return the cached result from the original request
+        return NextResponse.json(idempotencyDoc.data().result);
+      }
     }
 
-    const stats = userDoc.data();
+    const userRef = adminDb.collection("gamification").doc(userId);
+
     const xpRewards = {
       complete_chapter: 5,
       complete_course: 50,
@@ -112,9 +122,6 @@ export async function POST(request) {
     };
 
     const xpGained = xpRewards[action] || value || 0;
-    const newXP = stats.xp + xpGained;
-    const newLevel = Math.floor(newXP / 500) + 1;
-    let currentStreak = stats.streak || 0;
     const learningActions = [
       "complete_chapter",
       "complete_course",
@@ -125,70 +132,120 @@ export async function POST(request) {
       "generate_course",
     ];
 
-    if (learningActions.includes(action)) {
-      const lastActive = stats.lastActive ? new Date(stats.lastActive) : null;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    // Use a Firestore transaction for atomic read-compute-write
+    const result = await adminDb.runTransaction(async (transaction) => {
+      const userDoc = await transaction.get(userRef);
 
-      if (!lastActive) {
-        currentStreak = 1;
-      } else {
-        lastActive.setHours(0, 0, 0, 0);
-        const daysDiff = Math.floor((today - lastActive) / (1000 * 60 * 60 * 24));
-
-        if (daysDiff === 0) {
-          currentStreak = Math.max(stats.streak || 1, 1);
-        } else if (daysDiff === 1) {
-          currentStreak = (stats.streak || 0) + 1;
-        } else if (daysDiff > 1) {
-          currentStreak = 1;
-        }
+      if (!userDoc.exists) {
+        throw new Error("User not found");
       }
-    } else {
-      currentStreak = Math.max(stats.streak || 1, 1);
+
+      const stats = userDoc.data();
+
+      const newXP = (stats.xp || 0) + xpGained;
+      const newLevel = Math.floor(newXP / 500) + 1;
+      const oldLevel = stats.level || 1;
+      let currentStreak = stats.streak || 0;
+
+      if (learningActions.includes(action)) {
+        const lastActive = stats.lastActive ? new Date(stats.lastActive) : null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (!lastActive) {
+          currentStreak = 1;
+        } else {
+          const lastActiveDay = new Date(lastActive);
+          lastActiveDay.setHours(0, 0, 0, 0);
+          const daysDiff = Math.floor(
+            (today - lastActiveDay) / (1000 * 60 * 60 * 24)
+          );
+
+          if (daysDiff === 0) {
+            currentStreak = Math.max(stats.streak || 1, 1);
+          } else if (daysDiff === 1) {
+            currentStreak = (stats.streak || 0) + 1;
+          } else if (daysDiff > 1) {
+            currentStreak = 1;
+          }
+        }
+      } else {
+        currentStreak = Math.max(stats.streak || 1, 1);
+      }
+
+      const newBadges = checkBadges(
+        { ...stats, xp: newXP, level: newLevel, streak: currentStreak },
+        action
+      );
+
+      const achievementEntry = {
+        title: getAchievementTitle(action),
+        description: getAchievementDescription(action),
+        xp: xpGained,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Atomic update within transaction
+      transaction.update(userRef, {
+        xp: newXP,
+        level: newLevel,
+        streak: currentStreak,
+        badges: FieldValue.arrayUnion(...(newBadges.length > 0 ? newBadges : ["__noop__"])),
+        achievements: FieldValue.arrayUnion(achievementEntry),
+        lastActive: new Date().toISOString(),
+      });
+
+      // Remove the noop sentinel if we used it
+      if (newBadges.length === 0) {
+        transaction.update(userRef, {
+          badges: FieldValue.arrayRemove("__noop__"),
+        });
+      }
+
+      return {
+        success: true,
+        xpGained,
+        currentStreak,
+        newLevel: newLevel > oldLevel,
+        newBadges,
+        oldLevel,
+        newLevelValue: newLevel,
+        newXP,
+      };
+    });
+
+    // Store idempotency record (outside transaction, best effort)
+    if (idempotencyKey) {
+      const idempotencyRef = adminDb
+        .collection("idempotency")
+        .doc(`${userId}_${idempotencyKey}`);
+      await idempotencyRef.set({
+        result,
+        createdAt: FieldValue.serverTimestamp(),
+      }).catch(() => {});
     }
-    const newBadges = checkBadges(stats, action);
 
-    const updates = {
-      xp: newXP,
-      level: newLevel,
-      streak: currentStreak,
-      badges: [...new Set([...stats.badges, ...newBadges])],
-      achievements: [
-        ...stats.achievements,
-        {
-          title: getAchievementTitle(action),
-          description: getAchievementDescription(action),
-          xp: xpGained,
-          timestamp: new Date().toISOString(),
-        },
-      ],
-      lastActive: new Date().toISOString(),
-    };
-
-    await userRef.update(updates);
-
-    // Fire notifications for new badges and level-ups
-    if (adminDb && userId) {
-      if (newBadges.length > 0) {
-        for (const badge of newBadges) {
+    // Fire notifications for new badges and level-ups (outside transaction)
+    if (userId) {
+      if (result.newBadges.length > 0) {
+        for (const badge of result.newBadges) {
           createNotification(adminDb, {
             userId,
             title: "New Badge Unlocked!",
             body: `You earned the "${badge.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}" badge.`,
             type: "achievement",
             link: "/gamification",
-          }).catch(() => { });
+          }).catch(() => {});
         }
       }
-      if (newLevel > stats.level) {
+      if (result.newLevel) {
         createNotification(adminDb, {
           userId,
-          title: `Level Up! You're now Level ${newLevel}`,
-          body: `Awesome work! You've reached Level ${newLevel} with ${newXP} XP.`,
+          title: `Level Up! You're now Level ${result.newLevelValue}`,
+          body: `Awesome work! You've reached Level ${result.newLevelValue} with ${result.newXP} XP.`,
           type: "achievement",
           link: "/gamification",
-        }).catch(() => { });
+        }).catch(() => {});
       }
       if (action === "generate_course") {
         createNotification(adminDb, {
@@ -197,18 +254,21 @@ export async function POST(request) {
           body: "Your AI-generated course is ready. Start learning!",
           type: "progress",
           link: "/roadmap",
-        }).catch(() => { });
+        }).catch(() => {});
       }
     }
 
     return NextResponse.json({
-      success: true,
-      xpGained,
-      currentStreak,
-      newLevel: newLevel > stats.level,
-      newBadges,
+      success: result.success,
+      xpGained: result.xpGained,
+      currentStreak: result.currentStreak,
+      newLevel: result.newLevel,
+      newBadges: result.newBadges,
     });
   } catch (error) {
+    if (error.message === "User not found") {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
     console.error("Error updating stats:", error);
     return NextResponse.json({ error: "Failed to update stats" }, { status: 500 });
   }

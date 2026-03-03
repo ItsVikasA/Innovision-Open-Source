@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { adminDb, FieldValue } from "@/lib/firebase-admin";
 
 // Daily quest templates - rotates based on day
 const QUEST_TEMPLATES = [
@@ -136,68 +136,86 @@ export async function POST(request) {
     let userProgress = userQuestsDoc.data();
 
     if (action === "updateProgress") {
-      // Update progress for quests matching the progress type
-      userProgress.quests = userProgress.quests.map(quest => {
-        if (quest.type === progressType && !quest.completed) {
-          const newProgress = Math.min(quest.progress + (progressIncrement || 1), quest.target);
-          return {
-            ...quest,
-            progress: newProgress,
-            completed: newProgress >= quest.target,
-          };
-        }
-        return quest;
-      });
+      // Use a transaction to prevent race conditions on progress updates
+      const updatedQuests = await adminDb.runTransaction(async (transaction) => {
+        const doc = await transaction.get(userQuestsRef);
+        if (!doc.exists) throw new Error("No quests found");
 
-      await userQuestsRef.update({ quests: userProgress.quests });
+        const data = doc.data();
+        const updatedQuestList = data.quests.map((quest) => {
+          if (quest.type === progressType && !quest.completed) {
+            const newProgress = Math.min(
+              quest.progress + (progressIncrement || 1),
+              quest.target
+            );
+            return {
+              ...quest,
+              progress: newProgress,
+              completed: newProgress >= quest.target,
+            };
+          }
+          return quest;
+        });
+
+        transaction.update(userQuestsRef, { quests: updatedQuestList });
+        return updatedQuestList;
+      });
 
       return NextResponse.json({
         success: true,
-        quests: userProgress.quests,
+        quests: updatedQuests,
       });
     }
 
     if (action === "claim") {
-      // Find and claim the quest reward
-      const questIndex = userProgress.quests.findIndex(q => q.id === questId);
+      // Use a transaction to prevent double-claim race conditions
+      const claimResult = await adminDb.runTransaction(async (transaction) => {
+        const doc = await transaction.get(userQuestsRef);
+        if (!doc.exists) throw new Error("No quests found");
 
-      if (questIndex === -1) {
-        return NextResponse.json({ error: "Quest not found" }, { status: 404 });
-      }
+        const data = doc.data();
+        const questIndex = data.quests.findIndex((q) => q.id === questId);
 
-      const quest = userProgress.quests[questIndex];
+        if (questIndex === -1) throw new Error("Quest not found");
 
-      if (!quest.completed) {
-        return NextResponse.json({ error: "Quest not completed" }, { status: 400 });
-      }
+        const quest = data.quests[questIndex];
 
-      if (quest.claimed) {
-        return NextResponse.json({ error: "Already claimed" }, { status: 400 });
-      }
+        if (!quest.completed) throw new Error("Quest not completed");
+        if (quest.claimed) throw new Error("Already claimed");
 
-      // Mark as claimed
-      userProgress.quests[questIndex].claimed = true;
-      userProgress.totalXPEarned = (userProgress.totalXPEarned || 0) + quest.xpReward;
+        // Mark as claimed within transaction
+        data.quests[questIndex].claimed = true;
+        const newTotalXP = (data.totalXPEarned || 0) + quest.xpReward;
 
-      await userQuestsRef.update({
-        quests: userProgress.quests,
-        totalXPEarned: userProgress.totalXPEarned,
+        transaction.update(userQuestsRef, {
+          quests: data.quests,
+          totalXPEarned: newTotalXP,
+        });
+
+        return { quest: data.quests[questIndex], xpReward: quest.xpReward };
       });
 
-      // Award XP to user's main stats
-      const userStatsRef = adminDb.collection("users").doc(userId).collection("gamification").doc("stats");
-      const statsDoc = await userStatsRef.get();
-      const currentXP = statsDoc.exists ? (statsDoc.data().xp || 0) : 0;
+      // Award XP to user's main stats using FieldValue.increment (atomic)
+      const userStatsRef = adminDb
+        .collection("users")
+        .doc(userId)
+        .collection("gamification")
+        .doc("stats");
 
-      await userStatsRef.set({
-        xp: currentXP + quest.xpReward,
-        lastUpdated: new Date().toISOString(),
-      }, { merge: true });
+      await userStatsRef.set(
+        {
+          xp: FieldValue.increment(claimResult.xpReward),
+          lastUpdated: new Date().toISOString(),
+        },
+        { merge: true }
+      );
 
       return NextResponse.json({
         success: true,
-        xpAwarded: quest.xpReward,
-        quest: userProgress.quests[questIndex],
+        xpAwarded: claimResult.xpReward,
+        quest: claimResult.quest,
+      });
+    }
       });
     }
 

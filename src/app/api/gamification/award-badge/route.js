@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { adminDb, FieldValue } from "@/lib/firebase-admin";
 
-// POST - Award a badge to user
+// POST - Award a badge to user (idempotent via FieldValue.arrayUnion)
 export async function POST(request) {
   try {
     const { userId, badgeId } = await request.json();
@@ -27,18 +27,14 @@ export async function POST(request) {
       return NextResponse.json({ success: true, badges: [badgeId] });
     }
 
-    const stats = userDoc.data();
-    const currentBadges = stats.badges || [];
+    // Use arrayUnion — inherently idempotent, no race condition
+    await userRef.update({ badges: FieldValue.arrayUnion(badgeId) });
 
-    // Don't add duplicate badges
-    if (currentBadges.includes(badgeId)) {
-      return NextResponse.json({ success: true, message: "Badge already earned", badges: currentBadges });
-    }
+    // Read back to return current badges
+    const updatedDoc = await userRef.get();
+    const badges = updatedDoc.data()?.badges || [];
 
-    const newBadges = [...currentBadges, badgeId];
-    await userRef.update({ badges: newBadges });
-
-    return NextResponse.json({ success: true, badges: newBadges });
+    return NextResponse.json({ success: true, badges });
   } catch (error) {
     console.error("Error awarding badge:", error);
     return NextResponse.json({ error: "Failed to award badge" }, { status: 500 });

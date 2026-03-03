@@ -10,34 +10,45 @@ export async function POST(request) {
     }
 
     const userRef = adminDb.collection("gamification").doc(userId);
-    const userDoc = await userRef.get();
 
-    if (!userDoc.exists) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    // Use a transaction to prevent race conditions on streak fix
+    const result = await adminDb.runTransaction(async (transaction) => {
+      const userDoc = await transaction.get(userRef);
 
-    const stats = userDoc.data();
+      if (!userDoc.exists) {
+        throw new Error("User not found");
+      }
 
-    // If streak is 0, set it to 1 (they're using it today)
-    if (stats.streak === 0) {
-      await userRef.update({
-        streak: 1,
-        lastActive: new Date().toISOString(),
-      });
+      const stats = userDoc.data();
 
+      if (stats.streak === 0) {
+        transaction.update(userRef, {
+          streak: 1,
+          lastActive: new Date().toISOString(),
+        });
+        return { fixed: true, newStreak: 1 };
+      }
+
+      return { fixed: false, currentStreak: stats.streak };
+    });
+
+    if (result.fixed) {
       return NextResponse.json({
         success: true,
         message: "Streak fixed to 1",
-        newStreak: 1,
+        newStreak: result.newStreak,
       });
     }
 
     return NextResponse.json({
       success: true,
       message: "Streak already set",
-      currentStreak: stats.streak,
+      currentStreak: result.currentStreak,
     });
   } catch (error) {
+    if (error.message === "User not found") {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
     console.error("Error fixing streak:", error);
     return NextResponse.json({ error: "Failed to fix streak" }, { status: 500 });
   }
