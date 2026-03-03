@@ -305,6 +305,23 @@ export const XpProvider = ({ children }) => {
     [user, getXp, combo]
   );
 
+  // Daily check-in: update streak via dedicated endpoint once per session.
+  // This replaces the old behaviour where GET /stats had the side-effect of
+  // writing streak data, which caused race conditions with concurrent POSTs.
+  // See: https://github.com/ItsVikasA/Innovision-Open-Source/issues/176
+  const hasCheckedIn = useRef(false);
+
+  useEffect(() => {
+    if (user?.email && !hasCheckedIn.current) {
+      hasCheckedIn.current = true;
+      fetch("/api/gamification/check-in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.email }),
+      }).catch((err) => console.error("Check-in failed:", err));
+    }
+  }, [user]);
+
   useEffect(() => {
     if (user?.email) {
       getXp();

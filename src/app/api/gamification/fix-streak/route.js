@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
+import { fixZeroStreak } from "@/lib/streak-helper";
 
 export async function POST(request) {
   try {
@@ -18,17 +19,16 @@ export async function POST(request) {
 
     const stats = userDoc.data();
 
-    // If streak is 0, set it to 1 (they're using it today)
-    if (stats.streak === 0) {
-      await userRef.update({
-        streak: 1,
-        lastActive: new Date().toISOString(),
-      });
+    // Centralised streak-zero fix via helper
+    const { streak, lastActive, changed } = fixZeroStreak(stats);
+
+    if (changed) {
+      await userRef.update({ streak, lastActive });
 
       return NextResponse.json({
         success: true,
         message: "Streak fixed to 1",
-        newStreak: 1,
+        newStreak: streak,
       });
     }
 

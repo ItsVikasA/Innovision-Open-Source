@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createNotification } from "@/lib/create-notification";
+import { computeStreakUpdate } from "@/lib/streak-helper";
 
 export async function GET(request) {
   try {
@@ -45,32 +46,10 @@ export async function GET(request) {
     }
 
     const stats = userDoc.data();
-    const lastActive = new Date(stats.lastActive);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    lastActive.setHours(0, 0, 0, 0);
-    const daysDiff = Math.floor((today - lastActive) / (1000 * 60 * 60 * 24));
 
-    if (daysDiff === 1) {
-      stats.streak = (stats.streak || 0) + 1;
-      stats.lastActive = new Date().toISOString();
-      await userRef.update({
-        streak: stats.streak,
-        lastActive: stats.lastActive,
-      });
-    } else if (daysDiff > 1) {
-      stats.streak = 1;
-      stats.lastActive = new Date().toISOString();
-      await userRef.update({
-        streak: 1,
-        lastActive: stats.lastActive,
-      });
-    } else if (daysDiff === 0 && (!stats.streak || stats.streak === 0)) {
-      stats.streak = 1;
-      await userRef.update({
-        streak: 1,
-      });
-    }
+    // GET is read-only — streak updates are handled by the dedicated
+    // check-in endpoint and the POST handler (learning actions).
+    // See: https://github.com/ItsVikasA/Innovision-Open-Source/issues/176
 
     return NextResponse.json(stats);
   } catch (error) {
@@ -114,7 +93,6 @@ export async function POST(request) {
     const xpGained = xpRewards[action] || value || 0;
     const newXP = stats.xp + xpGained;
     const newLevel = Math.floor(newXP / 500) + 1;
-    let currentStreak = stats.streak || 0;
     const learningActions = [
       "complete_chapter",
       "complete_course",
@@ -125,29 +103,15 @@ export async function POST(request) {
       "generate_course",
     ];
 
-    if (learningActions.includes(action)) {
-      const lastActive = stats.lastActive ? new Date(stats.lastActive) : null;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    // Centralised streak calculation via helper
+    const isLearningAction = learningActions.includes(action);
+    const streakResult = computeStreakUpdate(stats, { isLearningAction });
+    const currentStreak = streakResult.streak;
 
-      if (!lastActive) {
-        currentStreak = 1;
-      } else {
-        lastActive.setHours(0, 0, 0, 0);
-        const daysDiff = Math.floor((today - lastActive) / (1000 * 60 * 60 * 24));
-
-        if (daysDiff === 0) {
-          currentStreak = Math.max(stats.streak || 1, 1);
-        } else if (daysDiff === 1) {
-          currentStreak = (stats.streak || 0) + 1;
-        } else if (daysDiff > 1) {
-          currentStreak = 1;
-        }
-      }
-    } else {
-      currentStreak = Math.max(stats.streak || 1, 1);
-    }
-    const newBadges = checkBadges(stats, action);
+    const newBadges = checkBadges(
+      { ...stats, xp: newXP, level: newLevel, streak: currentStreak },
+      action
+    );
 
     const updates = {
       xp: newXP,
@@ -163,7 +127,7 @@ export async function POST(request) {
           timestamp: new Date().toISOString(),
         },
       ],
-      lastActive: new Date().toISOString(),
+      lastActive: streakResult.lastActive,
     };
 
     await userRef.update(updates);
