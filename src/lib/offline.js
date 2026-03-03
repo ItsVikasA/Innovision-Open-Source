@@ -1,25 +1,44 @@
-// Offline-First Capabilities
+// Offline-First Capabilities with LWW Conflict Resolution
 import { openDB } from "idb";
 
 const DB_NAME = "InnoVisionOffline";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+
+// Prevent concurrent syncs
+let syncInProgress = false;
 
 /**
  * Initialize IndexedDB for offline storage
  */
 export async function initOfflineDB() {
   return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       // Courses store
       if (!db.objectStoreNames.contains("courses")) {
         db.createObjectStore("courses", { keyPath: "id" });
       }
 
-      // Progress store
+      // Progress store — deduplicated by courseId+chapter
       if (!db.objectStoreNames.contains("progress")) {
-        const progressStore = db.createObjectStore("progress", { keyPath: "id", autoIncrement: true });
+        const progressStore = db.createObjectStore("progress", {
+          keyPath: "id",
+          autoIncrement: true,
+        });
         progressStore.createIndex("synced", "synced");
         progressStore.createIndex("timestamp", "timestamp");
+        progressStore.createIndex("courseId", "courseId");
+      }
+
+      // v2: add courseId index to existing stores
+      if (oldVersion < 2) {
+        if (db.objectStoreNames.contains("progress")) {
+          const tx = db.transaction("progress", "readwrite");
+          if (!tx.store.indexNames.contains("courseId")) {
+            tx.store.createIndex("courseId", "courseId");
+          }
+        }
       }
 
       // Cache store
@@ -50,15 +69,47 @@ export async function getOfflineCourses() {
 }
 
 /**
- * Save progress offline (to sync later)
+ * Save progress offline with deduplication.
+ * If a record for the same courseId + chapter already exists (unsynced),
+ * update it instead of creating a duplicate.
  */
 export async function saveProgressOffline(progress) {
   const db = await initOfflineDB();
-  await db.add("progress", {
-    ...progress,
-    synced: 0,
-    timestamp: Date.now(),
-  });
+
+  // Check for existing unsynced record with same courseId + chapter
+  const allUnsynced = await getUnsyncedProgress();
+  const existing = allUnsynced.find(
+    (p) =>
+      p.courseId === progress.courseId &&
+      p.chapter === progress.chapter
+  );
+
+  if (existing) {
+    // Update existing record with newer data (LWW at client level)
+    const updated = {
+      ...existing,
+      ...progress,
+      timestamp: Date.now(),
+      synced: 0,
+    };
+    await db.put("progress", updated);
+  } else {
+    await db.add("progress", {
+      ...progress,
+      synced: 0,
+      timestamp: Date.now(),
+    });
+  }
+
+  // Request background sync if supported
+  if ("serviceWorker" in navigator && "SyncManager" in window) {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.sync.register("sync-progress");
+    } catch {
+      // Background sync not available — will sync on reconnect
+    }
+  }
 }
 
 /**
@@ -84,50 +135,139 @@ export async function markProgressSynced(progressId) {
 }
 
 /**
- * Sync offline data when online
+ * Group unsynced progress entries by courseId for batch sync
  */
-export async function syncOfflineData() {
-  if (!navigator.onLine) {
-    return { success: false, message: "Device is offline" };
-  }
-
-  const unsyncedProgress = await getUnsyncedProgress();
-  const results = [];
-
-  for (const progress of unsyncedProgress) {
-    try {
-      const response = await fetch("/api/progress/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(progress),
-      });
-
-      if (response.ok) {
-        await markProgressSynced(progress.id);
-        results.push({ id: progress.id, success: true });
-      } else {
-        results.push({ id: progress.id, success: false, error: "Sync failed" });
-      }
-    } catch (error) {
-      results.push({ id: progress.id, success: false, error: error.message });
+function groupByCourse(progressEntries) {
+  const grouped = {};
+  for (const entry of progressEntries) {
+    const key = entry.courseId;
+    if (!key) continue;
+    if (!grouped[key]) {
+      grouped[key] = {
+        courseId: entry.courseId,
+        courseType: entry.courseType || "roadmap",
+        chapters: {},
+        ids: [], // track IndexedDB IDs for marking synced
+      };
     }
+    // LWW: if same chapter appears multiple times, keep the newest
+    const chapterKey = entry.chapter || entry.chapterKey || "unknown";
+    const existing = grouped[key].chapters[chapterKey];
+    if (!existing || (entry.timestamp || 0) > (existing.completedAt || 0)) {
+      grouped[key].chapters[chapterKey] = {
+        completed: entry.completed || false,
+        completedAt: entry.timestamp || Date.now(),
+        timeSpent: entry.timeSpent || 0,
+      };
+    }
+    grouped[key].ids.push(entry.id);
   }
-
-  return { success: true, results };
+  return grouped;
 }
 
 /**
- * Check if device is online and setup listeners
+ * Sync offline data when online — with batch sync, LWW merge, and retry
+ */
+export async function syncOfflineData() {
+  if (!navigator.onLine) {
+    return { success: false, message: "Device is offline", synced: 0, failed: 0 };
+  }
+
+  if (syncInProgress) {
+    return { success: false, message: "Sync already in progress", synced: 0, failed: 0 };
+  }
+
+  syncInProgress = true;
+
+  try {
+    const unsyncedProgress = await getUnsyncedProgress();
+    if (unsyncedProgress.length === 0) {
+      return { success: true, message: "Nothing to sync", synced: 0, failed: 0 };
+    }
+
+    // Group by course for batch sync
+    const grouped = groupByCourse(unsyncedProgress);
+    let synced = 0;
+    let failed = 0;
+    const conflicts = [];
+
+    for (const [courseId, group] of Object.entries(grouped)) {
+      let lastError = null;
+
+      // Retry with exponential backoff
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+          const response = await fetch("/api/progress/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              courseId: group.courseId,
+              courseType: group.courseType,
+              chapters: group.chapters,
+              clientTimestamp: Date.now(),
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Mark all related IndexedDB records as synced
+            for (const id of group.ids) {
+              await markProgressSynced(id);
+            }
+            synced += group.ids.length;
+            if (data.conflicts?.length > 0) {
+              conflicts.push(...data.conflicts);
+            }
+            lastError = null;
+            break; // Success — exit retry loop
+          } else if (response.status === 401) {
+            // Auth error — don't retry
+            lastError = "Unauthorized";
+            break;
+          } else {
+            lastError = `Server error (${response.status})`;
+          }
+        } catch (error) {
+          lastError = error.message;
+        }
+
+        // Exponential backoff before retry
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, BASE_DELAY_MS * Math.pow(2, attempt)));
+        }
+      }
+
+      if (lastError) {
+        failed += group.ids.length;
+        console.warn(`Failed to sync course ${courseId}:`, lastError);
+      }
+    }
+
+    return { success: true, synced, failed, conflicts };
+  } finally {
+    syncInProgress = false;
+  }
+}
+
+/**
+ * Check if device is online and setup listeners.
+ * Returns a cleanup function to remove listeners.
  */
 export function setupOfflineListeners(onOnline, onOffline) {
-  window.addEventListener("online", () => {
-    console.log("Device is online");
-    syncOfflineData();
+  const handleOnline = () => {
     if (onOnline) onOnline();
-  });
+  };
 
-  window.addEventListener("offline", () => {
-    console.log("Device is offline");
+  const handleOffline = () => {
     if (onOffline) onOffline();
-  });
+  };
+
+  window.addEventListener("online", handleOnline);
+  window.addEventListener("offline", handleOffline);
+
+  // Return cleanup function
+  return () => {
+    window.removeEventListener("online", handleOnline);
+    window.removeEventListener("offline", handleOffline);
+  };
 }
