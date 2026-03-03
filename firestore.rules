@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default rule: Deny all read/write unless explicitly allowed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users Collection
+    // Users can read/write their own profile
+    // Assuming document ID is the user's email or UID. 
+    // Based on codebase usage, it seems to be email in some places and UID in others.
+    // We'll support both patterns safely.
+    
+    match /users/{userId} {
+      // Allow if the document ID matches the authenticated user's UID or Email
+      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.email == userId);
+      
+      // Allow write only if auth matches AND they are NOT modifying sensitive fields like 'isPremium'
+      allow write: if request.auth != null 
+                   && (request.auth.uid == userId || request.auth.token.email == userId)
+                   && (!('isPremium' in request.resource.data) || request.resource.data.isPremium == resource.data.isPremium)
+                   && (!('xp' in request.resource.data) || request.resource.data.xp == resource.data.xp); // Prevent XP farming
+
+      // Subcollections (e.g. youtube-courses)
+      match /youtube-courses/{courseId} {
+        allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email == userId);
+      }
+      
+      // Subcollections (e.g. generated-courses)
+      match /generated-courses/{courseId} {
+        allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email == userId);
+      }
+    }
+
+    // Projects Collection (Public Read, Owner Write)
+    match /projects/{projectId} {
+      // Public read if marked public, or if owner
+      allow read: if resource.data.public == true || (request.auth != null && resource.data.userId == request.auth.token.email);
+      
+      // Create: user must be authenticated and set themselves as owner
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.token.email;
+      
+      // Update: user must be owner
+      allow update: if request.auth != null && resource.data.userId == request.auth.token.email;
+      
+      // Delete: user must be owner
+      allow delete: if request.auth != null && resource.data.userId == request.auth.token.email;
+    }
+
+    // Leaderboard (Read-only for public, Write only by server/admin)
+    // Server-side writes utilize Admin SDK which bypasses these rules.
+    match /leaderboard/{document=**} {
+      allow read: if true;
+      allow write: if false; 
+    }
+  }
+}

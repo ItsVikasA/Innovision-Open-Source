@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createNotification } from "@/lib/create-notification";
+import { getServerSession } from "@/lib/auth-server";
 
 export async function GET(request) {
   try {
@@ -81,7 +82,16 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { userId, action, value } = await request.json();
+
+    if (userId !== session.user.email) {
+      return NextResponse.json({ error: "Forbidden: Cannot update other user's stats" }, { status: 403 });
+    }
 
     const adminDb = getAdminDb();
 
@@ -111,7 +121,7 @@ export async function POST(request) {
       generate_course: 10,
     };
 
-    const xpGained = xpRewards[action] || value || 0;
+    const xpGained = xpRewards[action] || 0;
     const newXP = stats.xp + xpGained;
     const newLevel = Math.floor(newXP / 500) + 1;
     let currentStreak = stats.streak || 0;
