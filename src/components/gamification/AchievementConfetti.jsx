@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import confetti from "canvas-confetti";
 
 // XP milestones that trigger celebrations
@@ -10,6 +10,15 @@ const XP_MILESTONES = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100
 const LEVEL_MILESTONES = [5, 10, 15, 20, 25, 50, 100];
 
 export const useAchievementConfetti = () => {
+  const rafRef = useRef(null);
+
+  // Clean up any pending rAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
   const fireConfetti = useCallback((type = "default") => {
     const defaults = {
       origin: { y: 0.7 },
@@ -51,7 +60,7 @@ export const useAchievementConfetti = () => {
           });
 
           if (Date.now() < end) {
-            requestAnimationFrame(frame);
+            rafRef.current = requestAnimationFrame(frame);
           }
         };
         frame();

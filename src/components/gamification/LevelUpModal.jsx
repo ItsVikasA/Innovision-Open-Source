@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSpring, animated, config } from "@react-spring/web";
 import confetti from "canvas-confetti";
 import { X, Star, Trophy, Zap, Crown, Sparkles } from "lucide-react";
@@ -26,6 +26,8 @@ export default function LevelUpModal({
 }) {
   const [showParticles, setShowParticles] = useState(false);
   const [badgeRevealed, setBadgeRevealed] = useState(false);
+  const rafRef = useRef(null);
+  const timersRef = useRef([]);
 
   // Get badge for this level (if any)
   const badge = LEVEL_BADGES[newLevel];
@@ -71,8 +73,10 @@ export default function LevelUpModal({
       // Fire confetti
       const duration = 3000;
       const end = Date.now() + duration;
+      let cancelled = false;
 
       const frame = () => {
+        if (cancelled) return;
         confetti({
           particleCount: 3,
           angle: 60,
@@ -91,18 +95,27 @@ export default function LevelUpModal({
         });
 
         if (Date.now() < end) {
-          requestAnimationFrame(frame);
+          rafRef.current = requestAnimationFrame(frame);
         }
       };
       frame();
 
       // Reveal badge after delay
       if (badge) {
-        setTimeout(() => setBadgeRevealed(true), 1500);
+        const t1 = setTimeout(() => setBadgeRevealed(true), 1500);
+        timersRef.current.push(t1);
       }
 
       // Hide particles after duration
-      setTimeout(() => setShowParticles(false), 3000);
+      const t2 = setTimeout(() => setShowParticles(false), 3000);
+      timersRef.current.push(t2);
+
+      return () => {
+        cancelled = true;
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        timersRef.current.forEach(clearTimeout);
+        timersRef.current = [];
+      };
     } else {
       setBadgeRevealed(false);
     }

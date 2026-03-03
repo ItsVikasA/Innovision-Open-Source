@@ -7,6 +7,9 @@ import { Crown, Sparkles, Star, Zap } from "lucide-react";
 export default function PremiumCelebration({ isOpen, onClose }) {
   const [showContent, setShowContent] = useState(false);
   const audioRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const timersRef = useRef([]);
+  const confettiIntervalRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -17,14 +20,29 @@ export default function PremiumCelebration({ isOpen, onClose }) {
       fireConfettiSequence();
 
       // Show content after a delay
-      setTimeout(() => setShowContent(true), 500);
+      const t1 = setTimeout(() => setShowContent(true), 500);
+      timersRef.current.push(t1);
 
       // Auto close after 6 seconds
       const timer = setTimeout(() => {
         onClose?.();
       }, 6000);
+      timersRef.current.push(timer);
 
-      return () => clearTimeout(timer);
+      return () => {
+        // Clean up all timers
+        timersRef.current.forEach(clearTimeout);
+        timersRef.current = [];
+        if (confettiIntervalRef.current) {
+          clearInterval(confettiIntervalRef.current);
+          confettiIntervalRef.current = null;
+        }
+        // Close AudioContext
+        if (audioContextRef.current) {
+          audioContextRef.current.close().catch(() => {});
+          audioContextRef.current = null;
+        }
+      };
     } else {
       setShowContent(false);
     }
@@ -34,6 +52,7 @@ export default function PremiumCelebration({ isOpen, onClose }) {
     try {
       // Create audio context for celebration sound
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioContextRef.current = audioContext;
 
       // Play a victory fanfare sequence
       const playNote = (frequency, startTime, duration, gain = 0.3) => {
@@ -83,7 +102,7 @@ export default function PremiumCelebration({ isOpen, onClose }) {
     });
 
     // Side cannons
-    setTimeout(() => {
+    const t1 = setTimeout(() => {
       confetti({
         particleCount: 80,
         angle: 60,
@@ -101,6 +120,7 @@ export default function PremiumCelebration({ isOpen, onClose }) {
         zIndex: 10000,
       });
     }, 300);
+    timersRef.current.push(t1);
 
     // Continuous confetti rain
     const interval = setInterval(() => {
@@ -126,9 +146,10 @@ export default function PremiumCelebration({ isOpen, onClose }) {
         zIndex: 10000,
       });
     }, 100);
+    confettiIntervalRef.current = interval;
 
     // Star bursts
-    setTimeout(() => {
+    const t2 = setTimeout(() => {
       confetti({
         particleCount: 100,
         spread: 360,
@@ -138,9 +159,10 @@ export default function PremiumCelebration({ isOpen, onClose }) {
         zIndex: 10000,
       });
     }, 1000);
+    timersRef.current.push(t2);
 
     // Final explosion
-    setTimeout(() => {
+    const t3 = setTimeout(() => {
       confetti({
         particleCount: 200,
         spread: 180,
@@ -149,6 +171,7 @@ export default function PremiumCelebration({ isOpen, onClose }) {
         zIndex: 10000,
       });
     }, 2000);
+    timersRef.current.push(t3);
   };
 
   if (!isOpen) return null;

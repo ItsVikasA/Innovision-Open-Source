@@ -55,33 +55,31 @@ const MarkDown = ({ content }) => {
   const [theme, setTheme] = useState("light");
   const { nightMode } = useNightMode();
 
-  // Listen for theme changes
+  // Listen for theme changes via storage events + MutationObserver (no polling)
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") || "light";
     setTheme(savedTheme);
 
-    // Listen for theme changes
-    const handleThemeChange = () => {
+    const syncTheme = () => {
       const currentTheme = localStorage.getItem("theme") || "light";
       setTheme(currentTheme);
     };
 
     // Listen for storage events (theme changes in other tabs)
-    window.addEventListener("storage", handleThemeChange);
+    window.addEventListener("storage", syncTheme);
 
-    // Also check periodically for theme changes (fallback)
-    const interval = setInterval(() => {
-      const currentTheme = localStorage.getItem("theme") || "light";
-      if (currentTheme !== theme) {
-        setTheme(currentTheme);
-      }
-    }, 100);
+    // Watch for class changes on <html> to detect same-tab theme toggles
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
 
     return () => {
-      window.removeEventListener("storage", handleThemeChange);
-      clearInterval(interval);
+      window.removeEventListener("storage", syncTheme);
+      observer.disconnect();
     };
-  }, [theme]);
+  }, []);
 
   // Select appropriate theme based on current mode
   const codeTheme = theme === "dark" ? coldarkDark : coldarkCold;

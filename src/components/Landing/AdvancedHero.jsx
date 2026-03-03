@@ -9,54 +9,58 @@ const AdvancedHero = () => {
   const dotsRef = useRef(null);
 
   useEffect(() => {
-    // Animate title
-    gsap.from(".hero-title", {
-      opacity: 0,
-      y: 50,
-      duration: 1,
-      ease: "power3.out",
-    });
-
-    gsap.from(".hero-subtitle", {
-      opacity: 0,
-      y: 30,
-      duration: 1,
-      delay: 0.3,
-      ease: "power3.out",
-    });
-
-    gsap.from(".hero-description", {
-      opacity: 0,
-      y: 20,
-      duration: 1,
-      delay: 0.5,
-      ease: "power3.out",
-    });
-
-    gsap.from(".hero-cta", {
-      opacity: 0,
-      scale: 0.9,
-      duration: 0.8,
-      delay: 0.7,
-      ease: "back.out(1.7)",
-    });
-
-    // Animate dots
-    const dots = dotsRef.current?.querySelectorAll('.dot');
-    if (dots) {
-      gsap.to(dots, {
-        opacity: 0.3,
-        scale: 1.2,
-        duration: 2,
-        stagger: {
-          amount: 3,
-          from: "random",
-          repeat: -1,
-          yoyo: true,
-        },
-        ease: "power1.inOut",
+    const ctx = gsap.context(() => {
+      // Animate title
+      gsap.from(".hero-title", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        ease: "power3.out",
       });
-    }
+
+      gsap.from(".hero-subtitle", {
+        opacity: 0,
+        y: 30,
+        duration: 1,
+        delay: 0.3,
+        ease: "power3.out",
+      });
+
+      gsap.from(".hero-description", {
+        opacity: 0,
+        y: 20,
+        duration: 1,
+        delay: 0.5,
+        ease: "power3.out",
+      });
+
+      gsap.from(".hero-cta", {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.8,
+        delay: 0.7,
+        ease: "back.out(1.7)",
+      });
+
+      // Animate dots
+      const dots = dotsRef.current?.querySelectorAll('.dot');
+      if (dots) {
+        gsap.to(dots, {
+          opacity: 0.3,
+          scale: 1.2,
+          duration: 2,
+          stagger: {
+            amount: 3,
+            from: "random",
+            repeat: -1,
+            yoyo: true,
+          },
+          ease: "power1.inOut",
+        });
+      }
+    }, heroRef);
+
+    return () => ctx.revert();
   }, []);
 
   // Generate dots

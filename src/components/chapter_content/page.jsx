@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import Sidebar from "../sidebar/page";
@@ -69,6 +69,17 @@ const Page = ({ chapter, roadmapId }) => {
     const [certDialogOpen, setCertDialogOpen] = useState(false);
     const { showLoader, hideLoader } = loader();
     const { user } = useAuth();
+    const pollingRef = useRef(null);
+
+    // Clean up polling interval on unmount
+    useEffect(() => {
+        return () => {
+            if (pollingRef.current) {
+                clearInterval(pollingRef.current);
+                pollingRef.current = null;
+            }
+        };
+    }, []);
 
     async function getRoadmap() {
         try {
@@ -170,6 +181,7 @@ const Page = ({ chapter, roadmapId }) => {
                     reject(error);
                 }
             }, 3000);
+            pollingRef.current = fetchInterval;
         });
     }
 

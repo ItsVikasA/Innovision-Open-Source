@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +17,19 @@ export default function Leaderboard({ currentUserId }) {
   const [animatingUsers, setAnimatingUsers] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const isFirstLoad = useRef(true);
+  const animationTimers = useRef([]);
 
   useEffect(() => {
     fetchLeaderboard();
 
     // Refresh leaderboard every 10 seconds for real-time updates
     const interval = setInterval(fetchLeaderboard, 10000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      // Clear any pending animation timers
+      animationTimers.current.forEach(clearTimeout);
+      animationTimers.current = [];
+    };
   }, []);
 
   const fetchLeaderboard = async () => {
@@ -54,13 +60,14 @@ export default function Leaderboard({ currentUserId }) {
             if (prevRank !== undefined && prevRank !== newRank) {
               newAnimating.add(`${period}_${user.id}`);
               // Clear animation after 2 seconds
-              setTimeout(() => {
+              const timer = setTimeout(() => {
                 setAnimatingUsers(prev => {
                   const next = new Set(prev);
                   next.delete(`${period}_${user.id}`);
                   return next;
                 });
               }, 2000);
+              animationTimers.current.push(timer);
             }
 
             newPreviousRanks[`${period}_${user.id}`] = newRank;
