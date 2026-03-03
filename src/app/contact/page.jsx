@@ -89,13 +89,13 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen overflow-hidden bg-black relative">
+    <div className="flex flex-col min-h-screen overflow-hidden bg-background relative">
       {/* Animated dots background */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         {dots.map((style, i) => (
           <div
             key={i}
-            className="dot absolute w-1 h-1 bg-white/20 rounded-full animate-pulse"
+            className="dot absolute w-1 h-1 bg-foreground/20 rounded-full animate-pulse"
             style={style}
           />
         ))}
@@ -106,11 +106,11 @@ export default function ContactPage() {
         <div className="bg-transparent px-4">
           <ScrollReveal>
             <div className="max-w-3xl mx-auto text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 border border-white/10 rounded-full mb-6">
-                <Mail className="h-7 w-7 text-blue-500" />
+              <div className="inline-flex items-center justify-center w-16 h-16 border border-border rounded-full mb-6">
+                <Mail className="h-7 w-7 text-primary" />
               </div>
-              <h1 className="text-white text-4xl md:text-5xl font-light mb-4">Get in Touch</h1>
-              <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto font-light">
+              <h1 className="text-foreground text-4xl md:text-5xl font-light mb-4">Get in Touch</h1>
+              <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto font-light">
                 Have a question or idea? Reach out — we typically respond within 24 hours.
               </p>
             </div>
@@ -122,15 +122,19 @@ export default function ContactPage() {
             <ScrollReveal delay={100}>
               <div className="max-w-xl mx-auto">
                 <div
-                  className="relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl 
-               shadow-[0_0_60px_-15px_rgba(59,130,246,0.25)] px-6 py-8 md:px-8 md:py-10">
+                  className="relative rounded-3xl border border-border bg-card/80 backdrop-blur-xl 
+               shadow-lg px-6 py-8 md:px-8 md:py-10">
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
+                      <label htmlFor="contact-email" className="block text-sm font-medium text-foreground mb-1.5">
+                        Email
+                      </label>
                       <input
+                        id="contact-email"
                         type="email"
-                        placeholder="Email"
-                        className="w-full px-6 py-4 rounded-xl bg-black/40 border border-white/15 text-white placeholder:text-gray-500 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all font-light"
+                        placeholder="you@example.com"
+                        className="w-full px-6 py-4 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground 
+                       focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all font-light"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
@@ -138,11 +142,15 @@ export default function ContactPage() {
                     </div>
 
                     <div>
+                      <label htmlFor="contact-message" className="block text-sm font-medium text-foreground mb-1.5">
+                        Message
+                      </label>
                       <textarea
-                        placeholder="Message"
+                        id="contact-message"
+                        placeholder="Tell us what's on your mind..."
                         rows="5"
-                        className="w-full px-6 py-4 rounded-2xl bg-black/40 border border-white/15 text-white placeholder:text-gray-500 
-                      focus:outline-none focus:ring-2  focus:ring-blue-500/40 focus:border-blue-500/40 transition-all resize-none font-light"
+                        className="w-full px-6 py-4 rounded-2xl bg-background border border-border text-foreground placeholder:text-muted-foreground 
+                      focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all resize-none font-light"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         required
@@ -153,8 +161,8 @@ export default function ContactPage() {
                       <button
                         type="submit"
                         ref={formRef}
-                        className="relative bg-blue-500 hover:bg-blue-600 text-white px-10 py-3.5 rounded-full font-medium transition-all duration-300 
-                      hover:shadow-[0_0_25px_rgba(59,130,246,0.6)] focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed 
+                        className="relative bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-3.5 rounded-full font-medium transition-all duration-300 
+                      hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed 
                       flex items-center gap-2 cursor-pointer w-full justify-center">
                         <Send className="h-4 w-4" />
                         Send Message
