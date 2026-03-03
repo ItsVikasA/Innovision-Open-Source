@@ -9,6 +9,7 @@ import xpContext from "@/contexts/xp";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ChatBot from "@/components/chat/ChatBot";
+import BookmarkButton from "@/components/chapter_content/BookmarkButton";
 
 export default function StudioCoursePage() {
   const params = useParams();
@@ -106,6 +107,16 @@ export default function StudioCoursePage() {
       />
       <div className="flex-1 pt-20 lg:ml-96">
         <div className="p-6 max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">{currentChapter.title || `Chapter ${chapterIndex + 1}`}</h2>
+            <BookmarkButton
+              courseId={params.courseId}
+              chapterNumber={chapterIndex + 1}
+              chapterTitle={currentChapter.title || `Chapter ${chapterIndex + 1}`}
+              courseTitle={courseData.title}
+              courseType="studio"
+            />
+          </div>
           <StudioContent content={currentChapter.content} />
 
           {/* Chapter Navigation Buttons */}

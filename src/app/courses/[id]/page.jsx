@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Clock, User, ArrowLeft, Play } from "lucide-react";
 import { toast } from "sonner";
 import ChatBot from "@/components/chat/ChatBot";
+import BookmarkButton from "@/components/chapter_content/BookmarkButton";
 
 export default function CourseDetailPage() {
   const params = useParams();
@@ -91,6 +92,12 @@ export default function CourseDetailPage() {
               <h1 className="text-4xl font-bold mb-2">{course.title}</h1>
               <p className="text-lg text-muted-foreground">{course.description}</p>
             </div>
+            <BookmarkButton
+              courseId={params.id}
+              courseTitle={course.title}
+              courseType="studio"
+              size="lg"
+            />
             <Badge className="ml-4">Published</Badge>
           </div>
 
@@ -145,7 +152,15 @@ export default function CourseDetailPage() {
                       <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-sm font-bold">
                         {index + 1}
                       </span>
-                      {chapter.title || `Chapter ${index + 1}`}
+                      <span className="flex-1">{chapter.title || `Chapter ${index + 1}`}</span>
+                      <BookmarkButton
+                        courseId={params.id}
+                        chapterNumber={index + 1}
+                        chapterTitle={chapter.title || `Chapter ${index + 1}`}
+                        courseTitle={course.title}
+                        courseType="studio"
+                        size="sm"
+                      />
                     </CardTitle>
                     {chapter.description && (
                       <CardDescription>{chapter.description}</CardDescription>

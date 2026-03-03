@@ -35,7 +35,9 @@ export default function Bookmarks() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           roadmapId: bookmark.roadmapId,
+          courseId: bookmark.courseId || bookmark.roadmapId,
           chapterNumber: bookmark.chapterNumber,
+          courseType: bookmark.courseType || "roadmap",
           action: "remove",
         }),
       });
@@ -65,6 +67,12 @@ export default function Bookmarks() {
       }
     } else if (type === "youtube") {
       router.push(`/youtube-course/${id}`);
+    } else if (type === "studio") {
+      if (chapter && chapter !== 0) {
+        router.push(`/studio-course/${id}/${chapter}`);
+      } else {
+        router.push(`/courses/${id}`);
+      }
     } else {
       // Default to roadmap pattern
       if (chapter && chapter !== 0) {

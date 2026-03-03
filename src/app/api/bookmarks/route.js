@@ -91,6 +91,12 @@ export async function POST(request) {
         }
       } else if (type === "youtube") {
         notifLink = `/youtube-course/${id}`;
+      } else if (type === "studio") {
+        if (chapterNumber && chapterNumber !== 0) {
+          notifLink = `/studio-course/${id}/${chapterNumber}`;
+        } else {
+          notifLink = `/courses/${id}`;
+        }
       } else {
         if (chapterNumber && chapterNumber !== 0) {
           notifLink = `/chapter-test/${id}/${chapterNumber}`;
