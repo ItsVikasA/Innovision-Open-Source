@@ -1,10 +1,10 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, BookOpen, Sparkles, Search, X, Filter, Trash2, Archive, ArchiveRestore, CheckSquare } from "lucide-react";
+import { Plus, BookOpen, Sparkles, Search, X, Filter, Trash2, Archive, ArchiveRestore, CheckSquare, AlertTriangle, RefreshCw, GraduationCap, Rocket } from "lucide-react";
 import CourseCard from "@/components/Home/CourseCard";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageBackground, GridPattern, PageHeader, ScrollReveal, HoverCard } from "@/components/ui/PageWrapper";
 import ChatBot from "@/components/chat/ChatBot";
@@ -23,6 +23,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import RecommendedCourses from "@/components/RecommendedCourses";
+
+// Timeout for fetch requests (15 seconds)
+const FETCH_TIMEOUT_MS = 15000;
 
 export default function page() {
     const [error, setError] = useState(null);
@@ -72,20 +75,39 @@ export default function page() {
         setLoading(true);
         setError(null);
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
         try {
-            const response = await fetch("/api/roadmap/all");
+            const response = await fetch("/api/roadmap/all", {
+                signal: controller.signal,
+            });
 
             if (!response.ok) {
-                throw new Error("Failed to fetch roadmaps");
+                throw new Error(
+                    response.status === 401
+                        ? "Please log in to view your courses."
+                        : "Failed to fetch roadmaps"
+                );
             }
 
             const data = await response.json();
             setRoadmaps(data?.docs || []);
         } catch (err) {
-            console.error("Roadmap fetch error:", err);
-            setError("Unable to load your courses.");
+            if (err.name === "AbortError") {
+                console.error("Roadmap fetch timed out");
+                setError(
+                    "The request took too long. Please check your internet connection and try again."
+                );
+            } else {
+                console.error("Roadmap fetch error:", err);
+                setError(
+                    err.message || "Unable to load your courses. Please try again."
+                );
+            }
             setRoadmaps([]);
         } finally {
+            clearTimeout(timeoutId);
             setLoading(false);
         }
     }
@@ -413,45 +435,66 @@ export default function page() {
 
                 <div className="flex gap-6 justify-center flex-wrap w-full">
                     {loading ? (
-                        Array(6)
-                            .fill(0)
-                            .map((_, i) => (
-                                <Skeleton
-                                    key={i}
-                                    className="w-[320px] h-70 rounded-xl"
-                                />
-                            ))
+                        <div className="w-full space-y-6">
+                            <div className="text-center">
+                                <p className="text-sm text-muted-foreground animate-pulse">
+                                    Loading your courses...
+                                </p>
+                            </div>
+                            <div className="flex gap-6 justify-center flex-wrap">
+                                {Array(6)
+                                    .fill(0)
+                                    .map((_, i) => (
+                                        <Skeleton
+                                            key={i}
+                                            className="w-[320px] h-70 rounded-xl"
+                                        />
+                                    ))}
+                            </div>
+                        </div>
                     ) : error ? (
-                        <div className="w-full text-center py-16 text-muted-foreground">
-                            <div className="flex flex-col items-center">
-                                <BookOpen className="h-12 w-12 mb-4 opacity-50" />
-                                <p className="text-lg font-semibold">
-                                    We couldn't load your courses
+                        <div className="w-full text-center py-20 text-muted-foreground">
+                            <div className="flex flex-col items-center max-w-md mx-auto">
+                                <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+                                    <AlertTriangle className="h-8 w-8 text-red-500" />
+                                </div>
+                                <p className="text-xl font-semibold text-foreground">
+                                    Something went wrong
                                 </p>
-                                <p className="text-sm mt-2">
-                                    Please try again or refresh the page.
+                                <p className="text-sm mt-2 text-muted-foreground">
+                                    {error}
                                 </p>
-                                <button
+                                <Button
                                     onClick={fetchRoadmaps}
-                                    className="mt-4 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+                                    className="mt-6 gap-2"
                                 >
-                                    Retry
-                                </button>
+                                    <RefreshCw className="h-4 w-4" />
+                                    Try Again
+                                </Button>
                             </div>
                         </div>
                     ) : completedCourses.length === 0 ? (
-                        <div className="w-full text-center py-16 text-muted-foreground">
-                            <div className="flex flex-col items-center">
-                                <BookOpen className="h-12 w-12 mb-4 opacity-50" />
-                                <p className="text-lg font-medium">
-                                    You don't have any courses yet
+                        <div className="w-full text-center py-20 text-muted-foreground">
+                            <div className="flex flex-col items-center max-w-lg mx-auto">
+                                <div className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
+                                    <GraduationCap className="h-10 w-10 text-blue-500" />
+                                </div>
+                                <p className="text-2xl font-bold text-foreground">
+                                    Start your learning journey
                                 </p>
-                                <p className="text-sm mt-2">
-                                    Start by generating your first roadmap
+                                <p className="text-base mt-3 text-muted-foreground max-w-sm">
+                                    You don&apos;t have any courses yet. Create your
+                                    first AI-generated course and begin learning
+                                    something new today!
                                 </p>
-                                <Link href="/generate" className="mt-4">
-                                    <Button>Create Course</Button>
-                                </Link>
+                                <div className="flex gap-3 mt-6">
+                                    <Link href="/generate">
+                                        <Button className="gap-2">
+                                            <Rocket className="h-4 w-4" />
+                                            Create Your First Course
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     ) : filteredCourses.length === 0 ? (
