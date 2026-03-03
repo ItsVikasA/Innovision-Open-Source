@@ -1,0 +1,44 @@
+name: Auto Comment on Pull Requests
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  welcome-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome new PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prAuthor = context.payload.pull_request.user.login;
+            const prNumber = context.payload.pull_request.number;
+
+            const body = `👋 Hello @${prAuthor}, thank you for submitting this Pull Request!
+
+            We appreciate your contribution to **Innovision-Open-Source**. Here's what happens next:
+
+            ### 📋 Review Process
+            1. A maintainer will review your changes as soon as possible.
+            2. You may be asked to make changes or address feedback — please watch for review comments.
+            3. Once approved, your PR will be merged into the main branch.
+
+            ### ✅ PR Checklist
+            - [ ] My code follows the project's coding style and conventions.
+            - [ ] I have tested my changes locally.
+            - [ ] I have linked the related issue (e.g., \`Closes #issue_number\`).
+            - [ ] I have added/updated documentation if needed.
+
+            Thank you for helping improve this project! 🚀`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body,
+            });

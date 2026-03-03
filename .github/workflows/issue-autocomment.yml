@@ -1,0 +1,44 @@
+name: Auto Comment on Issues
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  welcome-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome new issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueAuthor = context.payload.issue.user.login;
+            const issueNumber = context.payload.issue.number;
+
+            const body = `👋 Hello @${issueAuthor}, thank you for opening this issue!
+
+            We appreciate your contribution to **Innovision-Open-Source**. Here's what happens next:
+
+            ### 📋 Next Steps
+            1. A maintainer will review your issue and may add labels or ask for more details.
+            2. If you'd like to work on this issue yourself, please comment below to get assigned.
+            3. Once assigned, fork the repository and create a new branch for your changes.
+            4. Submit a Pull Request referencing this issue (e.g., \`Closes #${issueNumber}\`).
+
+            ### 📝 Guidelines
+            - Please make sure your issue has a clear **title** and **description**.
+            - Include **steps to reproduce** if reporting a bug.
+            - Check existing issues to avoid duplicates.
+
+            Thank you for helping improve this project! 🚀`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: body,
+            });
