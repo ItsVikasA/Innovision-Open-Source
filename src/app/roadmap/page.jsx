@@ -95,15 +95,8 @@ export default function page() {
 
     const completedCourses = roadmaps.filter(r => r.process === "completed");
 
-    // Filter by archive status
-    const statusFilteredCourses = completedCourses.filter((course) => {
-        if (archiveFilter === "active") return !course.archived;
-        if (archiveFilter === "archived") return course.archived;
-        return true; // "all"
-    });
-
     // Filter and sort courses
-    const filteredCourses = statusFilteredCourses
+    const filteredCourses = completedCourses
         .filter((course) => {
             // Archive filter - treat undefined/null as not archived
             const isArchived = course.archived === true;
@@ -363,18 +356,6 @@ export default function page() {
                                     <SelectItem value="fast">Fast-paced</SelectItem>
                                     <SelectItem value="balanced">Balanced</SelectItem>
                                     <SelectItem value="in-depth">In-depth</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            {/* Archive Filter */}
-                            <Select value={archiveFilter} onValueChange={setArchiveFilter}>
-                                <SelectTrigger className="w-35 h-9 bg-card/50 backdrop-blur-sm border-border/50">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="archived">Archived</SelectItem>
-                                    <SelectItem value="all">All Courses</SelectItem>
                                 </SelectContent>
                             </Select>
 

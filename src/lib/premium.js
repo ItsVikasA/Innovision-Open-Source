@@ -153,7 +153,9 @@ export async function getUserCourseCount(userEmail) {
       .where("process", "==", "completed")
       .get();
 
-    return snapshot.size;
+    // Exclude archived courses from the count so they don't count toward limits
+    const activeCourses = snapshot.docs.filter(doc => !doc.data().archived);
+    return activeCourses.length;
   } catch (error) {
     console.error("Error getting course count:", error);
     return 0;

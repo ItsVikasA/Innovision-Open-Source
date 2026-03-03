@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, BookOpen, CheckCircle2 } from "lucide-react";
+import { Clock, BookOpen, CheckCircle2, Archive } from "lucide-react";
 import { calculateEstimatedTime } from "@/lib/time-utils";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -164,6 +164,11 @@ const CourseCard = ({ course, onDelete, onArchive, isSelectable, isSelected, onS
           {progress === 100 && (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
               ✓ Completed
+            </span>
+          )}
+          {archived && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20">
+              <Archive className="h-3 w-3" /> Archived
             </span>
           )}
         </div>
