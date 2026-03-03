@@ -82,12 +82,21 @@ const Navbar = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
+
+    // Preserve night-mode class across theme switches
+    const hasNightMode = document.documentElement.classList.contains("night-mode");
+
     if (newTheme === "dark") {
       document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("light");
     } else {
       document.documentElement.classList.add("light");
       document.documentElement.classList.remove("dark");
+    }
+
+    // Re-apply night-mode if it was (or should be) active
+    if (hasNightMode || nightMode) {
+      document.documentElement.classList.add("night-mode");
     }
   };
 
