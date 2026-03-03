@@ -11,6 +11,7 @@ import ChapterNotFound from "./ChapterNotFound";
 import ChapterError from "./ChapterError";
 import ChapterLoading from "./ChapterLoading";
 import BookmarkButton from "./BookmarkButton";
+import StudyBuddy from "./StudyBuddy";
 import { toast } from "sonner";
 import { loader } from "../ui/Custom/ToastLoader";
 import CertificateDialog from "@/components/certificates/CertificateDialog";
@@ -358,13 +359,29 @@ const Page = ({ chapter, roadmapId }) => {
                                     <h1 className="text-4xl font-bold">
                                         {chapterData.chapterTitle}
                                     </h1>
-                                    <BookmarkButton
-                                        roadmapId={roadmapId}
-                                        chapterNumber={chapter}
-                                        chapterTitle={chapterData.chapterTitle}
-                                        roadmapTitle={roadmap?.title}
-                                        size="lg"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <StudyBuddy
+                                            chapterTitle={chapterData.chapterTitle}
+                                            chapterContent={(() => {
+                                                if (!chapterData?.subtopics) return "";
+                                                return chapterData.subtopics.map(topic => {
+                                                    let text = topic.title + "\n";
+                                                    (topic.content || []).forEach(item => {
+                                                        if (typeof item.content === "string") text += item.content + "\n";
+                                                        else if (Array.isArray(item.content)) text += item.content.join("\n") + "\n";
+                                                    });
+                                                    return text;
+                                                }).join("\n");
+                                            })()}
+                                        />
+                                        <BookmarkButton
+                                            roadmapId={roadmapId}
+                                            chapterNumber={chapter}
+                                            chapterTitle={chapterData.chapterTitle}
+                                            roadmapTitle={roadmap?.title}
+                                            size="lg"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-2 mt-2 text-muted-foreground">
                                     <Clock className="h-4 w-4" />

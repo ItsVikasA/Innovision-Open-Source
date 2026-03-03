@@ -22,6 +22,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import BookmarkButton from "@/components/chapter_content/BookmarkButton";
 import ChatBot from "@/components/chat/ChatBot";
+import StudyBuddy from "@/components/chapter_content/StudyBuddy";
 import MarkDown from "@/components/MarkDown";
 
 export default function IngestedChapterPage() {
@@ -320,15 +321,21 @@ export default function IngestedChapterPage() {
                     </div>
                     <div className="flex items-center gap-2">
                         {user && (
-                            <BookmarkButton
-                                courseId={params.courseId}
-                                chapterNumber={chapter?.chapterNumber}
-                                chapterTitle={chapter?.title}
-                                courseTitle={courseTitle}
-                                courseType="ingested"
-                                size="sm"
-                                chapterId={params.chapterId}
-                            />
+                            <>
+                                <StudyBuddy
+                                    chapterTitle={chapter?.title}
+                                    chapterContent={chapter?.content || ""}
+                                />
+                                <BookmarkButton
+                                    courseId={params.courseId}
+                                    chapterNumber={chapter?.chapterNumber}
+                                    chapterTitle={chapter?.title}
+                                    courseTitle={courseTitle}
+                                    courseType="ingested"
+                                    size="sm"
+                                    chapterId={params.chapterId}
+                                />
+                            </>
                         )}
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />

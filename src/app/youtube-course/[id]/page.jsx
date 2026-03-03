@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/auth";
 import MarkDown from "@/components/MarkDown";
 import { getOfflineCourses } from "@/lib/offline";
 import ChatBot from "@/components/chat/ChatBot";
+import StudyBuddy from "@/components/chapter_content/StudyBuddy";
 
 export default function YouTubeCourseView() {
   const params = useParams();
@@ -349,15 +350,25 @@ export default function YouTubeCourseView() {
                           {activeChapter.description}
                         </CardDescription>
                       </div>
-                      {completedChapters.includes(activeChapter.number) ? (
-                        <Button variant="outline" onClick={() => markChapterComplete(activeChapter.number, false)}>
-                          <CheckCircle2 className="h-4 w-4 mr-2" /> Completed
-                        </Button>
-                      ) : (
-                        <Button onClick={() => markChapterComplete(activeChapter.number, true)}>
-                          <CheckCircle className="h-4 w-4 mr-2" /> Mark Complete
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <StudyBuddy
+                          chapterTitle={activeChapter.title}
+                          chapterContent={(() => {
+                            if (!activeChapter?.content) return "";
+                            const c = activeChapter.content;
+                            return [c.introduction, c.mainContent, ...(c.keyPoints || []), ...(c.examples || [])].filter(Boolean).join("\n\n");
+                          })()}
+                        />
+                        {completedChapters.includes(activeChapter.number) ? (
+                          <Button variant="outline" onClick={() => markChapterComplete(activeChapter.number, false)}>
+                            <CheckCircle2 className="h-4 w-4 mr-2" /> Completed
+                          </Button>
+                        ) : (
+                          <Button onClick={() => markChapterComplete(activeChapter.number, true)}>
+                            <CheckCircle className="h-4 w-4 mr-2" /> Mark Complete
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                 </Card>
