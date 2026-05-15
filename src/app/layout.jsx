@@ -10,6 +10,7 @@ import { NotificationProvider } from "@/contexts/notifications";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import NotificationChecker from "@/components/NotificationChecker";
 import { Analytics } from "@vercel/analytics/next";
+import ScrollToTop from "@/components/ui/ScrollToTop";
 
 const robotoSans = Roboto({
   variable: "--font-roboto-sans",
@@ -73,6 +74,7 @@ export default function RootLayout({ children }) {
                   <OfflineIndicator />
                   <NotificationChecker />
                   <Toaster richColors />
+                  <ScrollToTop />
                 </LoaderProvider>
               </NotificationProvider>
             </NightModeProvider>
