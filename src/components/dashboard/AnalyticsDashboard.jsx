@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Users, BookOpen, TrendingUp, Award } from "lucide-react";
+import StatsCard from "@/components/ui/StatsCard";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -76,45 +77,26 @@ export default function AnalyticsDashboard({ instructorId }) {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{safeOverview.totalStudents}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{safeOverview.totalCourses}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Avg Completion</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(safeOverview.avgCompletionRate * 100).toFixed(1)}%</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total XP Earned</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{safeOverview.totalXpEarned.toLocaleString()}</div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total Students"
+          value={safeOverview.totalStudents}
+          icon={Users}
+        />
+        <StatsCard
+          title="Active Courses"
+          value={safeOverview.totalCourses}
+          icon={BookOpen}
+        />
+        <StatsCard
+          title="Avg Completion"
+          value={`${(safeOverview.avgCompletionRate * 100).toFixed(1)}%`}
+          icon={TrendingUp}
+        />
+        <StatsCard
+          title="Total XP Earned"
+          value={safeOverview.totalXpEarned.toLocaleString()}
+          icon={Award}
+        />
       </div>
 
       {/* Charts */}
