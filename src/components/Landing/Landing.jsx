@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { toast } from "sonner";
 import Hero from "./Hero";
 import Features from "./Features";
 import HowItWorks from "./HowItWorks";
@@ -9,6 +11,51 @@ import Link from "next/link";
 import BackToTop from "./BackToTop";
 
 export default function Landing() {
+  const [formData, setFormData] = useState({ email: "", message: "" });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+    if (!formData.message) {
+      newErrors.message = "Message is required";
+    } else if (formData.message.length < 10) {
+      newErrors.message = "Message must be at least 10 characters";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast.success("Message sent successfully!");
+      setFormData({ email: "", message: "" });
+    } catch (error) {
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { type, value } = e.target;
+    setFormData(prev => ({ ...prev, [type === 'email' ? 'email' : 'message']: value }));
+    // Clear error when user types
+    if (errors[type === 'email' ? 'email' : 'message']) {
+      setErrors(prev => ({ ...prev, [type === 'email' ? 'email' : 'message']: null }));
+    }
+  };
   return (
     <div className="relative flex min-h-screen overflow-x-hidden flex-col scroll-smooth bg-background text-foreground">
       {/* Animated dots background */}
@@ -48,31 +95,43 @@ export default function Landing() {
             </div>
 
             <div className="max-w-xl mx-auto">
-              <form className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <input
                     type="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     placeholder="Email"
-                    className="w-full px-5 py-3.5 rounded-full bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-light"
-                    required
+                    className={`w-full px-5 py-3.5 rounded-full bg-background border ${errors.email ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-light`}
                   />
+                  {errors.email && <p className="text-red-500 text-xs mt-1.5 ml-5">{errors.email}</p>}
                 </div>
 
                 <div>
                   <textarea
+                    value={formData.message}
+                    onChange={handleChange}
                     placeholder="Message"
                     rows="5"
-                    className="w-full px-5 py-3.5 rounded-2xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none font-light"
-                    required
+                    className={`w-full px-5 py-3.5 rounded-2xl bg-background border ${errors.message ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none font-light`}
                   />
+                  {errors.message && <p className="text-red-500 text-xs mt-1.5 ml-5">{errors.message}</p>}
                 </div>
 
                 <div className="flex justify-center pt-2">
                   <button
                     type="submit"
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full font-light transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    disabled={isSubmitting}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full font-light transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    Send Message
+                    {isSubmitting ? (
+                      <>
+                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Send Message"
+                    )}
                   </button>
                 </div>
               </form>

@@ -15,6 +15,7 @@ Thank you for your interest in contributing to InnoVision! 🎉 We're excited to
 - [Commit Guidelines](#commit-guidelines)
 - [Pull Request Process](#pull-request-process)
 - [Testing](#testing)
+- [Design & UI/UX Standards](#design--uiux-standards)
 - [Documentation](#documentation)
 - [Community](#community)
 
@@ -429,6 +430,36 @@ Test on:
 - iOS Safari
 - Chrome Mobile
 - Responsive mode in DevTools
+
+---
+
+## Design & UI/UX Standards
+
+To maintain InnoVision's premium aesthetic, please follow these design principles:
+
+### Visual Consistency
+- **Colors**: Use the predefined CSS variables (e.g., `--background`, `--foreground`, `--primary`). Avoid hardcoded hex colors.
+- **Glassmorphism**: Use `backdrop-blur` and subtle borders (`border-white/10`) for cards and overlays.
+- **Gradients**: Use logical, smooth gradients (e.g., `bg-linear-to-br from-blue-500 to-indigo-600`).
+
+### Typography
+- Use the standard font family (Roboto).
+- Maintain proper hierarchy using `h1`, `h2`, `h3` tags.
+- Use `text-muted-foreground` for secondary information.
+
+### Animations
+- Use **Framer Motion** for interactive elements.
+- Keep animations subtle and fast (duration 0.2s - 0.5s).
+- Use `AnimatePresence` for components that mount/unmount.
+
+### Reusable Components
+- Always check if a reusable component exists (e.g., `StatsCard`, `EmptyState`, `Skeleton`) before building from scratch.
+- If you build a generic component, place it in `src/components/ui/`.
+
+### Accessibility (A11y)
+- **ARIA Labels**: Ensure all icon-only buttons have descriptive `aria-label` attributes.
+- **Contrast**: Maintain a high contrast ratio for readability.
+- **Keyboard Navigation**: Ensure all interactive elements are focusable and usable via keyboard.
 
 ---
 
