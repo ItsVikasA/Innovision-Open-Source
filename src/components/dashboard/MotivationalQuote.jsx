@@ -106,27 +106,39 @@ export default function MotivationalQuote({ variant = "default" }) {
   }
 
   return (
-    <Card
-      className={`
-        relative overflow-hidden transition-all duration-500 ease-out
-        ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
-      `}
-    >
+      <Card
+        className={`
+          relative overflow-hidden border border-white/10
+          bg-white/5 backdrop-blur-md shadow-2xl
+          hover:shadow-purple-500/20 hover:scale-[1.01]
+          transition-all duration-500 ease-out
+          rounded-2xl
+          ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
+        `}
+      >
       {/* Background gradient */}
+      <div className="absolute -top-10 -right-10 h-32 w-32 bg-purple-500/20 rounded-full blur-3xl" />
+      <div className="absolute -bottom-10 -left-10 h-32 w-32 bg-blue-500/20 rounded-full blur-3xl" />
       <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5" />
 
       <div className="relative p-6">
         <div className="flex items-start gap-4">
-          <div className="p-2 rounded-full bg-linear-to-br from-blue-500 to-purple-600 shrink-0">
+          <div className="p-3 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-lg shadow-purple-500/30 shrink-0">
             <Quote className="h-5 w-5 text-white" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-lg font-medium leading-relaxed mb-3">
+            <p
+                className={`
+                  text-lg md:text-xl font-semibold leading-relaxed mb-3 tracking-wide text-white/90
+                  transition-all duration-300
+                  ${isChanging ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}
+                `}
+              >
               "{quote.text}"
             </p>
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-purple-300 font-medium">
                 — {quote.author}
               </p>
               <Button
@@ -134,7 +146,7 @@ export default function MotivationalQuote({ variant = "default" }) {
                 size="sm"
                 onClick={changeQuote}
                 disabled={isChanging}
-                className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                className="h-8 px-2 rounded-full text-muted-foreground hover:text-white hover:bg-purple-500/20 transition-all duration-300"
               >
                 <RefreshCw className={`h-4 w-4 ${isChanging ? "animate-spin" : ""}`} />
               </Button>
