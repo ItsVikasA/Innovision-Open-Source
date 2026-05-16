@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/auth";
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function SignIn() {
   const { user, googleSignIn, githubSignIn } = useAuth();
@@ -114,13 +115,19 @@ export default function SignIn() {
               <div className="mt-8 space-y-3 text-muted-foreground text-center">
                 <p className="text-xs font-light">
                   By proceeding, you agree to our{" "}
-                  <a href="/terms" className="underline hover:text-foreground transition-colors">
+                  <Link
+                    href="/terms"
+                    className="underline hover:text-foreground transition-colors"
+                  >
                     Terms of Use
-                  </a>{" "}
+                  </Link>{" "}
                   and{" "}
-                  <a href="/privacy" className="underline hover:text-foreground transition-colors">
+                  <Link
+                    href="/privacy"
+                    className="underline hover:text-foreground transition-colors"
+                  >
                     Privacy Policy
-                  </a>
+                  </Link>
                   .
                 </p>
               </div>
