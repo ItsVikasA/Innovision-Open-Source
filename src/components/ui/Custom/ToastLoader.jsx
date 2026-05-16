@@ -65,6 +65,20 @@ export default function LoaderProvider({ children }) {
             document.removeEventListener("click", handleGlobalLinkClick);
     }, []);
 
+    // When the browser restores the page from bfcache (e.g. pressing Back after
+    // a full-page navigation to /terms or /privacy), the loading state is still
+    // true and overflow is still hidden. The pageshow event with persisted=true
+    // fires exactly in that scenario, so we reset the loader here.
+    useEffect(() => {
+        const handlePageShow = (event) => {
+            if (event.persisted) {
+                hideLoader();
+            }
+        };
+        window.addEventListener("pageshow", handlePageShow);
+        return () => window.removeEventListener("pageshow", handlePageShow);
+    }, []);
+
     return (
         <LoaderContext.Provider value={{ showLoader, hideLoader }}>
             {loading && <ToastLoader />}
