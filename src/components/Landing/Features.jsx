@@ -56,7 +56,7 @@ const FeatureCard3D = ({ feature, premium, index = 0 }) => {
         )}
         <CardHeader className="relative z-10">
           <div
-            className="w-12 h-12 rounded-xl border border-border flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-500 group-hover:rotate-6"
+            className="w-12 h-12 rounded-xl border border-border flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-500"
             style={{
               borderColor: `${feature.color}20`,
               boxShadow: isHovered ? `0 0 20px ${feature.color}40` : 'none'
