@@ -1,9 +1,11 @@
 import { cookies } from "next/headers";
-import { auth as firebaseAuth } from "@/lib/firebase";
+import { getAuth } from "firebase-admin/auth";
+import "@/lib/firebase-admin"; // ensure Firebase Admin is initialized
 
 /**
- * Get the current user from the session cookie
- * This replaces NextAuth's auth() function for API routes
+ * Get the current user from the session cookie.
+ * Verifies the Firebase ID token cryptographically using the Admin SDK.
+ * This prevents forged cookies from bypassing authentication.
  */
 export async function getServerSession() {
   try {
@@ -14,24 +16,22 @@ export async function getServerSession() {
       return null;
     }
 
-    // The session cookie contains the Firebase ID token
-    // For now, we'll decode it client-side style
-    // In production, you should verify it with Firebase Admin SDK
     const idToken = sessionCookie.value;
 
-    // For now, we'll extract user info from the token payload
-    // This is a simplified approach - ideally use Firebase Admin to verify
+    // Cryptographically verify the token signature using Firebase Admin SDK.
+    // This rejects any tampered or forged tokens.
     try {
-      const payload = JSON.parse(atob(idToken.split(".")[1]));
+      const decoded = await getAuth().verifyIdToken(idToken);
       return {
         user: {
-          email: payload.email,
-          name: payload.name,
-          image: payload.picture,
+          email: decoded.email,
+          name: decoded.name,
+          image: decoded.picture,
         },
       };
     } catch (e) {
-      console.error("Failed to parse session token:", e);
+      // Token is invalid, expired, or forged — treat as unauthenticated
+      console.error("Session token verification failed:", e.message);
       return null;
     }
   } catch (error) {
