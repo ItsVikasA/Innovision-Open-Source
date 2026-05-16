@@ -26,8 +26,8 @@ const MagneticButton = ({ children, className = "", strength = 0.3 }) => {
       onMouseLeave={handleMouseLeave}
       className={className}
       style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        transition: position.x === 0 ? "transform 0.5s ease-out" : "transform 0.1s ease-out",
+        translate: `${position.x}px ${position.y}px`,
+        transition: position.x === 0 ? "translate 0.5s ease-out" : "translate 0.1s ease-out",
       }}
     >
       {children}
