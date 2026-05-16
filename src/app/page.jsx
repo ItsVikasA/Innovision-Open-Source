@@ -33,6 +33,21 @@ const Page = () => {
       router.replace("/roadmap");
     }
   }, [user, router]);
+  
+
+  useEffect(() => {
+    const hash = window.location.hash;
+
+    if (hash) {
+      const id = hash.replace("#", "");
+
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({
+          behavior: "smooth",
+        });
+      }, 100);
+    }
+  }, []);
 
   if (loading) {
     return (
