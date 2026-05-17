@@ -17,20 +17,23 @@ export async function POST(req) {
       const existingSession = cookieStore.get("session");
       const isNewLogin = !existingSession;
 
-      // Set session cookie
-      cookieStore.set("session", idToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 5, // 5 days
-      });
-
-
+      // Verify the ID token and create a proper session cookie
+      const { getAuth } = await import("firebase-admin/auth");
       try {
+        const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days in milliseconds
+        const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn });
+
+        // Set session cookie
+        cookieStore.set("session", sessionCookie, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 60 * 60 * 24 * 5, // 5 days (in seconds)
+        });
+
         if (isNewLogin) {
-          const { getAuth } = await import("firebase-admin/auth");
-          const decoded = await getAuth().verifyIdToken(idToken);
+          const decoded = await getAuth().verifySessionCookie(sessionCookie);
           const userEmail = decoded.email;
           if (userEmail) {
             const adminDb = getAdminDb();
@@ -44,7 +47,8 @@ export async function POST(req) {
           }
         }
       } catch (err) {
-        console.error("Error verifying ID token or creating notification:", err);
+        console.error("Error creating session cookie or notification:", err);
+        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
       }
 
       return NextResponse.json({ success: true });

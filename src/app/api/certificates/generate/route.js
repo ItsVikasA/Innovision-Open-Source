@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { getAdminDb, FieldValue } from "@/lib/firebase-admin";
 import { nanoid } from "nanoid";
+import { getServerSession } from "@/lib/auth-server";
 
 export async function POST(request) {
   let body;
   try {
+    const session = await getServerSession();
+    if (!session || !session.user || !session.user.email) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.email;
+
     const adminDb = getAdminDb();
     if (!adminDb) {
       return NextResponse.json(
@@ -14,12 +21,12 @@ export async function POST(request) {
     }
 
     body = await request.json();
-    const { userId, courseId } = body;
+    const { courseId } = body;
 
-    // Guard: both fields required
-    if (!userId || !courseId) {
+    // Guard: courseId required
+    if (!courseId) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields: userId and courseId" },
+        { success: false, error: "Missing required field: courseId" },
         { status: 400 }
       );
     }

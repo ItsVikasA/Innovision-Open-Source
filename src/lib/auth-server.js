@@ -14,24 +14,23 @@ export async function getServerSession() {
       return null;
     }
 
-    // The session cookie contains the Firebase ID token
-    // For now, we'll decode it client-side style
-    // In production, you should verify it with Firebase Admin SDK
-    const idToken = sessionCookie.value;
+    // The session cookie is a Firebase session cookie
+    const sessionCookieValue = sessionCookie.value;
 
-    // For now, we'll extract user info from the token payload
-    // This is a simplified approach - ideally use Firebase Admin to verify
     try {
-      const payload = JSON.parse(atob(idToken.split(".")[1]));
+      const { getAuth } = await import("firebase-admin/auth");
+      // Verify session cookie with Firebase Admin SDK instead of just decoding
+      const decodedClaims = await getAuth().verifySessionCookie(sessionCookieValue, true);
+      
       return {
         user: {
-          email: payload.email,
-          name: payload.name,
-          image: payload.picture,
+          email: decodedClaims.email,
+          name: decodedClaims.name,
+          image: decodedClaims.picture,
         },
       };
     } catch (e) {
-      console.error("Failed to parse session token:", e);
+      console.error("Failed to verify session token:", e);
       return null;
     }
   } catch (error) {

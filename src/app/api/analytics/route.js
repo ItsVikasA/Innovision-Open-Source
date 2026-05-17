@@ -1,15 +1,25 @@
 // Analytics API for Instructor Dashboard
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
+import { getServerSession } from "@/lib/auth-server";
 
 export async function GET(request) {
   try {
+    const session = await getServerSession();
+    if (!session || !session.user || !session.user.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const instructorId = searchParams.get("instructorId");
     const timeRange = searchParams.get("timeRange") || "7d";
 
     if (!instructorId) {
       return NextResponse.json({ error: "Instructor ID required" }, { status: 400 });
+    }
+
+    if (session.user.email !== instructorId) {
+      return NextResponse.json({ error: "Forbidden: Not your dashboard" }, { status: 403 });
     }
 
     // Fetch all users
