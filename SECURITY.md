@@ -17,6 +17,7 @@ This document summarizes important security practices, immediate remediation ite
 - Use a secret manager (GCP Secret Manager / AWS Secrets Manager / Azure Key Vault) for production creds.
 - Rotate keys regularly and revoke on compromise.
 - Store `FIREBASE_PRIVATE_KEY` and other sensitive credentials in a secret store rather than a plaintext env file.
+- Treat promo codes, referral codes and partner discount tokens as credential material. Do not commit them in source. Use the Firestore-backed seeding flow at `src/scripts/seed_coupons.js`, with the source JSON kept outside the repository.
 
 ## Authentication & session management
 - Verify tokens server-side for every request that requires authentication using Firebase Admin (`getAuth().verifyIdToken()` or `getAuth().verifySessionCookie()`).

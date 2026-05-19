@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { activatePremium } from "@/lib/premium";
+import { consumeCoupon } from "@/lib/coupons";
+import Razorpay from "razorpay";
 import crypto from "crypto";
 
 export async function POST(req) {
@@ -13,11 +16,9 @@ export async function POST(req) {
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
 
-    // Verify signature
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(body.toString())
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
@@ -27,7 +28,6 @@ export async function POST(req) {
       );
     }
 
-    // Activate premium for 1 month
     const success = await activatePremium(session.user.email, 1, razorpay_payment_id);
 
     if (!success) {
@@ -35,6 +35,21 @@ export async function POST(req) {
         { error: "Failed to activate premium" },
         { status: 500 }
       );
+    }
+
+    try {
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+      const order = await razorpay.orders.fetch(razorpay_order_id);
+      const couponCode = order?.notes?.couponCode;
+      const adminDb = getAdminDb();
+      if (adminDb && couponCode && couponCode !== "none") {
+        await consumeCoupon(adminDb, couponCode);
+      }
+    } catch (couponError) {
+      console.error("Coupon consumption failed (non-blocking):", couponError.message);
     }
 
     return NextResponse.json({
