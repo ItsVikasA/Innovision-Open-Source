@@ -75,6 +75,12 @@ export default function CoursesPage() {
     }
   };
 
+  const formatDate = (date) => {
+    if (!date) return "Date unknown";
+    const d = new Date(date);
+    return isNaN(d) ? "Date unknown" : d.toLocaleDateString();
+  };
+
   return (
     <div className="min-h-screen bg-background relative py-10">
       <PageBackground variant="courses" />
@@ -137,7 +143,7 @@ export default function CoursesPage() {
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4 mr-2" />
-                          <span>Published {new Date(course.publishedAt).toLocaleDateString()}</span>
+                          <span>Published {formatDate(course.publishedAt)}</span>
                         </div>
                         <Button
                           onClick={() => enrollInCourse(course)}

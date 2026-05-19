@@ -71,6 +71,12 @@ export default function CourseDetailPage() {
     );
   }
 
+  const formatDate = (date) => {
+    if (!date) return "Date unknown";
+    const d = new Date(date);
+    return isNaN(d) ? "Date unknown" : d.toLocaleDateString();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto p-6">
@@ -105,7 +111,7 @@ export default function CourseDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Published {new Date(course.publishedAt).toLocaleDateString()}</span>
+              <span>Published {formatDate(course.publishedAt)}</span>
             </div>
           </div>
         </div>
