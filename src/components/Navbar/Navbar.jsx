@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   Zap,
+  Users,
 } from "lucide-react";
 import { Sun, Moon } from "lucide-react";
 import Image from "next/image";
@@ -146,6 +147,7 @@ const Navbar = () => {
     { href: "/features", label: "Features", icon: Trophy, description: "Platform features" },
     { href: "/gamification", label: "Achievements", icon: Zap, description: "Badges & rewards" },
     { href: "/demo", label: "Demo", icon: BarChart3, description: "See how it works" },
+    { href: "/collaboration", label: "Workspace", icon: Users, description: "Collaboration workspace" },
     { href: "/contact", label: "Contact", icon: MessageSquare, description: "Get in touch" },
   ];
 
