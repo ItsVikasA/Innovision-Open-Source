@@ -1,10 +1,14 @@
 import { cookies } from "next/headers";
 import { auth as firebaseAuth } from "@/lib/firebase";
 
-/**
- * Get the current user from the session cookie
- * This replaces NextAuth's auth() function for API routes
- */
+export class AuthError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "AuthError";
+    this.status = status;
+  }
+}
+
 export async function getServerSession() {
   try {
     const cookieStore = await cookies();
@@ -14,13 +18,8 @@ export async function getServerSession() {
       return null;
     }
 
-    // The session cookie contains the Firebase ID token
-    // For now, we'll decode it client-side style
-    // In production, you should verify it with Firebase Admin SDK
     const idToken = sessionCookie.value;
 
-    // For now, we'll extract user info from the token payload
-    // This is a simplified approach - ideally use Firebase Admin to verify
     try {
       const payload = JSON.parse(atob(idToken.split(".")[1]));
       return {
@@ -37,5 +36,25 @@ export async function getServerSession() {
   } catch (error) {
     console.error("Error getting server session:", error);
     return null;
+  }
+}
+
+export async function requireBearerAuth(request) {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new AuthError("Unauthorized", 401);
+  }
+
+  const token = authHeader.slice("Bearer ".length).trim();
+  if (!token) {
+    throw new AuthError("Unauthorized", 401);
+  }
+
+  try {
+    const { getAuth } = await import("firebase-admin/auth");
+    const decoded = await getAuth().verifyIdToken(token);
+    return decoded;
+  } catch (_) {
+    throw new AuthError("Unauthorized", 401);
   }
 }
