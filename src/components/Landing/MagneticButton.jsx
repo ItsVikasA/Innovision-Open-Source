@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 
-const MagneticButton = ({ children, className = "", strength = 0.3 }) => {
+const MagneticButton = ({ children, className = "", strength = 0.08}) => {
   const ref = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
@@ -12,11 +12,13 @@ const MagneticButton = ({ children, className = "", strength = 0.3 }) => {
     const centerY = rect.top + rect.height / 2;
     const x = (e.clientX - centerX) * strength;
     const y = (e.clientY - centerY) * strength;
-    setPosition({ x, y });
+    ref.current.style.translate = `${x}px ${y}px`;
   };
 
   const handleMouseLeave = () => {
-    setPosition({ x: 0, y: 0 });
+    if (!ref.current) return;
+
+    ref.current.style.translate = "0px 0px";
   };
 
   return (

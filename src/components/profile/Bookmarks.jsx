@@ -35,7 +35,10 @@ export default function Bookmarks() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          bookmarkId: bookmark.id,
           roadmapId: bookmark.roadmapId,
+          courseId: bookmark.courseId,
+          courseType: bookmark.courseType,
           chapterNumber: bookmark.chapterNumber,
           action: "remove",
         }),
