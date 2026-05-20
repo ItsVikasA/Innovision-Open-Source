@@ -352,6 +352,60 @@ const ExportCourse = ({ courseId, courseTitle }) => {
               yPosition += 8;
             });
           }
+        } else if (chapterData && typeof chapterData === 'string') {
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(0, 0, 0);
+
+          const sections = chapterData.split('```');
+          sections.forEach((section, sectionIndex) => {
+            const isCodeBlock = sectionIndex % 2 === 1;
+            if (isCodeBlock) {
+              const lines = section.split('\n');
+              const codeLines = lines.slice(1);
+              doc.setFont("courier", "normal");
+              doc.setFontSize(9);
+              doc.setTextColor(50, 50, 50);
+
+              codeLines.forEach((line) => {
+                if (!line.trim() && line === codeLines[codeLines.length - 1]) return;
+                checkPageBreak(8);
+                doc.setFillColor(248, 248, 248);
+                doc.rect(margin, yPosition - 4, maxWidth, 6, 'F');
+
+                if (line.length > 80) {
+                  const codeParts = doc.splitTextToSize(line, maxWidth - 6);
+                  codeParts.forEach((part) => {
+                    checkPageBreak(6);
+                    doc.setFillColor(248, 248, 248);
+                    doc.rect(margin, yPosition - 4, maxWidth, 6, 'F');
+                    doc.text(part, margin + 2, yPosition);
+                    yPosition += 5;
+                  });
+                } else {
+                  doc.text(line, margin + 2, yPosition);
+                  yPosition += 5;
+                }
+              });
+              yPosition += 4;
+              doc.setFont("helvetica", "normal");
+              doc.setFontSize(10);
+              doc.setTextColor(0, 0, 0);
+            } else {
+              const paragraphs = section.split('\n\n');
+              paragraphs.forEach((p) => {
+                if (p.trim()) {
+                  const lines = doc.splitTextToSize(p.trim(), maxWidth);
+                  lines.forEach((line) => {
+                    checkPageBreak();
+                    doc.text(line, margin, yPosition);
+                    yPosition += lineHeight;
+                  });
+                  yPosition += 2;
+                }
+              });
+            }
+          });
         }
 
         // Tasks section if exists
