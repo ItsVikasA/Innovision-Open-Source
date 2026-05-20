@@ -1,6 +1,6 @@
 // Centralized Landing Page Theme Manager
 // All colors, animations, and styles in one place
-
+import React from 'react';
 export const landingTheme = {
   // Color Palette
   colors: {
@@ -194,43 +194,58 @@ export const landingTheme = {
 
   // Feature Highlights
   featureHighlights: [
-    { text: "XP & Levels", color: "text-yellow-500" },
-    { text: "Daily Streaks", color: "text-orange-500" },
-    { text: "Badges & Leaderboards", color: "text-green-500" },
-    { text: "100+ Languages", color: "text-blue-500" },
+    { text: "XP & Levels", color: "text-yellow-500", icon: "⚡" },
+    { text: "Daily Streaks", color: "text-orange-500", icon: "🔥" },
+    { text: "Badges", color: "text-green-500", icon: "🏆" },
+    { text: "Leaderboard", color: "text-emerald-400", icon: "🥇" },
+    { text: "Smart Goals", color: "text-pink-500", icon: "🎯" },
+    { text: "Progress Tracking", color: "text-blue-500", icon: "📈" },
   ],
 };
 
-// Helper Functions
-export const getFeatureColor = (category, index) => {
-  const colors = landingTheme.featureColors[category];
-  return colors ? colors[index % colors.length] : landingTheme.colors.primary.blue;
-};
+export default function InfiniteMarqueeOutput() {
+  const { featureHighlights, components } = landingTheme;
+  const loopItems = [...featureHighlights, ...featureHighlights, ...featureHighlights];
 
-export const getAnimationDelay = (index, baseDelay = 100) => {
-  return `${index * baseDelay}ms`;
-};
+  return (
+    <div className="w-full py-8 overflow-hidden bg-transparent relative transition-colors duration-500">
+      <style>{`
+        @keyframes inlineMarquee {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-inline-marquee {
+          animation: inlineMarquee 25s linear infinite;
+        }
+      `}</style>
 
-export const getGlowStyle = (color, intensity = "md") => {
-  return `${landingTheme.effects.glow[intensity]} ${color}40`;
-};
+      <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white via-white/50 to-transparent dark:from-[#030712] dark:via-[#030712]/50 [.sepia_&]:from-[#f4ecd8] [.sepia_&]:via-[#f4ecd8]/50 z-10 pointer-events-none transition-all duration-500" />
+      <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white via-white/50 to-transparent dark:from-[#030712] dark:via-[#030712]/50 [.sepia_&]:from-[#f4ecd8] [.sepia_&]:via-[#f4ecd8]/50 z-10 pointer-events-none transition-all duration-500" />
 
-export const getTiltStyle = (mouseX, mouseY, centerX = 150, centerY = 150) => {
-  const { perspective, maxRotation, scale } = landingTheme.effects.tilt;
-  const rotateX = (mouseY - centerY) / maxRotation;
-  const rotateY = (mouseX - centerX) / maxRotation;
-
-  return {
-    transform: `perspective(${perspective}) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(${scale}, ${scale}, ${scale})`,
-  };
-};
-
-export const getSpotlightStyle = (mouseX, mouseY, color) => {
-  const { radius, opacity } = landingTheme.effects.spotlight;
-  return {
-    background: `radial-gradient(${radius} circle at ${mouseX}px ${mouseY}px, ${color}${opacity}, transparent 40%)`,
-  };
-};
-
-// Export default
-export default landingTheme;
+      <div className="flex w-max gap-5 animate-inline-marquee pause-on-hover">
+        {loopItems.map((item, index) => (
+          <div
+            key={`${item.text}-${index}`}
+            className={`
+              inline-flex items-center gap-3 px-6 py-3 whitespace-nowrap rounded-full border transition-all duration-500 hover:scale-105 shadow-sm
+              /* Light Mode Default Styling Override */
+              bg-white/70 border-slate-200/80 text-slate-800 backdrop-blur-md
+              /* Dark Mode Overrides */
+              dark:bg-[#111827]/40 dark:border-slate-800/70 dark:text-slate-200
+              /* Sepia Mode Overrides */
+              [.sepia_&]:bg-[#e4dcc6]/60 [.sepia_&]:border-[#d3c8ab] [.sepia_&]:text-[#433422]
+            `}
+          >
+            <span className="text-lg filter drop-shadow-sm select-none transition-transform duration-300">
+              {item.icon}
+            </span>
+            
+            <span className={`text-sm tracking-wide font-medium dark:${item.color} [.sepia_&]:text-amber-900`}>
+              {item.text}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

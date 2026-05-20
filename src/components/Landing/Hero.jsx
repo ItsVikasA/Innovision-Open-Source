@@ -1,17 +1,17 @@
+import React from "react";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { ArrowRight, Play, Sparkles, Zap, BookOpen, Trophy, Users, Globe, Flame } from "lucide-react";
 import AnimatedCounter from "./AnimatedCounter";
 import MagneticButton from "./MagneticButton";
-import landingTheme, { getAnimationDelay } from "@/lib/landing-theme";
+import InfiniteMarqueeOutput, { landingTheme } from "@/lib/landing-theme";
 
 const Hero = () => {
   const { colors, animations, effects, typography, components, stats, trustBadges, featureHighlights } = landingTheme;
 
   return (
-    <section className="relative w-full min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden px-4">
-      {/* Gradient orbs */}
+    <section className="relative w-full min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden px-4 transition-colors duration-500">
       <div
         className={`absolute ${effects.gradient.orb1.position} ${effects.gradient.orb1.size} ${effects.gradient.orb1.color} rounded-full ${effects.blur["3xl"]} animate-pulse`}
         style={{ animationDuration: effects.gradient.orb1.duration }}
@@ -21,11 +21,10 @@ const Hero = () => {
         style={{ animationDuration: effects.gradient.orb2.duration, animationDelay: effects.gradient.orb2.delay }}
       />
 
-      <div className="container relative z-10 mx-auto px-2 sm:px-4 md:px-6 py-8 sm:py-12 md:pb-24 pt-12">
+      <div className="container relative z-10 mx-auto px-2 sm:px-4 md:px-6 py-8 sm:py-12 md:pb-16 pt-12">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-          {/* Badge */}
           <div
-            className={`${components.badge.base} ${components.badge.hover} mb-6 sm:mb-8 animate-fade-in`}
+            className={`${components.badge.base} ${components.badge.hover} mb-6 sm:mb-8 animate-fade-in bg-white/70 dark:bg-card/50 text-slate-800 dark:text-inherit border-slate-200/80 dark:border-border`}
             style={{ animationDelay: animations.delay.badge }}
           >
             <Sparkles
@@ -34,10 +33,9 @@ const Hero = () => {
               style={{ color: colors.primary.blue }}
             />
             <span>AI-Powered Learning Platform</span>
-            <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] sm:text-xs">New</span>
+            <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-500 dark:text-blue-400 text-[10px] sm:text-xs">New</span>
           </div>
 
-          {/* Logo with glow */}
           <div
             className="mb-4 sm:mb-6 animate-fade-in relative group"
             style={{ animationDelay: animations.delay.logo }}
@@ -53,7 +51,6 @@ const Hero = () => {
             />
           </div>
 
-          {/* Main heading with gradient */}
           <h1 className={`${typography.hero.title} mb-4 sm:mb-6`}>
             <span
               className="block text-foreground animate-fade-in"
@@ -69,38 +66,24 @@ const Hero = () => {
             </span>
           </h1>
 
-          {/* Subtitle */}
+          {/* Description Subtitle */}
           <p
-            className={`${typography.hero.subtitle} text-muted-foreground max-w-2xl mb-4 sm:mb-6 leading-relaxed animate-fade-in px-2`}
+            className={`${typography.hero.subtitle} text-muted-foreground max-w-2xl mb-6 leading-relaxed animate-fade-in px-2`}
             style={{ animationDelay: animations.delay.subtitle }}
           >
             Generate personalized courses on any topic in seconds. From programming to philosophy,
             our AI creates structured, chapter-wise content tailored to your learning style.
           </p>
 
-          {/* Feature highlights with icons */}
-          <div
-            className={`flex flex-wrap items-center justify-center ${landingTheme.spacing.gap.sm} mb-6 sm:mb-10 text-xs sm:text-sm text-muted-foreground animate-fade-in font-light`}
+          <div 
+            className="w-full max-w-4xl mb-8 sm:mb-12 animate-fade-in"
             style={{ animationDelay: animations.delay.features }}
           >
-            {featureHighlights.map((item, i) => {
-              const icons = [Zap, Flame, Trophy, Globe];
-              const Icon = icons[i];
-              return (
-                <div key={i} className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 ${landingTheme.radius.full} border border-border bg-card/30 backdrop-blur-sm hover:bg-card/50 ${landingTheme.hover.scale.sm} transition-all duration-300`}>
-                  <Icon
-                    aria-hidden="true"
-                    className={`h-3 w-3 sm:h-4 sm:w-4 ${item.color}`}
-                  />
-                  <span>{item.text}</span>
-                </div>
-              );
-            })}
+            <InfiniteMarqueeOutput />
           </div>
 
-          {/* CTA Buttons */}
           <div
-            className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 sm:mb-12 animate-fade-in w-full sm:w-auto"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10 sm:mb-16 animate-fade-in w-full sm:w-auto"
             style={{ animationDelay: animations.delay.buttons }}
           >
             <MagneticButton strength={0.2}>
@@ -130,9 +113,9 @@ const Hero = () => {
             </MagneticButton>
           </div>
 
-          {/* Stats with Animated Counters */}
+
           <div
-            className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4 md:gap-12 pt-6 sm:pt-8 border-t border-border w-full max-w-3xl animate-fade-in"
+            className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4 md:gap-12 pt-6 sm:pt-8 border-t border-border/80 w-full max-w-3xl animate-fade-in"
             style={{ animationDelay: animations.delay.stats }}
           >
             {stats.map((stat, i) => {
@@ -158,13 +141,18 @@ const Hero = () => {
             })}
           </div>
 
-          {/* Trust badges */}
           <div
-            className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground animate-fade-in font-light"
+            className="mt-8 sm:mt-12 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground animate-fade-in font-light"
             style={{ animationDelay: animations.delay.trust }}
           >
             {trustBadges.map((text, i) => (
-              <div key={i} className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 ${landingTheme.radius.full} border border-border bg-card/30 backdrop-blur-sm hover:bg-card/50 ${landingTheme.hover.scale.sm} transition-all duration-300`}>
+              <div 
+                key={i} 
+                className={`flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 ${landingTheme.radius.full} border transition-all duration-300 hover:scale-105 shadow-xs
+                  bg-white/70 dark:bg-card/30 text-slate-800 dark:text-muted-foreground border-slate-200/80 dark:border-border hover:bg-white dark:hover:bg-card/50
+                  [.sepia_&]:bg-[#e4dcc6]/60 [.sepia_&]:border-[#d3c8ab] [.sepia_&]:text-[#433422]
+                `}
+              >
                 <svg className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
