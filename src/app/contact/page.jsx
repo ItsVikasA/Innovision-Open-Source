@@ -218,13 +218,15 @@ export default function ContactPage() {
                 <IoLogoWhatsapp />
               </a>
 
-              <a
+               <a
                 href="https://github.com/ItsVikasA"
-                className="text-2xl hover:text-black dark:hover:text-white hover:scale-110 transition-all duration-300"
-              >
-                <FaGithub />
+                target="_blank"
+                 rel="noopener noreferrer"
+                 className="text-2xl hover:text-foreground hover:scale-110 transition-all duration-300"
+               >
+               <FaGithub />
               </a>
-
+            
               <a
                 href="https://www.linkedin.com/in/vikas028/"
                 className="text-2xl hover:text-black dark:hover:text-white hover:scale-110 transition-all duration-300"
