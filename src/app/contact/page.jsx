@@ -238,6 +238,13 @@ export default function ContactPage() {
               >
                 <FaYoutube />
               </a>
+              
+              <a
+                href="mailto:vikas.ambalazari@gmail.com?subject=Contact%20from%20Website"
+                className="hover:text-white transition-all duration-300"
+              >
+                Email Us
+              </a>                    
 
             </div>
 
