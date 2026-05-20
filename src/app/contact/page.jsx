@@ -1,6 +1,6 @@
 "use client";
 
-import emailjs from "emailjs-com";
+import emailjs from "@emailjs/browser";
 import { useRef, useState, useEffect } from "react";
 import { FaInstagram } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io5";
@@ -62,9 +62,9 @@ export default function ContactPage() {
           toast.error("Email service temporarily unavailable. Please try again later or contact us directly.");
         } else if (error.status === 412) {
           toast.error("Email service needs reconnection. Please contact support.");
-        } else {
+        } 
           toast.error("Failed to send message. Please try again.");
-        }
+        
 
         formRef.current.removeAttribute("disabled");
       });
@@ -82,7 +82,6 @@ export default function ContactPage() {
     // Clear form fields immediately for better UX
     setEmail("");
     setMessage("");
-    toast.success("Message sent successfully!", { type: "success" });
     setTimeout(() => {
       formRef.current.removeAttribute("disabled");
     }, 2000);
@@ -215,14 +214,14 @@ export default function ContactPage() {
            <IoLogoWhatsapp />
           </a>
 
-          <a
+         <a
             href="https://github.com/ItsVikasA"
             target="_blank"
             rel="noopener noreferrer"
-           className="text-2xl hover:text-foreground hover:scale-110 transition-all duration-300"
+            className="text-2xl hover:text-foreground hover:scale-110 transition-all duration-300"
           >
-         <FaGithub />
-         </a>
+          <FaGithub />
+        </a>
 
           <a
            href="https://www.linkedin.com/in/vikas028/"
@@ -234,12 +233,20 @@ export default function ContactPage() {
          </a>
 
           <a
-            href="mailto:vikas.ambalazari@gmail.com?subject=Contact%20from%20Website"
-            className="hover:text-white transition-all duration-300"
+            href="mailto:vikas.ambalazari@gmail.com?subject=Contact%20from%20Website&body=Hello%20Mentor,"
+            className="text-2xl hover:text-foreground hover:scale-110 transition-all duration-300"
           >
-           Email Us
-          </a>
+           <mail className="h-5 w-5" />
+         </a>
 
+          <a
+            href="https://github.com/ItsVikasA/Innovision-Open-Source"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blue-400 transition"
+          >
+           Repositories
+         </a>
          </div>
 
           </ScrollReveal>
