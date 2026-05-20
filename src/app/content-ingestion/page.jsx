@@ -43,6 +43,7 @@ export default function ContentIngestion() {
   const [result, setResult] = useState(null);
   const [pastCourses, setPastCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const [deletingCourseId, setDeletingCourseId] = useState(null);
   const router = useRouter();
   const { user, getToken } = useAuth();
 
@@ -181,6 +182,30 @@ export default function ContentIngestion() {
     }
     setUploading(false);
     setProcessingStatus("");
+  };
+
+  const handleDeleteCourse = async (e, courseId) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this course? This cannot be undone.")) return;
+    setDeletingCourseId(courseId);
+    try {
+      const token = await getToken?.();
+      const res = await fetch(`/api/ingested-courses/${courseId}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        setPastCourses((prev) => prev.filter((c) => c.id !== courseId));
+        toast.success("Course deleted successfully");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete course");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Something went wrong while deleting.");
+    }
+    setDeletingCourseId(null);
   };
 
   const getFileTypeIcon = (type) => {
@@ -474,13 +499,30 @@ export default function ContentIngestion() {
                                 </div>
                               </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); router.push(`/ingested-course/${course.id}`); }}
+                                title="View course"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleDeleteCourse(e, course.id)}
+                                disabled={deletingCourseId === course.id}
+                                title="Delete course"
+                                className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                              >
+                                {deletingCourseId === course.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ))}

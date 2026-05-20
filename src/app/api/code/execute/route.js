@@ -14,6 +14,10 @@ export async function POST(request) {
   try {
     const { code, language } = await request.json();
 
+    if (!code || code.length > 50000) {
+      return NextResponse.json({ error: "Code is required and must be less than 50,000 characters." }, { status: 400 });
+    }
+
     const config = LANGUAGE_MAP[language];
 
     if (!config) {
