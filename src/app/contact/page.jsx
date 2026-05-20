@@ -188,6 +188,7 @@ export default function ContactPage() {
                   className="text-2xl hover:text-foreground hover:scale-110 transition-all duration-300">
                   <FaYoutube />
                 </a>
+                
               </div>
             </ScrollReveal>
           )}
