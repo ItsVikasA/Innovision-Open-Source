@@ -202,53 +202,45 @@ export default function ContactPage() {
 
             </div>
 
-            <div className="flex justify-center text-gray-700 dark:text-muted-foreground space-x-6 mt-12">
+            <div className="flex justify-center pt-2 gap-4">
 
-              <a
-                href="https://www.instagram.com/hands_on_coding_028/#"
-                className="text-2xl hover:text-black dark:hover:text-white hover:scale-110 transition-all duration-300"
-              >
-                <FaInstagram />
-              </a>
+            <a
+               href="https://wa.me/your-number"
+               target="_blank"
+               rel="noopener noreferrer"
+                className="relative bg-blue-500 hover:bg-blue-600 text-white px-10 py-3.5 rounded-full font-medium transition-all duration-300 
+               hover:shadow-[0_0_25px_rgba(59,130,246,0.6)] focus:outline-none focus:ring-2 focus:ring-blue-500/50 
+               flex items-center gap-2 cursor-pointer"
+           >    
+           <IoLogoWhatsapp />
+          </a>
 
-              <a
-                href="https://wa.me/7019003366"
-                className="text-2xl hover:text-black dark:hover:text-white hover:scale-110 transition-all duration-300"
-              >
-                <IoLogoWhatsapp />
-              </a>
+          <a
+            href="https://github.com/ItsVikasA"
+            target="_blank"
+            rel="noopener noreferrer"
+           className="text-2xl hover:text-foreground hover:scale-110 transition-all duration-300"
+          >
+         <FaGithub />
+         </a>
 
-               <a
-                href="https://github.com/ItsVikasA"
-                target="_blank"
-                 rel="noopener noreferrer"
-                 className="text-2xl hover:text-foreground hover:scale-110 transition-all duration-300"
-               >
-               <FaGithub />
-              </a>
-            
-              <a
-                href="https://www.linkedin.com/in/vikas028/"
-                className="text-2xl hover:text-black dark:hover:text-white hover:scale-110 transition-all duration-300"
-              >
-                <FaLinkedin />
-              </a>
+          <a
+           href="https://www.linkedin.com/in/vikas028/"
+            target="_blank"
+            rel="noopener noreferrer"
+             className="text-2xl hover:text-foreground hover:scale-110 transition-all duration-300"
+          >
+         <FaLinkedin />
+         </a>
 
-              <a
-                href="https://www.youtube.com/@hands_on_coding_028"
-                className="text-2xl hover:text-black dark:hover:text-white hover:scale-110 transition-all duration-300"
-              >
-                <FaYoutube />
-              </a>
-              
-              <a
-                href="mailto:vikas.ambalazari@gmail.com?subject=Contact%20from%20Website"
-                className="hover:text-white transition-all duration-300"
-              >
-                Email Us
-              </a>                    
+          <a
+            href="mailto:vikas.ambalazari@gmail.com?subject=Contact%20from%20Website"
+            className="hover:text-white transition-all duration-300"
+          >
+           Email Us
+          </a>
 
-            </div>
+         </div>
 
           </ScrollReveal>
         )}
