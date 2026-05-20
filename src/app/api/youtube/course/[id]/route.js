@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
   try {
-    const courseId = params.id;
+    const { id: courseId } = await params;
     let session = null;
     try {
       const { getServerSession } = await import("@/lib/auth-server");
@@ -83,7 +83,7 @@ export async function GET(request, { params }) {
 }
 export async function PUT(request, { params }) {
   try {
-    const courseId = params.id;
+    const { id: courseId } = await params;
     const updates = await request.json();
     try {
       const { getAdminDb } = await import("@/lib/firebase-admin");
@@ -144,7 +144,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const courseId = params.id;
+    const { id: courseId } = await params;
     try {
       const { getAdminDb } = await import("@/lib/firebase-admin");
       const { getServerSession } = await import("@/lib/auth-server");

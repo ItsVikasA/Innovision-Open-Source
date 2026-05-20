@@ -11,7 +11,7 @@ export async function GET(request, { params }) {
       );
     }
 
-    const { certificateId } = params;
+    const { certificateId } = await params;
 
     if (!certificateId) {
       return NextResponse.json(

@@ -9,7 +9,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: roadmapId } = params;
+    const { id: roadmapId } = await params;
 
     // Delete all chapter subcollections first
     const chaptersRef = adminDb

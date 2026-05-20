@@ -10,7 +10,7 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { reviewId } = params;
+    const { reviewId } = await params;
     const { rating, reviewText } = await request.json();
 
     if (!reviewId) {
@@ -100,7 +100,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { reviewId } = params;
+    const { reviewId } = await params;
 
     if (!reviewId) {
       return NextResponse.json(

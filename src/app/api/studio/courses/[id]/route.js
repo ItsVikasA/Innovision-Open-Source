@@ -3,7 +3,7 @@ import { adminDb } from "@/lib/firebase-admin";
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const courseData = await request.json();
 
     const courseRef = adminDb.collection("published_courses").doc(id);
@@ -31,7 +31,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     await adminDb.collection("published_courses").doc(id).delete();
 

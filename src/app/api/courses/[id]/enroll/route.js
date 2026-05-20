@@ -9,7 +9,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: courseId } = params;
+    const { id: courseId } = await params;
 
     // Check if user is already enrolled
     const roadmapsRef = adminDb.collection("users").doc(session.user.email).collection("roadmaps");

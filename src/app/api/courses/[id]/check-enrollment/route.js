@@ -9,7 +9,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ enrolled: false });
     }
 
-    const { id: courseId } = params;
+    const { id: courseId } = await params;
 
     // Check if user has a roadmap for this course
     const roadmapsRef = adminDb.collection("users").doc(session.user.email).collection("roadmaps");
