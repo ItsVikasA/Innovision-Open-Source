@@ -10,21 +10,10 @@
 }
 
 /* ===== Custom Scrollbar (Global) ===== */
-
-/* Custom Scrollbar: Transparent Track */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(17, 24, 39, 0.8);
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg,
-      #8b5cf6,
-      #3b82f6);
-  border-radius: 999px;
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #8b5cf6 rgba(17, 24, 39, 0.8);
+  scrollbar-gutter: stable;
 }
 
 :root {
@@ -793,4 +782,13 @@ body {
 
 .animate-fade-in {
   animation: fade-in 0.6s ease-out forwards;
+}
+
+/* Disable Radix UI / react-remove-scroll layout shift padding adjustments */
+:root {
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+html, body {
+  padding-right: 0px !important;
 }
