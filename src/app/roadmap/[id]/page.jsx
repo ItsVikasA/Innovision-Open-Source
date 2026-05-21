@@ -13,7 +13,6 @@ import ChatBot from "@/components/chat/ChatBot";
 import CourseReviews from "@/components/reviews/CourseReviews";
 import { Separator } from "@/components/ui/separator";
 
-// Helper to serialize Firestore Timestamps
 const serializeTimestamps = (data) => {
   if (!data || typeof data !== "object") return data;
 
@@ -34,7 +33,6 @@ const serializeTimestamps = (data) => {
   return serialized;
 };
 
-//function to fetch roadmap
 async function getRoadmap(id) {
   const session = await getServerSession();
   if (session) {
@@ -48,7 +46,6 @@ async function getRoadmap(id) {
   }
 }
 
-//roadmap component
 const page = async ({ params }) => {
   const { id } = await params;
   const roadmap = await getRoadmap(id);
@@ -82,7 +79,6 @@ const page = async ({ params }) => {
         </Breadcrumb>
         <Roadmap roadMap={roadmap} id={id}></Roadmap>
 
-        {/* Reviews Section */}
         <div className="mt-12">
           <Separator className="mb-8" />
           <h2 className="text-2xl font-bold mb-6">Course Reviews</h2>

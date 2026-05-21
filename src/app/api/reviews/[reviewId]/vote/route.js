@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
-// POST - Vote on a review (helpful or not helpful)
 export async function POST(request, { params }) {
   try {
     const session = await getServerSession();
@@ -11,7 +10,7 @@ export async function POST(request, { params }) {
     }
 
     const { reviewId } = params;
-    const { voteType } = await request.json(); // "helpful" or "not_helpful"
+    const { voteType } = await request.json(); 
 
     if (!reviewId) {
       return NextResponse.json(
@@ -29,7 +28,6 @@ export async function POST(request, { params }) {
 
     const userEmail = session.user.email;
 
-    // Get the review
     const reviewRef = adminDb.collection("reviews").doc(reviewId);
     const reviewDoc = await reviewRef.get();
 
@@ -42,7 +40,6 @@ export async function POST(request, { params }) {
 
     const reviewData = reviewDoc.data();
 
-    // Check if user is trying to vote on their own review
     if (reviewData.userId === userEmail) {
       return NextResponse.json(
         { error: "You cannot vote on your own review" },
@@ -56,17 +53,16 @@ export async function POST(request, { params }) {
     let updateData = {};
 
     if (voteType === "helpful") {
-      // Check if already voted helpful
+      
       if (helpfulVotes.includes(userEmail)) {
-        // Remove helpful vote
+        
         updateData.helpfulVotes = helpfulVotes.filter((email) => email !== userEmail);
         updateData.helpfulCount = (reviewData.helpfulCount || 0) - 1;
       } else {
-        // Add helpful vote
+        
         updateData.helpfulVotes = [...helpfulVotes, userEmail];
         updateData.helpfulCount = (reviewData.helpfulCount || 0) + 1;
 
-        // Remove not helpful vote if exists
         if (notHelpfulVotes.includes(userEmail)) {
           updateData.notHelpfulVotes = notHelpfulVotes.filter(
             (email) => email !== userEmail
@@ -78,9 +74,9 @@ export async function POST(request, { params }) {
         }
       }
     } else if (voteType === "not_helpful") {
-      // Check if already voted not helpful
+      
       if (notHelpfulVotes.includes(userEmail)) {
-        // Remove not helpful vote
+        
         updateData.notHelpfulVotes = notHelpfulVotes.filter(
           (email) => email !== userEmail
         );
@@ -89,11 +85,10 @@ export async function POST(request, { params }) {
           0
         );
       } else {
-        // Add not helpful vote
+        
         updateData.notHelpfulVotes = [...notHelpfulVotes, userEmail];
         updateData.notHelpfulCount = (reviewData.notHelpfulCount || 0) + 1;
 
-        // Remove helpful vote if exists
         if (helpfulVotes.includes(userEmail)) {
           updateData.helpfulVotes = helpfulVotes.filter(
             (email) => email !== userEmail

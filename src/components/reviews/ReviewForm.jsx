@@ -74,13 +74,12 @@ const ReviewForm = ({ courseId, existingReview, onReviewSubmitted, onCancel }) =
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Star Rating */}
+          
           <div className="space-y-2">
             <label className="text-sm font-medium">Your Rating</label>
             <StarRating rating={rating} onRatingChange={setRating} size="lg" />
           </div>
 
-          {/* Review Text */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
               Your Review <span className="text-muted-foreground">(Optional)</span>
@@ -100,7 +99,6 @@ const ReviewForm = ({ courseId, existingReview, onReviewSubmitted, onCancel }) =
             </div>
           </div>
 
-          {/* Submit Button */}
           <div className="flex gap-2">
             <Button type="submit" disabled={loading || rating === 0} className="flex-1">
               {loading ? (

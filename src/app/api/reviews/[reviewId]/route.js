@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
-// PATCH - Update a review
 export async function PATCH(request, { params }) {
   try {
     const session = await getServerSession();
@@ -20,7 +19,6 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // Validation
     if (rating && (rating < 1 || rating > 5)) {
       return NextResponse.json(
         { error: "Rating must be between 1 and 5" },
@@ -37,7 +35,6 @@ export async function PATCH(request, { params }) {
 
     const userEmail = session.user.email;
 
-    // Get the review
     const reviewRef = adminDb.collection("reviews").doc(reviewId);
     const reviewDoc = await reviewRef.get();
 
@@ -50,7 +47,6 @@ export async function PATCH(request, { params }) {
 
     const reviewData = reviewDoc.data();
 
-    // Check if user owns this review
     if (reviewData.userId !== userEmail) {
       return NextResponse.json(
         { error: "You can only edit your own reviews" },
@@ -58,7 +54,6 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // Update review
     const updateData = {
       updatedAt: new Date().toISOString(),
     };
@@ -73,7 +68,6 @@ export async function PATCH(request, { params }) {
 
     await reviewRef.update(updateData);
 
-    // Update course average rating if rating changed
     if (rating !== undefined) {
       await updateCourseRating(reviewData.courseId);
     }
@@ -92,7 +86,6 @@ export async function PATCH(request, { params }) {
   }
 }
 
-// DELETE - Delete a review
 export async function DELETE(request, { params }) {
   try {
     const session = await getServerSession();
@@ -111,7 +104,6 @@ export async function DELETE(request, { params }) {
 
     const userEmail = session.user.email;
 
-    // Get the review
     const reviewRef = adminDb.collection("reviews").doc(reviewId);
     const reviewDoc = await reviewRef.get();
 
@@ -124,7 +116,6 @@ export async function DELETE(request, { params }) {
 
     const reviewData = reviewDoc.data();
 
-    // Check if user owns this review
     if (reviewData.userId !== userEmail) {
       return NextResponse.json(
         { error: "You can only delete your own reviews" },
@@ -132,10 +123,8 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Delete review
     await reviewRef.delete();
 
-    // Update course average rating
     await updateCourseRating(reviewData.courseId);
 
     return NextResponse.json({
@@ -151,7 +140,6 @@ export async function DELETE(request, { params }) {
   }
 }
 
-// Helper function to update course average rating
 async function updateCourseRating(courseId) {
   try {
     const reviewsSnapshot = await adminDb
@@ -161,7 +149,7 @@ async function updateCourseRating(courseId) {
       .get();
 
     if (reviewsSnapshot.empty) {
-      // No reviews left, remove rating stats
+      
       await adminDb.collection("courseRatings").doc(courseId).delete();
       return;
     }

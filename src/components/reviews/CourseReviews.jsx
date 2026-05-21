@@ -35,9 +35,9 @@ const CourseReviews = ({ courseId }) => {
   const handleReviewSubmitted = (review) => {
     setUserReview(review);
     setEditingReview(null);
-    // Force refresh of the entire reviews list
+    
     setRefreshKey(prev => prev + 1);
-    // Small delay to ensure backend has processed
+    
     setTimeout(() => {
       fetchUserReview();
     }, 500);
@@ -46,7 +46,7 @@ const CourseReviews = ({ courseId }) => {
   const handleEditReview = (review) => {
     setEditingReview(review);
     setUserReview(review);
-    // Scroll to form
+    
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -63,7 +63,7 @@ const CourseReviews = ({ courseId }) => {
 
   return (
     <div className="space-y-8">
-      {/* Review Form - Show only if user hasn't reviewed OR is editing */}
+      
       {user && (!userReview || editingReview) && (
         <>
           <ReviewForm
@@ -76,7 +76,6 @@ const CourseReviews = ({ courseId }) => {
         </>
       )}
 
-      {/* Show message if user already reviewed and not editing */}
       {user && userReview && !editingReview && (
         <>
           <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -88,7 +87,6 @@ const CourseReviews = ({ courseId }) => {
         </>
       )}
 
-      {/* Reviews List */}
       <ReviewList
         key={refreshKey}
         courseId={courseId}

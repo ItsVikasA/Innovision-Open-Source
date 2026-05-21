@@ -88,7 +88,7 @@ const ReviewList = ({ courseId, onEditReview, onReviewDeleted, onReviewsUpdated,
       const data = await response.json();
 
       if (response.ok) {
-        // Update local state
+        
         setReviews((prev) =>
           prev.map((review) =>
             review.id === reviewId
@@ -185,7 +185,7 @@ const ReviewList = ({ courseId, onEditReview, onReviewDeleted, onReviewsUpdated,
 
   return (
     <div className="space-y-6">
-      {/* Rating Summary */}
+      
       {stats && stats.totalReviews > 0 && (
         <Card>
           <CardContent className="pt-6">
@@ -223,7 +223,6 @@ const ReviewList = ({ courseId, onEditReview, onReviewDeleted, onReviewsUpdated,
         </Card>
       )}
 
-      {/* Sort Controls */}
       {reviews.length > 0 && (
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">
@@ -244,7 +243,6 @@ const ReviewList = ({ courseId, onEditReview, onReviewDeleted, onReviewsUpdated,
         </div>
       )}
 
-      {/* Reviews List */}
       {reviews.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -306,7 +304,6 @@ const ReviewList = ({ courseId, onEditReview, onReviewDeleted, onReviewsUpdated,
                       </div>
                     </div>
 
-                    {/* Actions Menu */}
                     {user && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -354,7 +351,6 @@ const ReviewList = ({ courseId, onEditReview, onReviewDeleted, onReviewsUpdated,
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -376,7 +372,6 @@ const ReviewList = ({ courseId, onEditReview, onReviewDeleted, onReviewsUpdated,
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Report Dialog */}
       <AlertDialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

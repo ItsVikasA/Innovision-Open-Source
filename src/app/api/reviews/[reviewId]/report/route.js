@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
-// POST - Report a review
 export async function POST(request, { params }) {
   try {
     const session = await getServerSession();
@@ -29,7 +28,6 @@ export async function POST(request, { params }) {
 
     const userEmail = session.user.email;
 
-    // Get the review
     const reviewRef = adminDb.collection("reviews").doc(reviewId);
     const reviewDoc = await reviewRef.get();
 
@@ -42,7 +40,6 @@ export async function POST(request, { params }) {
 
     const reviewData = reviewDoc.data();
 
-    // Check if user is trying to report their own review
     if (reviewData.userId === userEmail) {
       return NextResponse.json(
         { error: "You cannot report your own review" },
@@ -50,26 +47,23 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Create report document
     const reportData = {
       reviewId,
       courseId: reviewData.courseId,
       reportedBy: userEmail,
       reportedByName: session.user.name || "Anonymous",
       reason,
-      status: "pending", // pending, reviewed, dismissed
+      status: "pending", 
       createdAt: new Date().toISOString(),
     };
 
     await adminDb.collection("reviewReports").add(reportData);
 
-    // Update review report count
     const reportCount = (reviewData.reportCount || 0) + 1;
     const updateData = {
       reportCount,
     };
 
-    // Auto-hide review if it has 3 or more reports
     if (reportCount >= 3) {
       updateData.reported = true;
     }

@@ -73,7 +73,6 @@ export async function GET(request) {
   }
 }
 
-// POST - Submit a new review
 export async function POST(request) {
   try {
     const session = await getServerSession();
@@ -83,7 +82,6 @@ export async function POST(request) {
 
     const { courseId, rating, reviewText } = await request.json();
 
-    // Validation
     if (!courseId) {
       return NextResponse.json(
         { error: "Course ID is required" },
@@ -109,7 +107,6 @@ export async function POST(request) {
     const userName = session.user.name || "Anonymous";
     const userImage = session.user.image || null;
 
-    // Check if user already reviewed this course
     const existingReview = await adminDb
       .collection("reviews")
       .where("courseId", "==", courseId)
@@ -123,7 +120,6 @@ export async function POST(request) {
       );
     }
 
-    // Create review document
     const reviewData = {
       courseId,
       userId: userEmail,
@@ -133,8 +129,8 @@ export async function POST(request) {
       reviewText: reviewText || "",
       helpfulCount: 0,
       notHelpfulCount: 0,
-      helpfulVotes: [], // Array of user emails who voted helpful
-      notHelpfulVotes: [], // Array of user emails who voted not helpful
+      helpfulVotes: [], 
+      notHelpfulVotes: [], 
       reported: false,
       reportCount: 0,
       createdAt: new Date().toISOString(),
@@ -143,7 +139,6 @@ export async function POST(request) {
 
     const reviewRef = await adminDb.collection("reviews").add(reviewData);
 
-    // Update course average rating
     await updateCourseRating(courseId);
 
     return NextResponse.json({
@@ -161,7 +156,6 @@ export async function POST(request) {
   }
 }
 
-// Helper function to update course average rating
 async function updateCourseRating(courseId) {
   try {
     const reviewsSnapshot = await adminDb
@@ -184,13 +178,12 @@ async function updateCourseRating(courseId) {
 
     const averageRating = totalRating / count;
 
-    // Store rating stats in a separate collection for quick access
     await adminDb
       .collection("courseRatings")
       .doc(courseId)
       .set(
         {
-          averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
+          averageRating: Math.round(averageRating * 10) / 10, 
           totalReviews: count,
           updatedAt: new Date().toISOString(),
         },
