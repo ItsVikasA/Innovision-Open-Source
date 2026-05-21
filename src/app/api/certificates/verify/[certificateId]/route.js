@@ -14,37 +14,30 @@ export async function GET(request, { params }) {
     const { certificateId } = params;
 
     if (!certificateId) {
-      return NextResponse.json(
-        { error: "Certificate ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Certificate ID is required" }, { status: 400 });
     }
 
-    // Search for certificate across all users
-    const usersSnapshot = await adminDb.collection("users").get();
+    // Search for certificate across all users using Collection Group Query
+    const certsSnapshot = await adminDb
+      .collectionGroup("certificates")
+      .where("certificateId", "==", certificateId)
+      .limit(1)
+      .get();
 
-    for (const userDoc of usersSnapshot.docs) {
-      const certSnapshot = await adminDb
-        .collection("users")
-        .doc(userDoc.id)
-        .collection("certificates")
-        .where("certificateId", "==", certificateId)
-        .get();
-
-      if (!certSnapshot.empty) {
-        const certData = certSnapshot.docs[0].data();
-        return NextResponse.json({
-          success: true,
-          valid: true,
-          certificate: {
-            userName: certData.userName,
-            courseTitle: certData.courseTitle,
-            completionDate: certData.completionDate,
-            chapterCount: certData.chapterCount,
-            verified: certData.verified,
-          },
-        });
-      }
+    if (!certsSnapshot.empty) {
+      const certDoc = certsSnapshot.docs[0];
+      const certData = certDoc.data();
+      return NextResponse.json({
+        success: true,
+        valid: true,
+        certificate: {
+          userName: certData.userName,
+          courseTitle: certData.courseTitle,
+          completionDate: certData.completionDate,
+          chapterCount: certData.chapterCount,
+          verified: certData.verified,
+        },
+      });
     }
 
     return NextResponse.json({
@@ -54,9 +47,6 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error("Error verifying certificate:", error);
-    return NextResponse.json(
-      { error: "Failed to verify certificate" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to verify certificate" }, { status: 500 });
   }
 }
