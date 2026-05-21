@@ -159,7 +159,7 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="h-16 w-full border-b fixed top-0 left-0 bg-background/80 backdrop-blur-xl z-[100] border-border">
+      <header className="h-16 w-full fixed top-0 left-0 glassmorphism z-[100] border-b border-white/5 border-t-0 border-x-0 bg-[#060816]/75 backdrop-blur-md">
         <div className="h-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between">
           {/* Logo - Left */}
           <Link

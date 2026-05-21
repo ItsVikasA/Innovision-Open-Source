@@ -12,9 +12,24 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID,
 };
 
-// Initialize Firebase only if not already initialized
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
-const auth = getAuth(app);
+let db = null;
+let auth = null;
+
+// Only initialize Firebase Client SDK if the API key is present in environment variables
+const hasApiKey = firebaseConfig.apiKey && firebaseConfig.apiKey !== "undefined";
+
+if (hasApiKey) {
+  try {
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    db = getFirestore(app);
+    auth = getAuth(app);
+  } catch (error) {
+    console.error("Firebase client initialization failed:", error);
+  }
+} else {
+  if (typeof window !== "undefined") {
+    console.warn("Firebase Client SDK: NEXT_PUBLIC_FIREBASE_API_KEY is missing. Client-side database and authentication will not be initialized.");
+  }
+}
 
 export { db, auth };

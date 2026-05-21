@@ -1,27 +1,63 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, XCircle, Loader, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { useContext } from "react";
 import xpContext from "@/contexts/xp";
 import { ComboIndicator } from "@/components/gamification/ComboMultiplier";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
+/**
+ * @typedef {Object} FillUpsTask
+ * @property {string} id - Unique identifier for the task
+ * @property {string} type - Task type ('fillup')
+ * @property {string} question - The fill-in-the-blank question prompt
+ * @property {string[]} acceptableAnswers - List of correct answers accepted by the system
+ * @property {boolean} caseSensitive - Whether casing is strictly enforced during comparison
+ * @property {string} answer - A representative correct answer
+ * @property {string} explanation - Educational explanation of the answer
+ * @property {boolean} [isAnswered] - Whether the user has answered this task previously
+ * @property {boolean} [isCorrect] - Whether the user's previous answer was correct
+ * @property {string} [userAnswer] - The user's input string from previous attempt
+ */
+
+/**
+ * FillUps component provides a text input for fill-in-the-blank questions.
+ * Validates against a list of acceptable answers (case sensitive/insensitive),
+ * supports combo multipliers, and triggers success/error synth effects.
+ *
+ * @param {Object} props
+ * @param {FillUpsTask} props.task - The fillups task configuration object
+ * @param {string} props.roadmapId - The ID of the current roadmap
+ * @param {number} props.chapterNumber - The current chapter number
+ * @param {() => void} [props.onCourseComplete] - Callback triggered when course is completed
+ * @returns {JSX.Element} The rendered FillUps component
+ */
 const FillUps = ({ task, roadmapId, chapterNumber, onCourseComplete }) => {
   const [userAnswer, setUserAnswer] = useState("");
   const [isAnswered, setIsAnswered] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const { getXp, awardXP, combo, incrementCombo, resetCombo, getCurrentMultiplier } = useContext(xpContext);
+  const { getXp, combo, incrementCombo, resetCombo, getCurrentMultiplier } = useContext(xpContext);
+  const { playSuccess, playError } = useSoundEffects();
 
+  /**
+   * Tracks user input value and updates component state.
+   * 
+   * @param {React.ChangeEvent<HTMLInputElement>} e - Input change event.
+   */
   const handleInputChange = (e) => {
     if (isAnswered) return;
     setUserAnswer(e.target.value);
   };
 
+  /**
+   * Evaluates the typed fill-in-the-blank answer against acceptable answers,
+   * submits the assessment to the API, awards XP/streaks, and triggers sounds.
+   */
   const checkAnswer = async () => {
     let correct = false;
     setSubmitting(true);
@@ -54,8 +90,9 @@ const FillUps = ({ task, roadmapId, chapterNumber, onCourseComplete }) => {
         setIsCorrect(correct);
         setIsAnswered(true);
 
-        // Handle combo system
+        // Handle combo system & sound effects
         if (correct) {
+          playSuccess();
           incrementCombo();
           // Show toast for combo XP after a small delay so combo updates first
           setTimeout(() => {
@@ -67,6 +104,7 @@ const FillUps = ({ task, roadmapId, chapterNumber, onCourseComplete }) => {
             }
           }, 100);
         } else {
+          playError();
           resetCombo();
         }
 
@@ -94,11 +132,11 @@ const FillUps = ({ task, roadmapId, chapterNumber, onCourseComplete }) => {
       setIsCorrect(task.isCorrect);
       setUserAnswer(task.userAnswer || "");
     }
-  }, []);
+  }, [task]);
 
   return (
     <div className="w-full p-4">
-      <Card className="max-w-3xl gap-4 mx-auto border-0 shadow-none">
+      <Card className="max-w-3xl gap-4 mx-auto border border-white/10">
         <CardHeader className="rounded-t-lg">
           <div className="flex justify-between items-center">
             <CardTitle className="text-xl font-semibold">Fill in the blank</CardTitle>
@@ -109,23 +147,23 @@ const FillUps = ({ task, roadmapId, chapterNumber, onCourseComplete }) => {
 
         <CardContent className="pb-2">
           <div>
-            <h2 className="mb-0 text-lg font-semibold">Question</h2>
+            <h2 className="mb-4 text-sm font-medium text-gray-400 uppercase tracking-wider">Question</h2>
 
-            <div className="flex select-none flex-col gap-3 text-lg">
-              <span>{task.question || task.content}</span>
-              <div className="flex items-center gap-2">
-                Enter your answer :
+            <div className="flex select-none flex-col gap-4 text-lg">
+              <span className="text-white font-medium">{task.question || task.content}</span>
+              <div className="flex items-center gap-3 text-base text-gray-300 mt-2">
+                Enter your answer:
                 <Input
                   value={userAnswer}
                   onChange={handleInputChange}
                   disabled={isAnswered}
-                  className={`text-center mx-2 max-w-24 font-medium ${isAnswered
+                  className={`text-center mx-2 max-w-48 font-semibold transition-all duration-300 ${isAnswered
                     ? isCorrect
-                      ? "border-green-500 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400"
-                      : "border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400"
-                    : "border-blue-300 focus:border-blue-500"
+                      ? "border-emerald-500 bg-emerald-500/15 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                      : "border-rose-500 bg-rose-500/15 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.15)]"
+                    : "border-white/10 bg-white/5 focus:border-[#8B5CF6] text-white focus:shadow-[0_0_12px_rgba(139,92,246,0.25)]"
                     }`}
-                  placeholder="Answer"
+                  placeholder="Type here..."
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && userAnswer.trim() !== "") {
                       e.preventDefault();
@@ -137,49 +175,49 @@ const FillUps = ({ task, roadmapId, chapterNumber, onCourseComplete }) => {
             </div>
 
             {isAnswered && (
-              <div>
+              <div className="mt-6 border-t border-white/10 pt-4">
                 <div className="flex items-center mt-4">
                   <div className="shrink-0 mr-3">
                     {isCorrect ? (
-                      <CheckCircle className="h-6 w-6 text-green-500" />
+                      <CheckCircle className="h-6 w-6 text-emerald-400 animate-pulse" />
                     ) : (
-                      <XCircle className="h-6 w-6 text-red-500" />
+                      <XCircle className="h-6 w-6 text-rose-400 animate-pulse" />
                     )}
                   </div>
                   <div>
-                    <div className="font-semibold">{isCorrect ? "Correct!" : "Incorrect!"}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="font-semibold text-white">{isCorrect ? "Correct!" : "Incorrect!"}</div>
+                    <div className="text-sm text-gray-400">
                       {isCorrect ? "Great job!" : `The correct answer is: ${task.answer}`}
                     </div>
                   </div>
                 </div>
-                <div className="mt-6 space-y-4 animate-fadeIn">
+                <div className="mt-4 space-y-4">
                   <div
-                    className={`p-4 rounded-lg border-l-4 ${isCorrect
-                      ? "bg-green-50 dark:bg-green-950/30 border-green-500 text-green-700 dark:text-green-400"
-                      : "bg-red-50 dark:bg-red-950/30 border-red-500 text-red-700 dark:text-red-400"
+                    className={`p-4 rounded-lg border border-l-4 glassmorphism ${isCorrect
+                      ? "border-l-emerald-500 border-emerald-500/20 text-emerald-400"
+                      : "border-l-rose-500 border-rose-500/20 text-rose-300"
                       }`}
                   >
-                    <div className="font-bold text-lg mb-1">Explanation</div>
-                    <p>{task.explanation}</p>
+                    <div className="font-bold text-base mb-1 text-white">Explanation</div>
+                    <p className="text-sm text-gray-300 leading-relaxed">{task.explanation}</p>
                   </div>
                 </div>
               </div>
             )}
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex justify-center mt-4">
           {!isAnswered && (
             <Button
-              variant={"secondary"}
-              className={"bg-blue-500 text-zinc-50 mx-auto dark:bg-blue-800 hover:bg-blue-600 dark:hover:bg-blue-600"}
+              variant="default"
+              className="px-8"
               onClick={checkAnswer}
               disabled={!userAnswer || submitting}
             >
               {submitting ? (
                 <>
                   Submitting
-                  <Loader className="animate-spin"></Loader>
+                  <Loader className="animate-spin ml-2 h-4 w-4" />
                 </>
               ) : (
                 "Submit"

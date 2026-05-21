@@ -1,24 +1,44 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from './route';
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { getDoc, getDocs, addDoc } from 'firebase/firestore';
 
-// Mock dependencies
-vi.mock('@/lib/firebase', () => ({
-  db: {},
+// Mock Firestore Admin references
+const mockDocGet = vi.fn();
+const mockQueryGet = vi.fn();
+const mockAdd = vi.fn();
+const mockWhere = vi.fn();
+const mockDoc = vi.fn();
+const mockCollection = vi.fn();
+
+// Setup chainable mock functions
+mockCollection.mockReturnValue({
+  doc: mockDoc,
+  where: mockWhere,
+  add: mockAdd,
+});
+
+mockDoc.mockReturnValue({
+  collection: mockCollection,
+  get: mockDocGet,
+});
+
+mockWhere.mockReturnValue({
+  get: mockQueryGet,
+});
+
+vi.mock('@/lib/firebase-admin', () => ({
+  getAdminDb: vi.fn(() => ({
+    collection: mockCollection,
+  })),
+  FieldValue: {
+    serverTimestamp: vi.fn(() => 'server-timestamp'),
+  },
 }));
 
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(),
-  doc: vi.fn(),
-  getDoc: vi.fn(),
-  getDocs: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  addDoc: vi.fn(),
-  serverTimestamp: vi.fn(() => new Date()),
-}));
+// Map legacy client SDK names to our new admin SDK mocks
+const getDoc = mockDocGet;
+const getDocs = mockQueryGet;
+const addDoc = mockAdd;
 
 vi.mock('next/server', () => ({
   NextResponse: {
@@ -135,11 +155,11 @@ describe('POST /api/certificates/generate - Preservation Property Tests', () => 
     // Mock Firestore responses for successful flow
     getDoc
       .mockResolvedValueOnce({
-        exists: () => true,
+        exists: true,
         data: () => mockCourseData,
       })
       .mockResolvedValueOnce({
-        exists: () => true,
+        exists: true,
         data: () => mockUserData,
       });
 
@@ -181,7 +201,7 @@ describe('POST /api/certificates/generate - Preservation Property Tests', () => 
     // Verify certificate was saved to Firestore
     expect(addDoc).toHaveBeenCalled();
     const addDocCall = addDoc.mock.calls[0];
-    expect(addDocCall[1]).toMatchObject({
+    expect(addDocCall[0]).toMatchObject({
       certificateId: 'test-cert-id',
       userId: 'test@example.com',
       courseId: 'course123',
@@ -232,7 +252,7 @@ describe('POST /api/certificates/generate - Preservation Property Tests', () => 
     };
 
     getDoc.mockResolvedValue({
-      exists: () => true,
+      exists: true,
       data: () => mockCourseData,
     });
 
@@ -336,7 +356,7 @@ describe('POST /api/certificates/generate - Preservation Property Tests', () => 
   it('should return 404 for non-existent course (preservation)', async () => {
     // Arrange - Mock course not found
     getDoc.mockResolvedValue({
-      exists: () => false,
+      exists: false,
     });
 
     const request = new Request('http://localhost:3000/api/certificates/generate', {
@@ -387,7 +407,7 @@ describe('POST /api/certificates/generate - Preservation Property Tests', () => 
     };
 
     getDoc.mockResolvedValue({
-      exists: () => true,
+      exists: true,
       data: () => mockCourseData,
     });
 

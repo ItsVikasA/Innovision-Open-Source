@@ -1,14 +1,43 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader, CheckCircle, XCircle } from "lucide-react";
-import { useContext } from "react";
+import { Loader } from "lucide-react";
 import xpContext from "@/contexts/xp";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
+/**
+ * @typedef {Object} TaskTerms
+ * @property {string[]} lhs - Left-hand side terms
+ * @property {string[]} rhs - Right-hand side terms (shuffled/definitions)
+ */
+
+/**
+ * @typedef {Object} MatchTask
+ * @property {string} id - Unique identifier for the task
+ * @property {string} type - Task type ('match')
+ * @property {TaskTerms} terms - Left-hand and right-hand side terms to match
+ * @property {number[]} answer - The indices of correct RHS matches for each LHS element
+ * @property {string} explanation - Educational explanation of the answers
+ * @property {boolean} [isAnswered] - Whether the user has already completed this task
+ * @property {boolean[]} [isCorrect] - Array indicating correctness of each matched item
+ * @property {number[]} [userAnswer] - Array of RHS indices selected by the user for each LHS
+ */
+
+/**
+ * Match component provides a production-grade drag/click interactive matching interface.
+ * Left items connect to right items via dynamic, responsive SVG Bezier connectors.
+ *
+ * @param {Object} props
+ * @param {MatchTask} props.task - The match task configuration object
+ * @param {string} props.roadmapId - The ID of the current learning roadmap
+ * @param {number} props.chapterNumber - The current chapter index
+ * @param {() => void} [props.onCourseComplete] - Callback triggered when the entire course is completed
+ * @returns {JSX.Element} The rendered Match task component
+ */
 export default function Match({ task, roadmapId, chapterNumber, onCourseComplete }) {
   const [selectedLeft, setSelectedLeft] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -17,8 +46,8 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState([]);
   const [score, setScore] = useState(0);
-  const [lines, setLines] = useState([]);
-  const { getXp, awardXP } = useContext(xpContext);
+  const { getXp } = useContext(xpContext);
+  const { playHover, playClick, playSuccess, playError } = useSoundEffects();
 
   const leftRefs = useRef([]);
   const rightRefs = useRef([]);
@@ -35,63 +64,70 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
       setMatches(task.userAnswer || []);
       setSubmitted(task.isAnswered);
     }
-  }, []);
+  }, [task]);
 
   useEffect(() => {
-    updateLines();
-    window.addEventListener("resize", updateLines);
-    return () => window.removeEventListener("resize", updateLines);
-  }, [matches, submitted]);
+    let animationFrameId;
 
-  const updateLines = () => {
-    if (!containerRef.current) return;
+    const updateLinePaths = () => {
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
 
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const newLines = [];
+      matches.forEach((rightIndex, leftIndex) => {
+        if (rightIndex === -1) return;
+        const leftEl = leftRefs.current[leftIndex];
+        const rightEl = rightRefs.current[rightIndex];
+        const pathEl = containerRef.current.querySelector(`#path-${leftIndex}`);
 
-    matches.forEach((rightIndex, leftIndex) => {
-      if (rightIndex !== -1 && leftRefs.current[leftIndex] && rightRefs.current[rightIndex]) {
-        const leftRect = leftRefs.current[leftIndex].getBoundingClientRect();
-        const rightRect = rightRefs.current[rightIndex].getBoundingClientRect();
+        if (leftEl && rightEl && pathEl) {
+          const leftRect = leftEl.getBoundingClientRect();
+          const rightRect = rightEl.getBoundingClientRect();
 
-        const from = {
-          x: leftRect.right - containerRect.left,
-          y: leftRect.top + leftRect.height / 2 - containerRect.top,
-          width: leftRect.width,
-          height: leftRect.height,
-          left: leftRect.left - containerRect.left,
-          right: leftRect.right - containerRect.left,
-          top: leftRect.top - containerRect.top,
-          bottom: leftRect.bottom - containerRect.top,
-          toJSON: () => { },
-        };
+          const fromX = leftRect.right - containerRect.left;
+          const fromY = leftRect.top + leftRect.height / 2 - containerRect.top;
+          const toX = rightRect.left - containerRect.left;
+          const toY = rightRect.top + rightRect.height / 2 - containerRect.top;
 
-        const to = {
-          x: rightRect.left - containerRect.left,
-          y: rightRect.top + rightRect.height / 2 - containerRect.top,
-          width: rightRect.width,
-          height: rightRect.height,
-          left: rightRect.left - containerRect.left,
-          right: rightRect.right - containerRect.left,
-          top: rightRect.top - containerRect.top,
-          bottom: rightRect.bottom - containerRect.top,
-          toJSON: () => { },
-        };
+          const controlPointX1 = fromX + (toX - fromX) * 0.45;
+          const controlPointX2 = fromX + (toX - fromX) * 0.55;
 
-        let color = "#0971e8";
-        if (submitted) {
-          color = isCorrect[leftIndex] ? "#22c55e" : "#ef4444";
+          pathEl.setAttribute(
+            "d",
+            `M ${fromX} ${fromY} C ${controlPointX1} ${fromY}, ${controlPointX2} ${toY}, ${toX} ${toY}`
+          );
         }
+      });
+    };
 
-        newLines.push({ from, to, color });
-      }
-    });
+    const tick = () => {
+      updateLinePaths();
+      animationFrameId = requestAnimationFrame(tick);
+    };
 
-    setLines(newLines);
-  };
+    // Run requestAnimationFrame loop
+    animationFrameId = requestAnimationFrame(tick);
 
+    // Initial positioning
+    updateLinePaths();
+
+    window.addEventListener("resize", updateLinePaths);
+    window.addEventListener("scroll", updateLinePaths);
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", updateLinePaths);
+      window.removeEventListener("scroll", updateLinePaths);
+    };
+  }, [matches, submitted, isCorrect]);
+
+  /**
+   * Handles selection of a left-hand side item.
+   * If a right-hand side item is already selected, creates a match.
+   * 
+   * @param {number} index - Index of the left item.
+   */
   const handleLeftSelect = (index) => {
     if (submitted) return;
+    playClick();
     setSelectedLeft(index);
 
     if (selectedRight !== null) {
@@ -99,8 +135,15 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
     }
   };
 
+  /**
+   * Handles selection of a right-hand side item.
+   * If a left-hand side item is already selected, creates a match.
+   * 
+   * @param {number} index - Index of the right item.
+   */
   const handleRightSelect = (index) => {
     if (submitted) return;
+    playClick();
     setSelectedRight(index);
 
     if (selectedLeft !== null) {
@@ -108,6 +151,13 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
     }
   };
 
+  /**
+   * Creates a match pairing between a left item and a right item,
+   * updating matches state and clearing existing connections.
+   * 
+   * @param {number} leftIndex - LHS item index.
+   * @param {number} rightIndex - RHS item index.
+   */
   const createMatch = (leftIndex, rightIndex) => {
     const newMatches = [...matches];
 
@@ -127,13 +177,23 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
     setSelectedRight(null);
   };
 
+  /**
+   * Removes an existing match connection from a left-hand side item.
+   * 
+   * @param {number} leftIndex - LHS item index.
+   */
   const removeMatch = (leftIndex) => {
     if (submitted) return;
+    playClick();
     const newMatches = [...matches];
     newMatches[leftIndex] = -1;
     setMatches(newMatches);
   };
 
+  /**
+   * Submits matched pairs to the server to check correctness, update XP,
+   * trigger sound effects, and notify completion callbacks.
+   */
   const handleSubmit = async () => {
     if (matches.includes(-1)) {
       toast.warning("Please match all items before submitting");
@@ -169,6 +229,13 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
         setScore(correctCount);
         setSubmitted(true);
 
+        const allCorrect = correctnessArray.every(Boolean);
+        if (allCorrect) {
+          playSuccess();
+        } else {
+          playError();
+        }
+
         // XP is now awarded server-side in /api/tasks
         getXp();
 
@@ -187,50 +254,80 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
     setSubmitting(false);
   };
 
+  /**
+   * Resolves the styling/color classes of a left-hand side item card
+   * depending on whether it is selected, matched, or graded.
+   * 
+   * @param {number} index - Index of the LHS item.
+   * @returns {string} Tailwind CSS class string.
+   */
   const getLeftItemColor = (index) => {
     if (submitted) {
       return isCorrect[index]
-        ? "bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-700"
-        : "bg-red-100 border-red-300 dark:bg-red-900/30 dark:border-red-700";
+        ? "bg-emerald-500/15 border-emerald-500 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+        : "bg-rose-500/15 border-rose-500 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.15)]";
     }
-    if (index === selectedLeft) return "bg-blue-50 border-blue-300 dark:bg-blue-900/30 dark:border-blue-700";
-    if (matches[index] !== -1) return "bg-blue-200/80 border-blue-400/80 dark:bg-blue-900/50 dark:border-blue-700";
-    return "bg-background";
+    if (index === selectedLeft) {
+      return "bg-[#8B5CF6]/20 border-[#8B5CF6] text-white shadow-[0_0_12px_rgba(139,92,246,0.3)]";
+    }
+    if (matches[index] !== -1) {
+      return "bg-[#5865F2]/15 border-[#5865F2]/50 text-white shadow-[0_0_10px_rgba(88,101,242,0.1)]";
+    }
+    return "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-gray-300";
   };
 
+  /**
+   * Resolves the styling/color classes of a right-hand side item card
+   * depending on whether it is selected, matched, or graded.
+   * 
+   * @param {number} index - Index of the RHS item.
+   * @returns {string} Tailwind CSS class string.
+   */
   const getRightItemColor = (index) => {
     if (submitted) {
       const leftIndex = matches.indexOf(index);
       if (leftIndex !== -1) {
         return isCorrect[leftIndex]
-          ? "bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-700"
-          : "bg-red-100 border-red-300 dark:bg-red-900/30 dark:border-red-700";
+          ? "bg-emerald-500/15 border-emerald-500 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+          : "bg-rose-500/15 border-rose-500 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.15)]";
       }
     }
-    if (index === selectedRight) return "bg-blue-100 border-blue-300 dark:bg-blue-900/30 dark:border-blue-700";
-    if (matches.includes(index)) return "bg-blue-200/80 border-blue-400/80 dark:bg-blue-900/50 dark:border-blue-700";
-    return "bg-background";
+    if (index === selectedRight) {
+      return "bg-[#8B5CF6]/20 border-[#8B5CF6] text-white shadow-[0_0_12px_rgba(139,92,246,0.3)]";
+    }
+    if (matches.includes(index)) {
+      return "bg-[#5865F2]/15 border-[#5865F2]/50 text-white shadow-[0_0_10px_rgba(88,101,242,0.1)]";
+    }
+    return "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-gray-300";
   };
 
   return (
-    <Card className="w-full max-w-3xl border-0 shadow-none mx-auto">
+    <Card className="w-full max-w-3xl border border-white/10 mx-auto">
       <CardHeader>
         <CardTitle>Match the Following</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="relative" ref={containerRef}>
           <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
-            {lines.map((line, index) => {
-              const controlPointX1 = line.from.right + (line.to.left - line.from.right) * 0.4;
-              const controlPointX2 = line.from.right + (line.to.left - line.from.right) * 0.6;
+            {matches.map((rightIndex, leftIndex) => {
+              if (rightIndex === -1) return null;
+
+              let strokeColor = "#5865F2";
+              if (submitted) {
+                strokeColor = isCorrect[leftIndex] ? "#10b981" : "#f43f5e";
+              } else if (leftIndex === selectedLeft) {
+                strokeColor = "#8B5CF6";
+              }
 
               return (
                 <path
-                  key={index}
-                  d={`M ${line.from.right} ${line.from.y} C ${controlPointX1} ${line.from.y}, ${controlPointX2} ${line.to.y}, ${line.to.left} ${line.to.y}`}
-                  stroke={line.color}
-                  strokeWidth="2"
+                  key={`path-${leftIndex}`}
+                  id={`path-${leftIndex}`}
+                  stroke={strokeColor}
+                  strokeWidth="3"
+                  strokeLinecap="round"
                   fill="none"
+                  className="transition-colors duration-300 drop-shadow-[0_0_8px_rgba(88,101,242,0.3)]"
                 />
               );
             })}
@@ -238,12 +335,13 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
 
           <div className="flex gap-6 justify-center select-none md:gap-16">
             <div className="space-y-4">
-              {task.terms.lhs.map((term, index) => (
+              {(task?.terms?.lhs || []).map((term, index) => (
                 <div
                   key={`left-${index}`}
                   ref={(el) => (leftRefs.current[index] = el)}
-                  className={`p-3 border rounded-lg w-full cursor-pointer transition-colors ${getLeftItemColor(index)}`}
+                  className={`p-3 border rounded-lg w-full cursor-pointer transition-all duration-300 ${getLeftItemColor(index)}`}
                   onClick={() => handleLeftSelect(index)}
+                  onMouseEnter={() => !submitted && playHover()}
                 >
                   <div className="flex justify-between items-center">
                     <span>{term}</span>
@@ -253,7 +351,7 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
                           e.stopPropagation();
                           removeMatch(index);
                         }}
-                        className="text-gray-500 hover:text-gray-700 ml-2"
+                        className="text-gray-400 hover:text-white transition-colors ml-2 font-bold"
                       >
                         ×
                       </button>
@@ -264,12 +362,13 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
             </div>
 
             <div className="space-y-4">
-              {task.terms.rhs.map((definition, index) => (
+              {(task?.terms?.rhs || []).map((definition, index) => (
                 <div
                   key={`right-${index}`}
                   ref={(el) => (rightRefs.current[index] = el)}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${getRightItemColor(index)}`}
+                  className={`p-3 border rounded-lg cursor-pointer transition-all duration-300 ${getRightItemColor(index)}`}
                   onClick={() => handleRightSelect(index)}
+                  onMouseEnter={() => !submitted && playHover()}
                 >
                   {definition}
                 </div>
@@ -279,12 +378,12 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
         </div>
 
         {submitted && (
-          <Alert className="mt-6">
+          <Alert className="mt-6 border-white/10 glassmorphism">
             <AlertDescription>
-              <p className="font-medium">
-                Score: {score}/{task.terms.lhs.length}
+              <p className="font-semibold text-white">
+                Score: {score}/{(task?.terms?.lhs || []).length}
               </p>
-              <p className="mt-2">{task.explanation}</p>
+              <p className="mt-2 text-gray-300">{task.explanation}</p>
             </AlertDescription>
           </Alert>
         )}
@@ -292,15 +391,15 @@ export default function Match({ task, roadmapId, chapterNumber, onCourseComplete
       <CardFooter className="flex justify-center gap-2">
         {!submitted && (
           <Button
-            variant={"secondary"}
+            variant="default"
             onClick={handleSubmit}
             disabled={submitting}
-            className={"bg-blue-500 text-zinc-50 dark:bg-blue-800 hover:bg-blue-600 dark:hover:bg-blue-600"}
+            className="px-8"
           >
             {submitting ? (
               <>
                 Submitting
-                <Loader className="animate-spin"></Loader>
+                <Loader className="animate-spin ml-2 h-4 w-4" />
               </>
             ) : (
               "Submit"

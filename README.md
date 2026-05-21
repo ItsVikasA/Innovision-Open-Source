@@ -39,6 +39,19 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 
 ---
 
+## AI Learning Galaxy — Immersive Space Learning Dashboard
+
+The **AI Learning Galaxy** is InnoVision's flagship immersive educational feature. It transforms standard linear course roadmaps into a beautiful, interactive celestial cosmos. Users navigate their customized learning paths as space explorers, unlocking chapters represented as glowing star nodes, chatting with an AI Mentor (Orion), and completing tasks (quizzes, matches, fill-ups) to earn XP points, level up, and trigger starry animations.
+
+### 🌌 Key Architecture Highlights
+- **Hybrid Rendering Pipeline**: Combines React, Next.js App Router, custom SVGs for responsive Bezier curve routing, and Framer Motion for premium celestial physics and transition animations.
+- **SSR-Safe Hydration Isolation**: Prevents Next.js hydration mismatches by wrapping R3F canvas components, pointer/browser event handlers, and real-time Firebase elements in dynamic client-side wrappers with loaders.
+- **Procedural Web Audio API Synthesis**: Synthesis of all interactive audio on-the-fly (plucks, sweeps, chords, fanfares) without static asset downloads.
+- **Dynamic SVG Constellation Connectors**: Interactive connector paths calculated using Cubic Bezier curves and ResizeObservers, updating positions on fluid container resizing or scrolling.
+- **Performance First UX**: Throttled window event triggers, GPU-aware animations (transform/opacity only), and coarse-pointer device support for seamless 60fps interaction on mobile and low-end devices.
+
+---
+
 ## Modern UI/UX
 
 ### Icon-Based Navigation

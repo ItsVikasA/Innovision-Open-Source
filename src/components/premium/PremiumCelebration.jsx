@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import { Crown, Sparkles, Star, Zap } from "lucide-react";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 export default function PremiumCelebration({ isOpen, onClose }) {
   const [showContent, setShowContent] = useState(false);
-  const audioRef = useRef(null);
+  const { playLevelUp } = useSoundEffects();
 
   useEffect(() => {
     if (isOpen) {
       // Play celebration sound
-      playSound();
+      playLevelUp();
 
       // Fire confetti sequence
       fireConfettiSequence();
@@ -29,42 +30,6 @@ export default function PremiumCelebration({ isOpen, onClose }) {
       setShowContent(false);
     }
   }, [isOpen, onClose]);
-
-  const playSound = () => {
-    try {
-      // Create audio context for celebration sound
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-      // Play a victory fanfare sequence
-      const playNote = (frequency, startTime, duration, gain = 0.3) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = frequency;
-        oscillator.type = "sine";
-
-        gainNode.gain.setValueAtTime(gain, audioContext.currentTime + startTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + startTime + duration);
-
-        oscillator.start(audioContext.currentTime + startTime);
-        oscillator.stop(audioContext.currentTime + startTime + duration);
-      };
-
-      // Victory fanfare notes
-      playNote(523.25, 0, 0.15);     // C5
-      playNote(659.25, 0.15, 0.15);  // E5
-      playNote(783.99, 0.3, 0.15);   // G5
-      playNote(1046.50, 0.45, 0.4);  // C6 (longer)
-      playNote(783.99, 0.85, 0.15);  // G5
-      playNote(1046.50, 1.0, 0.6);   // C6 (final, longest)
-
-    } catch (error) {
-      console.log("Audio not supported");
-    }
-  };
 
   const fireConfettiSequence = () => {
     const duration = 4000;
@@ -263,6 +228,8 @@ export default function PremiumCelebration({ isOpen, onClose }) {
 
 // Export a function to trigger the celebration
 export const triggerPremiumCelebration = () => {
-  const event = new CustomEvent("premiumCelebration");
-  window.dispatchEvent(event);
+  if (typeof window !== "undefined") {
+    const event = new CustomEvent("premiumCelebration");
+    window.dispatchEvent(event);
+  }
 };
