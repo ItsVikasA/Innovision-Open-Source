@@ -224,7 +224,7 @@ export default function CodeEditor() {
                         placeholder="Example: Create a portfolio website with a hero section, about me, projects gallery, and contact form. Use modern design with blue and white colors."
                         className="min-h-75 bg-background/50"
                       />
-                      <Button onClick={generateWebsite} disabled={isGenerating} className="w-full bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300">
+                      <Button aria-label="Generate AI Website" onClick={generateWebsite} disabled={isGenerating} className="w-full bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300">
                         <Sparkles className="h-4 w-4 mr-2" />
                         {isGenerating ? "Generating..." : "Generate Website"}
                       </Button>
