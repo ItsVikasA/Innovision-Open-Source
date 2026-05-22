@@ -179,7 +179,7 @@ export default function CodeEditor() {
                         placeholder={`Write your ${language} code here...`}
                         className="font-mono min-h-100 bg-background/50"
                       />
-                      <Button onClick={runCode} className="w-full bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 transition-all duration-300">
+                      <Button aria-label="Run code in editor" onClick={runCode} className="w-full bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 transition-all duration-300">
                         <Play className="h-4 w-4 mr-2" />
                         Run Code
                       </Button>
