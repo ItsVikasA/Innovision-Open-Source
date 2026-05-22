@@ -34,20 +34,7 @@ const RecommendedCourses = ({ query = "" }) => {
     };
 
     useEffect(() => {
-        // Initial fetch or fetch on manual refresh
-        if (!query) {
-            fetchRecommendations();
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!query) return;
-
-        const timer = setTimeout(() => {
-            fetchRecommendations(query);
-        }, 800); // 800ms debounce
-
-        return () => clearTimeout(timer);
+        fetchRecommendations(query);
     }, [query]);
 
     const handleFeedback = async (courseId, feedbackType) => {

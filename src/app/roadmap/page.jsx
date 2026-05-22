@@ -5,6 +5,7 @@ import { Plus, BookOpen, Sparkles, Search, X, Filter, Trash2, Archive, ArchiveRe
 import CourseCard from "@/components/Home/CourseCard";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageBackground, GridPattern, PageHeader, ScrollReveal, HoverCard } from "@/components/ui/PageWrapper";
 import ChatBot from "@/components/chat/ChatBot";
@@ -38,6 +39,8 @@ export default function page() {
     const [archiveFilter, setArchiveFilter] = useState("active"); // active, archived, all
     const [sortBy, setSortBy] = useState("newest");
 
+    const debouncedSearchQuery = useDebounce(searchQuery, 400);
+
     // Bulk selection states
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedCourses, setSelectedCourses] = useState([]);
@@ -58,18 +61,19 @@ export default function page() {
         }
     }, []);
 
-    // Save filter preferences to localStorage
+    // Save filter preferences to localStorage (keyed to debounced query to avoid
+    // writing on every keystroke while the user is still typing)
     useEffect(() => {
         localStorage.setItem(
             "courseFilters",
             JSON.stringify({
-                search: searchQuery,
+                search: debouncedSearchQuery,
                 difficulty: difficultyFilter,
                 archive: archiveFilter,
                 sort: sortBy,
             })
         );
-    }, [searchQuery, difficultyFilter, archiveFilter, sortBy]);
+    }, [debouncedSearchQuery, difficultyFilter, archiveFilter, sortBy]);
 
     async function fetchRoadmaps() {
         setLoading(true);
@@ -238,7 +242,7 @@ export default function page() {
                     badge={<><Sparkles className="h-3.5 w-3.5" /> My Learning</>}
                 />
 
-                {!loading && !error && <RecommendedCourses query={searchQuery} />}
+                {!loading && !error && <RecommendedCourses query={debouncedSearchQuery} />}
 
                 {!loading && !error && user?.email && (
                     <div className="w-full max-w-4xl">
