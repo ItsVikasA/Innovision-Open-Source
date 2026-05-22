@@ -1,30 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-
-/**
- * Helper to resolve userId from session cookie or Bearer token
- */
-async function getUserId(request) {
-    try {
-        const { cookies } = await import("next/headers");
-        const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get("session");
-        if (sessionCookie) {
-            const { getAuth } = await import("firebase-admin/auth");
-            const decoded = await getAuth().verifySessionCookie(sessionCookie.value, true);
-            return decoded.email || decoded.uid;
-        }
-    } catch { }
-    try {
-        const authHeader = request.headers.get("authorization");
-        if (authHeader?.startsWith("Bearer ")) {
-            const { getAuth } = await import("firebase-admin/auth");
-            const decoded = await getAuth().verifyIdToken(authHeader.replace("Bearer ", ""));
-            return decoded.email || decoded.uid;
-        }
-    } catch { }
-    return null;
-}
+import { getAuthenticatedUserFromRequest } from "@/lib/auth-server";
 
 /**
  * GET /api/ingested-courses/[courseId] - Get a specific ingested course with its chapters
@@ -52,29 +28,8 @@ export async function GET(request, { params }) {
 
         const courseData = courseSnap.data();
 
-        // Get user ID for progress tracking
-        let userId = null;
-        try {
-            const { cookies } = await import("next/headers");
-            const cookieStore = await cookies();
-            const sessionCookie = cookieStore.get("session");
-
-            if (sessionCookie) {
-                const { getAuth } = await import("firebase-admin/auth");
-                const decoded = await getAuth().verifySessionCookie(sessionCookie.value, true);
-                userId = decoded.email || decoded.uid;
-            } else {
-                const authHeader = request.headers.get("authorization");
-                if (authHeader?.startsWith("Bearer ")) {
-                    const { getAuth } = await import("firebase-admin/auth");
-                    const token = authHeader.replace("Bearer ", "");
-                    const decoded = await getAuth().verifyIdToken(token);
-                    userId = decoded.email || decoded.uid;
-                }
-            }
-        } catch (err) {
-            console.log("[DEBUG] Auth check failed in course detail API:", err.message);
-        }
+        const user = await getAuthenticatedUserFromRequest(request);
+        const userId = user?.email || user?.uid;
 
         // Fetch progress if userId is available
         let progressData = { progress: 0, completedChapters: [] };
@@ -140,7 +95,8 @@ export async function DELETE(request, { params }) {
             );
         }
 
-        const userId = await getUserId(request);
+        const user = await getAuthenticatedUserFromRequest(request);
+        const userId = user?.email || user?.uid;
         if (!userId) {
             return NextResponse.json(
                 { error: "Authentication required" },

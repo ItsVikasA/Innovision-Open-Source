@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { cookies } from "next/headers";
+import { getAuthenticatedUserFromRequest } from "@/lib/auth-server";
 
 /**
  * GET /api/ingested-courses - List all ingested courses for the current user
@@ -15,39 +15,8 @@ export async function GET(request) {
             );
         }
 
-        // Get user ID from auth
-        let userId = null;
-        const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get("session");
-
-        if (sessionCookie) {
-            try {
-                const { getAuth } = await import("firebase-admin/auth");
-                const decoded = await getAuth().verifySessionCookie(
-                    sessionCookie.value,
-                    true
-                );
-                // Use email consistently (matches how other parts of the app identify users)
-                userId = decoded.email || decoded.uid;
-            } catch {
-                // try token
-            }
-        }
-
-        if (!userId) {
-            const authHeader = request.headers.get("authorization");
-            if (authHeader) {
-                try {
-                    const { getAuth } = await import("firebase-admin/auth");
-                    const token = authHeader.replace("Bearer ", "");
-                    const decoded = await getAuth().verifyIdToken(token);
-                    // Use email consistently
-                    userId = decoded.email || decoded.uid;
-                } catch {
-                    // auth failed
-                }
-            }
-        }
+        const user = await getAuthenticatedUserFromRequest(request);
+        const userId = user?.email || user?.uid;
 
         if (!userId) {
             return NextResponse.json(

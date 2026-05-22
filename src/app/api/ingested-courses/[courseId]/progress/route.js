@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { cookies } from "next/headers";
+import { getAuthenticatedUserFromRequest } from "@/lib/auth-server";
 export async function GET(request, { params }) {
     try {
         const db = getAdminDb();
@@ -13,36 +13,8 @@ export async function GET(request, { params }) {
 
         const { courseId } = await params;
 
-        let userId = null;
-        const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get("session");
-
-        if (sessionCookie) {
-            try {
-                const { getAuth } = await import("firebase-admin/auth");
-                const decoded = await getAuth().verifySessionCookie(
-                    sessionCookie.value,
-                    true
-                );
-                userId = decoded.email || decoded.uid;
-            } catch {
-                // try token
-            }
-        }
-
-        if (!userId) {
-            const authHeader = request.headers.get("authorization");
-            if (authHeader) {
-                try {
-                    const { getAuth } = await import("firebase-admin/auth");
-                    const token = authHeader.replace("Bearer ", "");
-                    const decoded = await getAuth().verifyIdToken(token);
-                    userId = decoded.email || decoded.uid;
-                } catch {
-                    // auth failed
-                }
-            }
-        }
+        const user = await getAuthenticatedUserFromRequest(request);
+        const userId = user?.email || user?.uid;
 
         if (!userId) {
             return NextResponse.json(
@@ -127,36 +99,8 @@ export async function PUT(request, { params }) {
             );
         }
 
-        let userId = null;
-        const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get("session");
-
-        if (sessionCookie) {
-            try {
-                const { getAuth } = await import("firebase-admin/auth");
-                const decoded = await getAuth().verifySessionCookie(
-                    sessionCookie.value,
-                    true
-                );
-                userId = decoded.email || decoded.uid;
-            } catch {
-
-            }
-        }
-
-        if (!userId) {
-            const authHeader = request.headers.get("authorization");
-            if (authHeader) {
-                try {
-                    const { getAuth } = await import("firebase-admin/auth");
-                    const token = authHeader.replace("Bearer ", "");
-                    const decoded = await getAuth().verifyIdToken(token);
-                    userId = decoded.email || decoded.uid;
-                } catch {
-
-                }
-            }
-        }
+        const user = await getAuthenticatedUserFromRequest(request);
+        const userId = user?.email || user?.uid;
 
         if (!userId) {
             return NextResponse.json(

@@ -1,25 +1,11 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { cookies } from "next/headers";
-
-async function getUserFromRequest() {
-    try {
-        const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get("session")?.value;
-        if (!sessionCookie) return null;
-
-        const payload = JSON.parse(atob(sessionCookie.split(".")[1]));
-        if (!payload?.email) return null;
-        return { email: payload.email, uid: payload.uid || payload.sub };
-    } catch {
-        return null;
-    }
-}
+import { getAuthenticatedUserFromSessionCookie } from "@/lib/auth-server";
 
 
 export async function GET(request) {
     try {
-        const user = await getUserFromRequest();
+        const user = await getAuthenticatedUserFromSessionCookie();
         if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -27,6 +13,7 @@ export async function GET(request) {
         const { searchParams } = new URL(request.url);
         const type = searchParams.get("type"); // optional category filter
         const limit = parseInt(searchParams.get("limit") || "50", 10);
+        const userId = user.email || user.uid;
 
         const adminDb = getAdminDb();
         if (!adminDb) {
@@ -34,7 +21,7 @@ export async function GET(request) {
         }
 
 
-        let baseQuery = adminDb.collection("notifications").where("userId", "==", user.email);
+        let baseQuery = adminDb.collection("notifications").where("userId", "==", userId);
         if (type && type !== "all") {
             baseQuery = baseQuery.where("type", "==", type);
         }
@@ -71,10 +58,15 @@ export async function GET(request) {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { userId, title, body: notifBody, type = "system", link = null } = body;
+        const user = await getAuthenticatedUserFromSessionCookie();
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-        if (!userId || !title || !notifBody) {
-            return NextResponse.json({ error: "userId, title, and body are required" }, { status: 400 });
+        const { title, body: notifBody, type = "system", link = null } = body;
+
+        if (!title || !notifBody) {
+            return NextResponse.json({ error: "title and body are required" }, { status: 400 });
         }
 
         const adminDb = getAdminDb();
@@ -82,6 +74,7 @@ export async function POST(request) {
             return NextResponse.json({ error: "Firebase not configured" }, { status: 503 });
         }
 
+        const userId = user.email || user.uid;
         const notification = {
             userId,
             title,
@@ -108,10 +101,11 @@ export async function POST(request) {
 
 export async function PATCH() {
     try {
-        const user = await getUserFromRequest();
+        const user = await getAuthenticatedUserFromSessionCookie();
         if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const userId = user.email || user.uid;
 
         const adminDb = getAdminDb();
         if (!adminDb) {
@@ -120,7 +114,7 @@ export async function PATCH() {
 
         const snapshot = await adminDb
             .collection("notifications")
-            .where("userId", "==", user.email)
+            .where("userId", "==", userId)
             .where("read", "==", false)
             .get();
 
