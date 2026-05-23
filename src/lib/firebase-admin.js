@@ -7,9 +7,9 @@ let isInitialized = false;
 function initializeFirebaseAdmin() {
   if (isInitialized) return adminDb;
   isInitialized = true;
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
 
   if (!projectId || !clientEmail || !privateKey) {
     console.warn("Firebase Admin SDK: Missing credentials. Server-side database operations will be limited.");
