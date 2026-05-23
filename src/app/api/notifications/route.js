@@ -70,20 +70,41 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const body = await request.json();
-        const { userId, title, body: notifBody, type = "system", link = null } = body;
+        const user = await getUserFromRequest();
 
-        if (!userId || !title || !notifBody) {
-            return NextResponse.json({ error: "userId, title, and body are required" }, { status: 400 });
+        if (!user) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        const body = await request.json();
+        const {
+            title,
+            body: notifBody,
+            type = "system",
+            link = null,
+        } = body;
+
+        if (!title || !notifBody) {
+            return NextResponse.json(
+                { error: "title and body are required" },
+                { status: 400 }
+            );
         }
 
         const adminDb = getAdminDb();
+
         if (!adminDb) {
-            return NextResponse.json({ error: "Firebase not configured" }, { status: 503 });
+            return NextResponse.json(
+                { error: "Firebase not configured" },
+                { status: 503 }
+            );
         }
 
         const notification = {
-            userId,
+            userId: user.email,
             title,
             body: notifBody,
             type,
@@ -92,7 +113,9 @@ export async function POST(request) {
             createdAt: new Date(),
         };
 
-        const docRef = await adminDb.collection("notifications").add(notification);
+        const docRef = await adminDb
+            .collection("notifications")
+            .add(notification);
 
         return NextResponse.json({
             success: true,
@@ -102,9 +125,14 @@ export async function POST(request) {
         });
     } catch (error) {
         console.error("Error creating notification:", error);
-        return NextResponse.json({ error: "Failed to create notification" }, { status: 500 });
+
+        return NextResponse.json(
+            { error: "Failed to create notification" },
+            { status: 500 }
+        );
     }
 }
+
 
 export async function PATCH() {
     try {
