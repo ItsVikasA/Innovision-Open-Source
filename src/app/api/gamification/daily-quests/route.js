@@ -185,7 +185,7 @@ export async function POST(request) {
       });
 
       // Award XP to user's main stats
-      const userStatsRef = adminDb.collection("users").doc(userId).collection("gamification").doc("stats");
+      const userStatsRef = adminDb.collection("gamification").doc(userId);
       const statsDoc = await userStatsRef.get();
       const currentXP = statsDoc.exists ? (statsDoc.data().xp || 0) : 0;
 
