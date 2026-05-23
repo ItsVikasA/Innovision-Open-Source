@@ -5,6 +5,14 @@ import crypto from "crypto";
 
 export async function POST(req) {
   try {
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      console.error("RAZORPAY_KEY_SECRET not configured");
+      return NextResponse.json(
+        { error: "Payment gateway not configured", details: "Missing Razorpay secret key" },
+        { status: 502 }
+      );
+    }
+
     const session = await getServerSession();
 
     if (!session?.user) {
@@ -12,6 +20,13 @@ export async function POST(req) {
     }
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return NextResponse.json(
+        { error: "Invalid payload", details: "razorpay_order_id, razorpay_payment_id, and razorpay_signature are required" },
+        { status: 400 }
+      );
+    }
 
     // Verify signature
     const body = razorpay_order_id + "|" + razorpay_payment_id;

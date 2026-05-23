@@ -21,19 +21,28 @@ const COUPONS = {
 
 export async function POST(req) {
   try {
-    // Check if Razorpay keys are configured
+    // Check if Razorpay keys are configured — this is a gateway config issue, not a server bug
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
       console.error("Razorpay keys not configured");
       return NextResponse.json(
         { error: "Payment gateway not configured", details: "Missing Razorpay API keys" },
-        { status: 500 }
+        { status: 502 }
       );
     }
 
-    const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
+    let razorpay;
+    try {
+      razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+    } catch (initError) {
+      console.error("Razorpay initialization failed:", initError.message);
+      return NextResponse.json(
+        { error: "Payment gateway initialization failed", details: initError.message },
+        { status: 502 }
+      );
+    }
 
     const session = await getServerSession();
 
@@ -83,24 +92,54 @@ export async function POST(req) {
       couponValid = true;
     }
 
-    const finalAmount = Math.max(baseAmount - discountApplied, 100); // Minimum ₹1
+    const finalAmount = Math.max(baseAmount - discountApplied, 100); // Minimum ₹1 (100 paise)
+    const currency = "INR";
+
+    // Validate payload before dispatching to Razorpay SDK
+    if (!Number.isInteger(finalAmount) || finalAmount < 100) {
+      return NextResponse.json(
+        { error: "Invalid order amount", details: "Amount must be at least ₹1 (100 paise)" },
+        { status: 400 }
+      );
+    }
+
+    if (currency !== "INR") {
+      return NextResponse.json(
+        { error: "Invalid currency", details: "Only INR is supported" },
+        { status: 400 }
+      );
+    }
+
     const planLabel = planType === "education" ? "edu" : "prem";
 
     // Receipt must be max 40 characters
     const receipt = `${planLabel}_${Date.now()}`;
-    const order = await razorpay.orders.create({
-      amount: finalAmount,
-      currency: "INR",
-      receipt: receipt,
-      notes: {
-        email: session.user.email,
-        type: planType === "education" ? "education_subscription" : "premium_subscription",
-        planType: planType,
-        couponCode: couponCode || "none",
-        originalAmount: baseAmount,
-        discountApplied: discountApplied,
-      },
-    });
+
+    let order;
+    try {
+      order = await razorpay.orders.create({
+        amount: finalAmount,
+        currency,
+        receipt,
+        notes: {
+          email: session.user.email,
+          type: planType === "education" ? "education_subscription" : "premium_subscription",
+          planType: planType,
+          couponCode: couponCode || "none",
+          originalAmount: baseAmount,
+          discountApplied: discountApplied,
+        },
+      });
+    } catch (razorpayError) {
+      console.error("Razorpay order creation failed:", razorpayError.message, razorpayError);
+      return NextResponse.json(
+        {
+          error: "Payment gateway error",
+          details: razorpayError.error?.description || razorpayError.message || "Razorpay rejected the order request",
+        },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json({
       orderId: order.id,
@@ -113,7 +152,7 @@ export async function POST(req) {
       planType: planType,
     });
   } catch (error) {
-    console.error("Error creating Razorpay order:", error.message, error);
+    console.error("Unexpected error in create-order:", error.message, error);
     return NextResponse.json(
       { error: "Failed to create order", details: error.message || "Unknown error" },
       { status: 500 }
