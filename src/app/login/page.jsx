@@ -55,6 +55,12 @@ export default function SignIn() {
         <div className="container m-auto px-6 md:px-12">
           <div className="m-auto max-w-md">
             <div className="rounded-2xl bg-background/80 backdrop-blur-sm border border-border p-8 sm:p-12">
+            <button
+                onClick={() => router.back()}
+                className="mb-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Back
+              </button>
               {/* Logo */}
               <div className="flex justify-center mb-6">
                 <Image
