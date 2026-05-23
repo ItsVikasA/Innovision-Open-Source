@@ -148,16 +148,25 @@ export async function PUT(request) {
 
     if (adminDb) {
       try {
-        await adminDb
+        const courseDocRef = adminDb
           .collection("users")
           .doc(session.user.email)
           .collection("youtube-courses")
-          .doc(courseId)
-          .update({
-            [`exerciseProgress.chapter${chapterNumber}.${exerciseId}`]: submissionData,
-            updatedAt: new Date().toISOString()
-          });
-        await awardExerciseXP(session.user.email, 5, chapterNumber, exerciseId);
+          .doc(courseId);
+
+        const courseDoc = await courseDocRef.get();
+        const courseData = courseDoc.exists ? courseDoc.data() : {};
+        const alreadyCompleted =
+          courseData.exerciseProgress?.[`chapter${chapterNumber}`]?.[exerciseId]?.status === "completed";
+
+        await courseDocRef.update({
+          [`exerciseProgress.chapter${chapterNumber}.${exerciseId}`]: submissionData,
+          updatedAt: new Date().toISOString()
+        });
+
+        if (!alreadyCompleted) {
+          await awardExerciseXP(session.user.email, 5, chapterNumber, exerciseId);
+        }
       } catch (dbError) {
         console.warn("Could not save exercise to Firebase:", dbError.message);
       }

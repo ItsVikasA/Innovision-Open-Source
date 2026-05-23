@@ -178,7 +178,8 @@ export async function PUT(request) {
           },
           updatedAt: new Date().toISOString()
         });
-      if (passed) {
+      const alreadyPassed = courseData.quizScores?.[`chapter${chapterNumber}`]?.passed === true;
+      if (passed && !alreadyPassed) {
         const xpEarned = Math.round(score / 10);
         await awardQuizXP(session.user.email, xpEarned, chapterNumber);
       }
