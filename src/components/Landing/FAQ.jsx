@@ -1,116 +1,242 @@
 "use client";
-import { useState } from "react";
-import { HelpCircle, Plus, Minus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { HelpCircle, Plus, Minus, Search } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
 
-const faqs = [
+const faqData = [
   {
+    category: "General",
     question: "How does InnoVision generate personalized courses?",
-    answer: "InnoVision uses advanced AI to analyze your topic of interest and creates a structured, chapter-by-chapter course tailored to your learning needs. Our algorithm considers the complexity of the subject, logical progression of concepts, and includes interactive elements to enhance understanding."
+    answer:
+      "InnoVision uses advanced AI to analyze your topic of interest and creates a structured, chapter-by-chapter course tailored to your learning needs."
   },
   {
+    category: "General",
     question: "What topics can I learn with InnoVision?",
-    answer: "You can learn virtually any topic with InnoVision. From technical subjects like programming, data science, and engineering to humanities, arts, business skills, and more. If you can describe it, our AI can create a structured learning path for it."
+    answer:
+      "You can learn virtually any topic—from programming and data science to arts, business, and personal skills."
   },
   {
-    question: "How long does it take to generate a course?",
-    answer: "Course generation typically takes just a few seconds. The AI analyzes your topic, creates a comprehensive roadmap, and then generates detailed chapter content ready for you to start learning immediately."
-  },
-  {
-    question: "Can I track my learning progress?",
-    answer: "Yes, InnoVision provides detailed progress tracking. You can monitor which chapters you've completed, view your performance on exercises and assessments, and see statistics about your learning journey."
-  },
-  {
-    question: "Do I need to create an account to use InnoVision?",
-    answer: "Yes, you'll need to create a free account to generate and access courses. This allows us to save your progress, provide personalized recommendations, and ensure you can return to your learning materials anytime."
-  },
-  {
-    question: "How does InnoVision ensure the quality of course content?",
-    answer: "Our AI is trained on high-quality educational materials and continuously improved based on user feedback. We also implement regular quality checks and updates to ensure accuracy and effectiveness of the generated content."
-  },
-  {
+    category: "General",
     question: "Is InnoVision free to use?",
-    answer: "Yes, InnoVision provides free access to core learning features. Some advanced tools or premium features may be introduced in the future."
+    answer:
+      "Yes, core learning features are free. Advanced features may be introduced later."
+  },
+
+  {
+    category: "Learning",
+    question: "How long does it take to generate a course?",
+    answer:
+      "Most courses are generated within a few seconds using AI-based structuring and content generation."
   },
   {
+    category: "Learning",
     question: "Can I customize my learning roadmap?",
-    answer: "Yes, users can choose different learning paths such as fast-track, balanced, or in-depth modes depending on their preferred learning style."
+    answer:
+      "Yes, you can choose fast-track, balanced, or deep-learning modes depending on your goals."
   },
   {
-    question: "Does InnoVision provide certifications?",
-    answer: "Currently, InnoVision focuses on structured learning and skill development. Certification features may be introduced in future updates."
+    category: "Learning",
+    question: "Does InnoVision support different skill levels?",
+    answer:
+      "Yes, it supports beginner, intermediate, and advanced learners with structured progression."
   },
   {
-    question: "What learning levels are supported?",
-    answer: "InnoVision supports beginner, intermediate, and advanced learners with structured content progression and practical learning guidance."
+    category: "Learning",
+    question: "Can I track my progress?",
+    answer:
+      "Yes, you can track completed chapters, progress stats, and performance insights."
+  },
+
+  {
+    category: "Account",
+    question: "Do I need an account to use InnoVision?",
+    answer:
+      "Yes, an account is required to save progress and access personalized learning features."
   },
   {
-    question: "Is my personal data secure?",
-    answer: "Yes, user data is securely handled using authentication systems and protected database storage. We prioritize privacy and data security."
+    category: "Account",
+    question: "Can I access my courses on multiple devices?",
+    answer:
+      "Yes, your learning data is synced across all devices once you log in."
   },
   {
-    question: "Can I access my courses across devices?",
-    answer: "Yes, once you log in, your courses and progress are saved to your account and can be accessed from any device."
+    category: "Account",
+    question: "Is my data secure?",
+    answer:
+      "Yes, we use secure authentication and encrypted storage to protect your data."
+  },
+
+  {
+    category: "Advanced",
+    question: "How does InnoVision ensure content quality?",
+    answer:
+      "AI models are trained on high-quality educational datasets and continuously improved using feedback loops."
+  },
+  {
+    category: "Advanced",
+    question: "Will certifications be available?",
+    answer:
+      "Certification features are planned for future updates."
   }
 ];
 
-const FAQItem = ({ question, answer, isOpen, onClick }) => (
-  <div className={`rounded-2xl border border-border bg-background backdrop-blur-sm overflow-hidden transition-all duration-300 ${isOpen ? 'border-blue-500/30' : 'hover:border-border/60'}`}>
-    <button onClick={onClick} className="flex w-full items-center justify-between p-5 text-left group">
-      <span className="font-light pr-4 group-hover:text-blue-500 transition-colors text-foreground">{question}</span>
-      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${isOpen ? 'bg-blue-500 text-white' : 'border border-border text-foreground group-hover:border-blue-500/30'}`}>
-        {isOpen ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+const categories = ["All", "General", "Learning", "Account", "Advanced"];
+
+const FAQItem = ({ item, isOpen, onClick }) => (
+  <div
+    className={`rounded-2xl border bg-background overflow-hidden transition-all duration-300 ${
+      isOpen ? "border-blue-500/40" : "hover:border-border/60"
+    }`}
+  >
+    <button
+      onClick={onClick}
+      className="flex w-full items-center justify-between p-5 text-left group"
+    >
+      <span className="pr-4 text-foreground group-hover:text-blue-500 transition-colors font-light">
+        {item.question}
+      </span>
+
+      <div
+        className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center transition-all duration-300 ${
+          isOpen
+            ? "bg-blue-500 text-white"
+            : "border border-border group-hover:border-blue-500/40"
+        }`}
+      >
+        {isOpen ? <Minus size={16} /> : <Plus size={16} />}
       </div>
     </button>
-    <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-      <div className="px-5 pb-5 text-muted-foreground leading-relaxed font-light">{answer}</div>
+
+    <div
+      className={`px-5 transition-all duration-300 overflow-hidden ${
+        isOpen ? "max-h-96 opacity-100 pb-5" : "max-h-0 opacity-0"
+      }`}
+    >
+      <p className="text-muted-foreground leading-relaxed font-light">
+        {item.answer}
+      </p>
     </div>
   </div>
 );
 
-const FAQ = () => {
+export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(5);
+  const [visibleCount, setVisibleCount] = useState(6);
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
 
-  const handleLoadMore = () => {
-    setVisibleCount(prev => Math.min(prev + 5, faqs.length));
+  const filteredFaqs = useMemo(() => {
+    return faqData.filter((faq) => {
+      const matchesCategory =
+        activeCategory === "All" || faq.category === activeCategory;
+
+      const matchesSearch =
+        faq.question.toLowerCase().includes(search.toLowerCase()) ||
+        faq.answer.toLowerCase().includes(search.toLowerCase());
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [search, activeCategory]);
+
+  const visibleFaqs = filteredFaqs.slice(0, visibleCount);
+
+  const toggleAll = (type) => {
+    if (type === "open") setOpenIndex("ALL");
+    else setOpenIndex(null);
   };
 
   return (
-    <section id="faq" className="relative w-screen py-20 md:py-32 bg-background">
-      <div className="container relative z-10 px-4 mx-auto md:px-6">
+    <section id="faq" className="w-screen py-20 md:py-32 bg-background">
+      <div className="container mx-auto px-4 md:px-6">
+
+        {/* Header */}
         <ScrollReveal direction="up">
-          <div className="flex flex-col items-center justify-center text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-foreground text-sm font-light mb-4">
-              <HelpCircle className="h-3.5 w-3.5" /> FAQ
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm mb-4">
+              <HelpCircle size={14} /> FAQ
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight mb-4 text-foreground">
-              Frequently Asked{" "}
-              <span className="text-blue-500">Questions</span>
+
+            <h2 className="text-4xl md:text-5xl font-light mb-3">
+              Frequently Asked <span className="text-blue-500">Questions</span>
             </h2>
-            <p className="max-w-2xl text-muted-foreground text-lg font-light">
-              Find answers to common questions about InnoVision's AI-powered learning platform.
+
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Everything you need to know about InnoVision AI learning platform.
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="mx-auto max-w-3xl space-y-4">
-          {faqs.slice(0, visibleCount).map((faq, index) => (
-            <ScrollReveal key={index} delay={index * 100} direction="up">
+        {/* Search */}
+        <div className="max-w-2xl mx-auto mb-6">
+          <div className="relative">
+            <Search className="absolute left-4 top-3.5 text-muted-foreground" size={18} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search questions..."
+              className="w-full pl-11 pr-4 py-3 rounded-xl border bg-background outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Categories */}
+        <div className="flex flex-wrap justify-center gap-2 mb-10">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                setActiveCategory(cat);
+                setVisibleCount(6);
+              }}
+              className={`px-4 py-2 rounded-full text-sm border transition ${
+                activeCategory === cat
+                  ? "bg-blue-500 text-white border-blue-500"
+                  : "hover:border-blue-400"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Controls */}
+        <div className="flex justify-center gap-3 mb-6">
+          <button
+            onClick={() => toggleAll("open")}
+            className="text-sm px-4 py-2 rounded-full border hover:border-blue-500"
+          >
+            Expand All
+          </button>
+          <button
+            onClick={() => toggleAll("close")}
+            className="text-sm px-4 py-2 rounded-full border hover:border-blue-500"
+          >
+            Collapse All
+          </button>
+        </div>
+
+        {/* FAQ List */}
+        <div className="max-w-3xl mx-auto space-y-4">
+          {visibleFaqs.map((item, index) => (
+            <ScrollReveal key={index} direction="up">
               <FAQItem
-                question={faq.question}
-                answer={faq.answer}
-                isOpen={openIndex === index}
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                item={item}
+                isOpen={openIndex === index || openIndex === "ALL"}
+                onClick={() =>
+                  setOpenIndex(openIndex === index ? null : index)
+                }
               />
             </ScrollReveal>
           ))}
         </div>
-        {visibleCount < faqs.length && (
-          <div className="flex justify-center mt-8">
+
+        {/* Load More */}
+        {visibleCount < filteredFaqs.length && (
+          <div className="flex justify-center mt-10">
             <button
-              onClick={handleLoadMore}
-              className="px-6 py-3 bg-blue-500 text-white rounded-full font-light hover:bg-blue-600 transition-colors"
+              onClick={() => setVisibleCount((p) => p + 5)}
+              className="px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
             >
               Load More
             </button>
@@ -119,6 +245,4 @@ const FAQ = () => {
       </div>
     </section>
   );
-};
-
-export default FAQ;
+}
