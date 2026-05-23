@@ -1,8 +1,16 @@
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   const session = await getServerSession();
 
   // Fetch from gamification collection (single source of truth for XP)

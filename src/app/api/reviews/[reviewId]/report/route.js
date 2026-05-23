@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
 // POST - Report a review
 export async function POST(request, { params }) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -14,17 +22,11 @@ export async function POST(request, { params }) {
     const { reason } = await request.json();
 
     if (!reviewId) {
-      return NextResponse.json(
-        { error: "Review ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Review ID is required" }, { status: 400 });
     }
 
     if (!reason || reason.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Report reason is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Report reason is required" }, { status: 400 });
     }
 
     const userEmail = session.user.email;
@@ -34,20 +36,14 @@ export async function POST(request, { params }) {
     const reviewDoc = await reviewRef.get();
 
     if (!reviewDoc.exists) {
-      return NextResponse.json(
-        { error: "Review not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
 
     const reviewData = reviewDoc.data();
 
     // Check if user is trying to report their own review
     if (reviewData.userId === userEmail) {
-      return NextResponse.json(
-        { error: "You cannot report your own review" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "You cannot report your own review" }, { status: 400 });
     }
 
     // Create report document
@@ -83,9 +79,6 @@ export async function POST(request, { params }) {
     });
   } catch (error) {
     console.error("Error reporting review:", error);
-    return NextResponse.json(
-      { error: "Failed to report review" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to report review" }, { status: 500 });
   }
 }

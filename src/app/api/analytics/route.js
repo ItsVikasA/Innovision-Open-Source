@@ -1,8 +1,16 @@
 // Analytics API for Instructor Dashboard
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export async function GET(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const instructorId = searchParams.get("instructorId");
@@ -45,7 +53,9 @@ export async function GET(request) {
     const startTime = now - (timeRanges[timeRange] || timeRanges["7d"]);
 
     // Filter users by time range if they have createdAt
-    const recentUsers = usersWithXP.filter((user) => !user.createdAt || user.createdAt >= startTime);
+    const recentUsers = usersWithXP.filter(
+      (user) => !user.createdAt || user.createdAt >= startTime
+    );
 
     // Aggregate analytics
     const analytics = {
@@ -86,11 +96,13 @@ export async function GET(request) {
     });
 
     analytics.overview.totalXpEarned = totalXp;
-    analytics.overview.avgCompletionRate = totalCourses > 0 ? totalCompletedCourses / totalCourses : 0;
+    analytics.overview.avgCompletionRate =
+      totalCourses > 0 ? totalCompletedCourses / totalCourses : 0;
 
     // Calculate engagement metrics
     const usersWithActivity = usersWithXP.filter((u) => u.xp > 0);
-    analytics.engagement.taskCompletionRate = usersWithActivity.length / Math.max(usersWithXP.length, 1);
+    analytics.engagement.taskCompletionRate =
+      usersWithActivity.length / Math.max(usersWithXP.length, 1);
 
     // Top performers by XP - remove duplicates by email
     const uniqueUsers = usersWithXP.reduce((acc, user) => {
@@ -127,14 +139,18 @@ export async function GET(request) {
         if (roadmap.progress && typeof roadmap.progress === "object") {
           const progressEntries = Object.values(roadmap.progress);
           totalChapters += progressEntries.length;
-          completedChapters += progressEntries.filter((p) => p === true || p === "completed").length;
+          completedChapters += progressEntries.filter(
+            (p) => p === true || p === "completed"
+          ).length;
         }
 
         // Also check chapters array
         const chapters = roadmap.chapters || roadmap.roadmap?.chapters || [];
         if (Array.isArray(chapters) && chapters.length > 0) {
           totalChapters += chapters.length;
-          completedChapters += chapters.filter((ch) => ch.completed === true || ch.status === "completed").length;
+          completedChapters += chapters.filter(
+            (ch) => ch.completed === true || ch.status === "completed"
+          ).length;
         }
 
         // If roadmap is marked as completed, count it

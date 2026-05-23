@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 // POST - Award a badge to user
 export async function POST(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const { userId, badgeId } = await request.json();
 
@@ -32,7 +40,11 @@ export async function POST(request) {
 
     // Don't add duplicate badges
     if (currentBadges.includes(badgeId)) {
-      return NextResponse.json({ success: true, message: "Badge already earned", badges: currentBadges });
+      return NextResponse.json({
+        success: true,
+        message: "Badge already earned",
+        badges: currentBadges,
+      });
     }
 
     const newBadges = [...currentBadges, badgeId];

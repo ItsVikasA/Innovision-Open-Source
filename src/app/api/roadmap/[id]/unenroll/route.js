@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export async function DELETE(request, { params }) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session || !session.user || !session.user.email) {
@@ -40,7 +48,11 @@ export async function DELETE(request, { params }) {
     }
 
     // Delete the roadmap document
-    const roadmapRef = adminDb.collection("users").doc(session.user.email).collection("roadmaps").doc(roadmapId);
+    const roadmapRef = adminDb
+      .collection("users")
+      .doc(session.user.email)
+      .collection("roadmaps")
+      .doc(roadmapId);
     await roadmapRef.delete();
 
     return NextResponse.json({
@@ -48,6 +60,9 @@ export async function DELETE(request, { params }) {
       message: "Successfully unenrolled from course",
     });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to unenroll", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to unenroll", details: error.message },
+      { status: 500 }
+    );
   }
 }

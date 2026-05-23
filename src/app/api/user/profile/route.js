@@ -1,11 +1,19 @@
 import { getServerSession } from "@/lib/auth-server";
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 // Force Node.js runtime (Firebase doesn't work in Edge Runtime)
 export const runtime = "nodejs";
 
 export async function GET(req) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session || !session.user || !session.user.email) {
@@ -27,6 +35,14 @@ export async function GET(req) {
 }
 
 export async function PUT(req) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session || !session.user || !session.user.email) {
@@ -50,7 +66,10 @@ export async function PUT(req) {
     }
 
     if (location && location.length > 50) {
-      return NextResponse.json({ error: "Location must be 50 characters or less" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Location must be 50 characters or less" },
+        { status: 400 }
+      );
     }
 
     const userRef = adminDb.collection("users").doc(session.user.email);

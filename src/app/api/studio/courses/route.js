@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export async function GET(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const coursesRef = adminDb.collection("published_courses");
     const querySnapshot = await coursesRef.get();
@@ -27,6 +35,9 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error("Error fetching courses:", error);
-    return NextResponse.json({ error: "Failed to fetch courses", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch courses", details: error.message },
+      { status: 500 }
+    );
   }
 }

@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
 export async function GET(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
 
@@ -16,7 +24,7 @@ export async function GET(request) {
       .get();
 
     const count = youtubeCoursesSnapshot.size;
-    const courses = youtubeCoursesSnapshot.docs.map(doc => ({
+    const courses = youtubeCoursesSnapshot.docs.map((doc) => ({
       id: doc.id,
       title: doc.data().title || doc.data().videoTitle || "Untitled Course",
       thumbnail: doc.data().thumbnail,
@@ -24,7 +32,7 @@ export async function GET(request) {
       createdAt: doc.data().createdAt,
       lastAccessedAt: doc.data().lastAccessedAt,
       chaptersCount: doc.data().chapters?.length || 0,
-      completedChapters: doc.data().completedChapters?.length || 0
+      completedChapters: doc.data().completedChapters?.length || 0,
     }));
     courses.sort((a, b) => {
       const dateA = a.lastAccessedAt ? new Date(a.lastAccessedAt) : new Date(0);
@@ -36,7 +44,7 @@ export async function GET(request) {
       count,
       courses,
       limit: 5,
-      remaining: Math.max(0, 5 - count)
+      remaining: Math.max(0, 5 - count),
     });
   } catch (error) {
     console.error("Error fetching YouTube course status:", error);

@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
 // PATCH - Update a review
 export async function PATCH(request, { params }) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -14,18 +22,12 @@ export async function PATCH(request, { params }) {
     const { rating, reviewText } = await request.json();
 
     if (!reviewId) {
-      return NextResponse.json(
-        { error: "Review ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Review ID is required" }, { status: 400 });
     }
 
     // Validation
     if (rating && (rating < 1 || rating > 5)) {
-      return NextResponse.json(
-        { error: "Rating must be between 1 and 5" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Rating must be between 1 and 5" }, { status: 400 });
     }
 
     if (reviewText && reviewText.length > 1000) {
@@ -42,20 +44,14 @@ export async function PATCH(request, { params }) {
     const reviewDoc = await reviewRef.get();
 
     if (!reviewDoc.exists) {
-      return NextResponse.json(
-        { error: "Review not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
 
     const reviewData = reviewDoc.data();
 
     // Check if user owns this review
     if (reviewData.userId !== userEmail) {
-      return NextResponse.json(
-        { error: "You can only edit your own reviews" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "You can only edit your own reviews" }, { status: 403 });
     }
 
     // Update review
@@ -85,15 +81,20 @@ export async function PATCH(request, { params }) {
     });
   } catch (error) {
     console.error("Error updating review:", error);
-    return NextResponse.json(
-      { error: "Failed to update review" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update review" }, { status: 500 });
   }
 }
 
 // DELETE - Delete a review
 export async function DELETE(request, { params }) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -103,10 +104,7 @@ export async function DELETE(request, { params }) {
     const { reviewId } = params;
 
     if (!reviewId) {
-      return NextResponse.json(
-        { error: "Review ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Review ID is required" }, { status: 400 });
     }
 
     const userEmail = session.user.email;
@@ -116,20 +114,14 @@ export async function DELETE(request, { params }) {
     const reviewDoc = await reviewRef.get();
 
     if (!reviewDoc.exists) {
-      return NextResponse.json(
-        { error: "Review not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
 
     const reviewData = reviewDoc.data();
 
     // Check if user owns this review
     if (reviewData.userId !== userEmail) {
-      return NextResponse.json(
-        { error: "You can only delete your own reviews" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "You can only delete your own reviews" }, { status: 403 });
     }
 
     // Delete review
@@ -144,15 +136,15 @@ export async function DELETE(request, { params }) {
     });
   } catch (error) {
     console.error("Error deleting review:", error);
-    return NextResponse.json(
-      { error: "Failed to delete review" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete review" }, { status: 500 });
   }
 }
 
 // Helper function to update course average rating
 async function updateCourseRating(courseId) {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   try {
     const reviewsSnapshot = await adminDb
       .collection("reviews")

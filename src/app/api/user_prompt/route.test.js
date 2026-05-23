@@ -8,15 +8,19 @@ vi.mock('@/lib/auth-server', () => ({
   getServerSession: vi.fn(),
 }));
 
-vi.mock('@/lib/firebase-admin', () => ({
-  adminDb: {
+vi.mock('@/lib/firebase-admin', () => {
+  const mockAdminDb = {
     collection: vi.fn(),
     runTransaction: vi.fn(),
-  },
-  FieldValue: {
-    serverTimestamp: vi.fn(() => new Date()),
-  },
-}));
+  };
+  return {
+    getAdminDb: () => mockAdminDb,
+    adminDb: mockAdminDb,
+    FieldValue: {
+      serverTimestamp: vi.fn(() => new Date()),
+    },
+  };
+});
 
 // Create a mock for the model that we can control in tests
 const mockGenerateContent = vi.fn();

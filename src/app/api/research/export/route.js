@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import crypto from "crypto";
 
 export async function GET(request) {
@@ -21,6 +21,9 @@ export async function GET(request) {
 }
 
 async function exportInteractions() {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   // Get all user activity data
   const snapshot = await adminDb.collection("user_activity").get();
 
@@ -45,6 +48,9 @@ async function exportInteractions() {
 }
 
 async function exportOutcomes() {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   // Get gamification stats (outcomes)
   const snapshot = await adminDb.collection("gamification").get();
 

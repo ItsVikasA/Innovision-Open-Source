@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
 export async function GET(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("courseId");
     const sortBy = searchParams.get("sortBy") || "newest";
 
     if (!courseId) {
-      return NextResponse.json(
-        { error: "Course ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Course ID is required" }, { status: 400 });
     }
 
     console.log("Fetching reviews for courseId:", courseId, "sortBy:", sortBy);
@@ -43,14 +48,9 @@ export async function GET(request) {
       reviews.sort((a, b) => (b.helpfulCount || 0) - (a.helpfulCount || 0));
     }
 
-    const ratingDoc = await adminDb
-      .collection("courseRatings")
-      .doc(courseId)
-      .get();
+    const ratingDoc = await adminDb.collection("courseRatings").doc(courseId).get();
 
-    const ratingStats = ratingDoc.exists
-      ? ratingDoc.data()
-      : { averageRating: 0, totalReviews: 0 };
+    const ratingStats = ratingDoc.exists ? ratingDoc.data() : { averageRating: 0, totalReviews: 0 };
     const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     reviews.forEach((review) => {
       distribution[review.rating]++;
@@ -75,6 +75,14 @@ export async function GET(request) {
 
 // POST - Submit a new review
 export async function POST(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -85,17 +93,11 @@ export async function POST(request) {
 
     // Validation
     if (!courseId) {
-      return NextResponse.json(
-        { error: "Course ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Course ID is required" }, { status: 400 });
     }
 
     if (!rating || rating < 1 || rating > 5) {
-      return NextResponse.json(
-        { error: "Rating must be between 1 and 5" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Rating must be between 1 and 5" }, { status: 400 });
     }
 
     if (reviewText && reviewText.length > 1000) {
@@ -154,15 +156,15 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("Error submitting review:", error);
-    return NextResponse.json(
-      { error: "Failed to submit review" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to submit review" }, { status: 500 });
   }
 }
 
 // Helper function to update course average rating
 async function updateCourseRating(courseId) {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   try {
     const reviewsSnapshot = await adminDb
       .collection("reviews")

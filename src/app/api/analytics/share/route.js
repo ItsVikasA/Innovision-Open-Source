@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export async function POST(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const { courseId, userId, platform } = await request.json();
 
     if (!courseId || !userId) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     // Increment share count
@@ -17,10 +22,7 @@ export async function POST(request) {
     const courseSnap = await courseRef.get();
 
     if (!courseSnap.exists()) {
-      return NextResponse.json(
-        { error: "Course not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
     const currentShareCount = courseSnap.data().shareCount || 0;
@@ -46,9 +48,6 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("Error tracking share:", error);
-    return NextResponse.json(
-      { error: "Failed to track share" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to track share" }, { status: 500 });
   }
 }

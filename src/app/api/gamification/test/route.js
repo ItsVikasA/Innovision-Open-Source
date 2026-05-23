@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 /**
  * Test endpoint to initialize and test gamification system
  * Usage: GET /api/gamification/test?userId=user@example.com&action=init
  */
 export async function GET(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
@@ -83,7 +91,8 @@ export async function GET(request) {
       message: "Gamification Test Endpoint",
       usage: {
         init: "/api/gamification/test?userId=user@example.com&action=init",
-        award: "/api/gamification/test?userId=user@example.com&action=award&xp=100&type=complete_chapter",
+        award:
+          "/api/gamification/test?userId=user@example.com&action=award&xp=100&type=complete_chapter",
         check: "/api/gamification/test?userId=user@example.com&action=check",
       },
     });

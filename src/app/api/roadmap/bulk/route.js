@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
 export async function POST(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -12,10 +20,7 @@ export async function POST(request) {
     const { courseIds, action } = await request.json();
 
     if (!courseIds || !Array.isArray(courseIds) || courseIds.length === 0) {
-      return NextResponse.json(
-        { error: "Course IDs array is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Course IDs array is required" }, { status: 400 });
     }
 
     if (!action || !["delete", "archive", "unarchive"].includes(action)) {
@@ -69,9 +74,6 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("Error in bulk action:", error);
-    return NextResponse.json(
-      { error: "Failed to perform bulk action" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to perform bulk action" }, { status: 500 });
   }
 }

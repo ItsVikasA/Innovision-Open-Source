@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
-import { adminDb, FieldValue } from "@/lib/firebase-admin";
+import { FieldValue, getAdminDb } from "@/lib/firebase-admin";
 import { nanoid } from "nanoid";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { canGenerateCourse } from "@/lib/premium";
@@ -25,6 +25,9 @@ const model = genAI.getGenerativeModel({
 });
 
 async function updateDatabase(details, id, user, retries = 3, context = {}) {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   const docRef = adminDb.collection("users").doc(user.email).collection("roadmaps").doc(id);
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -36,13 +39,13 @@ async function updateDatabase(details, id, user, retries = 3, context = {}) {
         roadmapId: id,
         attempt,
         maxRetries: retries,
-        operation: context.operation || 'updateDatabase',
+        operation: context.operation || "updateDatabase",
         prompt: context.prompt,
         error: {
           message: error.message,
           code: error.code,
-          stack: error.stack
-        }
+          stack: error.stack,
+        },
       });
       if (attempt === retries) return false;
       await new Promise((res) => setTimeout(res, 1000 * attempt));
@@ -60,6 +63,9 @@ function cleanJsonResponse(text) {
 }
 
 async function generateRoadmap(prompt, id, session, user_prompt) {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   const docRef = adminDb.collection("users").doc(session.user.email).collection("roadmaps").doc(id);
 
   try {
@@ -107,7 +113,7 @@ Topic: ${prompt}
         id,
         session.user,
         3,
-        { operation: 'unsuitable_topic', prompt }
+        { operation: "unsuitable_topic", prompt }
       );
 
       if (!dbSuccess) {
@@ -115,7 +121,7 @@ Topic: ${prompt}
           userId: session.user.email,
           roadmapId: id,
           prompt,
-          operation: 'unsuitable_topic'
+          operation: "unsuitable_topic",
         });
       }
       return;
@@ -142,7 +148,7 @@ Topic: ${prompt}
       id,
       session.user,
       3,
-      { operation: 'course_completion', prompt }
+      { operation: "course_completion", prompt }
     );
 
     // Create notification for completion
@@ -167,14 +173,14 @@ Topic: ${prompt}
         let stats = statsDoc.exists
           ? statsDoc.data()
           : {
-            xp: 0,
-            level: 1,
-            streak: 1,
-            badges: [],
-            rank: 0,
-            achievements: [],
-            lastActive: new Date().toISOString(),
-          };
+              xp: 0,
+              level: 1,
+              streak: 1,
+              badges: [],
+              rank: 0,
+              achievements: [],
+              lastActive: new Date().toISOString(),
+            };
 
         const newXP = (stats.xp || 0) + xpGained;
         const newLevel = Math.floor(newXP / 500) + 1;
@@ -207,33 +213,33 @@ Topic: ${prompt}
       userId: session.user.email,
       roadmapId: id,
       prompt,
-      operation: 'gemini_generation',
+      operation: "gemini_generation",
       error: {
         message: error.message,
         status: error.status,
         code: error.code,
-        stack: error.stack
-      }
+        stack: error.stack,
+      },
     });
 
     let userMessage = "There was an error while generating your roadmap.";
-    let detectedCondition = 'unknown';
+    let detectedCondition = "unknown";
 
     if (error.message?.includes("API key") || error.message?.includes("API_KEY")) {
       userMessage = "API key error. Please contact support or try again later.";
-      detectedCondition = 'api_key_error';
+      detectedCondition = "api_key_error";
     } else if (error.message?.includes("SAFETY")) {
       userMessage = "Content was blocked by safety filters. Try simpler wording.";
-      detectedCondition = 'safety_filter';
+      detectedCondition = "safety_filter";
     } else if (error.message?.includes("quota") || error.status === 429) {
       userMessage = "Rate limit reached. Please wait a minute and try again.";
-      detectedCondition = 'rate_limit';
+      detectedCondition = "rate_limit";
     } else if (error.message?.includes("Invalid JSON")) {
       userMessage = "AI returned invalid format. Please try again.";
-      detectedCondition = 'invalid_json';
+      detectedCondition = "invalid_json";
     } else if (error.message?.includes("token") || error.message?.includes("maximum")) {
       userMessage = "Topic too long. Try fewer modules or shorter names.";
-      detectedCondition = 'token_limit';
+      detectedCondition = "token_limit";
     }
 
     console.error("Error condition detected:", {
@@ -241,7 +247,7 @@ Topic: ${prompt}
       roadmapId: id,
       prompt,
       detectedCondition,
-      userMessage
+      userMessage,
     });
 
     const dbSuccess = await updateDatabase(
@@ -253,7 +259,7 @@ Topic: ${prompt}
       id,
       session.user,
       3,
-      { operation: 'error_handling', prompt, detectedCondition }
+      { operation: "error_handling", prompt, detectedCondition }
     );
 
     if (!dbSuccess) {
@@ -261,9 +267,9 @@ Topic: ${prompt}
         userId: session.user.email,
         roadmapId: id,
         prompt,
-        operation: 'error_handling',
+        operation: "error_handling",
         detectedCondition,
-        originalError: error.message
+        originalError: error.message,
       });
     }
   }
@@ -285,7 +291,10 @@ export async function POST(req) {
     }
 
     if (user_prompt.prompt.length > 1500) {
-      return NextResponse.json({ message: "Prompt too long. Maximum 1500 characters." }, { status: 400 });
+      return NextResponse.json(
+        { message: "Prompt too long. Maximum 1500 characters." },
+        { status: 400 }
+      );
     }
 
     // Check if user can generate more courses based on premium status
@@ -296,7 +305,7 @@ export async function POST(req) {
           message: eligibility.reason,
           isPremium: eligibility.isPremium,
           courseCount: eligibility.courseCount,
-          needsUpgrade: !eligibility.isPremium
+          needsUpgrade: !eligibility.isPremium,
         },
         { status: 403 }
       );
@@ -309,7 +318,7 @@ export async function POST(req) {
       roadmapId,
       session.user,
       3,
-      { operation: 'initialize_roadmap', prompt: user_prompt.prompt }
+      { operation: "initialize_roadmap", prompt: user_prompt.prompt }
     );
 
     if (!dbSuccess) {
@@ -317,7 +326,7 @@ export async function POST(req) {
         userId: session.user.email,
         roadmapId,
         prompt: user_prompt.prompt,
-        operation: 'initialize_roadmap'
+        operation: "initialize_roadmap",
       });
       return NextResponse.json({ message: "Failed to initialize roadmap" }, { status: 500 });
     }

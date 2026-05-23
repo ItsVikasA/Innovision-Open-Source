@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
 export async function GET(request, { params }) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -12,10 +20,7 @@ export async function GET(request, { params }) {
     const { id } = params;
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Course ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Course ID is required" }, { status: 400 });
     }
 
     // Get course data
@@ -28,10 +33,7 @@ export async function GET(request, { params }) {
     const courseSnap = await courseRef.get();
 
     if (!courseSnap.exists) {
-      return NextResponse.json(
-        { error: "Course not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
     const courseData = courseSnap.data();
@@ -42,14 +44,19 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error("Error fetching course:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch course" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch course" }, { status: 500 });
   }
 }
 
 export async function DELETE(request, { params }) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -59,10 +66,7 @@ export async function DELETE(request, { params }) {
     const { id } = params;
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Course ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Course ID is required" }, { status: 400 });
     }
 
     // Get course reference
@@ -75,10 +79,7 @@ export async function DELETE(request, { params }) {
     const courseSnap = await courseRef.get();
 
     if (!courseSnap.exists) {
-      return NextResponse.json(
-        { error: "Course not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
     // Delete the course
@@ -90,14 +91,19 @@ export async function DELETE(request, { params }) {
     });
   } catch (error) {
     console.error("Error deleting course:", error);
-    return NextResponse.json(
-      { error: "Failed to delete course" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete course" }, { status: 500 });
   }
 }
 
 export async function PATCH(request, { params }) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -108,10 +114,7 @@ export async function PATCH(request, { params }) {
     const { archived } = await request.json();
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Course ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Course ID is required" }, { status: 400 });
     }
 
     const courseRef = adminDb
@@ -131,9 +134,6 @@ export async function PATCH(request, { params }) {
     });
   } catch (error) {
     console.error("Error updating course:", error);
-    return NextResponse.json(
-      { error: "Failed to update course" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update course" }, { status: 500 });
   }
 }

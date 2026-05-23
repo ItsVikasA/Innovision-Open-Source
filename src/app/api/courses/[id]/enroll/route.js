@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export async function POST(request, { params }) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session || !session.user || !session.user.email) {
@@ -39,7 +47,11 @@ export async function POST(request, { params }) {
 
     // Create roadmap
     const roadmapId = `${Date.now()}`;
-    const roadmapRef = adminDb.collection("users").doc(session.user.email).collection("roadmaps").doc(roadmapId);
+    const roadmapRef = adminDb
+      .collection("users")
+      .doc(session.user.email)
+      .collection("roadmaps")
+      .doc(roadmapId);
 
     await roadmapRef.set({
       userId: session.user.email,

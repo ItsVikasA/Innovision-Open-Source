@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
 export async function POST(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -12,10 +20,7 @@ export async function POST(request) {
     const { courseId, format } = await request.json();
 
     if (!courseId || !format) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     if (!["pdf", "markdown", "json"].includes(format)) {
@@ -35,10 +40,7 @@ export async function POST(request) {
     const courseSnap = await courseRef.get();
 
     if (!courseSnap.exists) {
-      return NextResponse.json(
-        { error: "Course not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
     const courseData = courseSnap.data();
@@ -69,10 +71,7 @@ export async function POST(request) {
         break;
 
       default:
-        return NextResponse.json(
-          { error: "Unsupported format" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Unsupported format" }, { status: 400 });
     }
 
     return new NextResponse(content, {
@@ -83,10 +82,7 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("Error exporting course:", error);
-    return NextResponse.json(
-      { error: "Failed to export course" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to export course" }, { status: 500 });
   }
 }
 
@@ -199,13 +195,19 @@ function generateHTML(courseData) {
     ${courseData.chapters?.map((ch, i) => `<li><a href="#chapter-${i + 1}">${ch.chapterTitle || ch.title}</a></li>`).join("\n    ") || ""}
   </ol>
   
-  ${courseData.chapters?.map((chapter, index) => `
+  ${
+    courseData.chapters
+      ?.map(
+        (chapter, index) => `
     <div class="chapter" id="chapter-${index + 1}">
       <h2>Chapter ${index + 1}: ${chapter.chapterTitle || chapter.title}</h2>
       ${chapter.chapterDescription || chapter.description ? `<p><em>${chapter.chapterDescription || chapter.description}</em></p>` : ""}
       ${chapter.content ? `<div>${chapter.content}</div>` : ""}
     </div>
-  `).join("\n  ") || ""}
+  `
+      )
+      .join("\n  ") || ""
+  }
   
   <div class="footer">
     <p>Exported from InnoVision Learning Platform</p>

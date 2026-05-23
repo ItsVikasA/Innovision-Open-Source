@@ -6,11 +6,15 @@ import { getServerSession } from '@/lib/auth-server';
 import * as fc from 'fast-check';
 
 // Mock dependencies
-vi.mock('@/lib/firebase-admin', () => ({
-  adminDb: {
+vi.mock('@/lib/firebase-admin', () => {
+  const mockAdminDb = {
     collection: vi.fn(),
-  },
-}));
+  };
+  return {
+    getAdminDb: () => mockAdminDb,
+    adminDb: mockAdminDb,
+  };
+});
 
 vi.mock('@/lib/auth-server', () => ({
   getServerSession: vi.fn(),

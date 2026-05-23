@@ -1,8 +1,16 @@
 // Progress Sync API for Offline Support
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export async function POST(request) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const progress = await request.json();
 
@@ -11,7 +19,9 @@ export async function POST(request) {
     }
 
     // Save to Firebase
-    const progressRef = adminDb.collection("progress").doc(`${progress.userId}_${progress.courseId}_${Date.now()}`);
+    const progressRef = adminDb
+      .collection("progress")
+      .doc(`${progress.userId}_${progress.courseId}_${Date.now()}`);
     await progressRef.set({
       ...progress,
       syncedAt: Date.now(),

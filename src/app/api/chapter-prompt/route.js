@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getServerSession } from "@/lib/auth-server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export const openai = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -31,6 +31,9 @@ function parseJson(response) {
 }
 
 async function updateDatabase(content, chapter, roadmapId, session) {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   const docRef = adminDb
     .collection("users")
     .doc(session.user.email)
@@ -54,6 +57,9 @@ async function updateDatabase(content, chapter, roadmapId, session) {
 }
 
 async function generateChapter(prompt, number, roadmapId, session) {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   const docRef = adminDb
     .collection("users")
     .doc(session.user.email)
@@ -92,6 +98,9 @@ async function generateChapter(prompt, number, roadmapId, session) {
 }
 
 async function cleanupStuckChapters(session, roadmapId, number) {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   const docRef = adminDb
     .collection("users")
     .doc(session.user.email)
@@ -114,6 +123,14 @@ async function cleanupStuckChapters(session, roadmapId, number) {
 }
 
 export async function POST(req) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   const { prompt, number, roadmapId } = await req.json();
   const session = await getServerSession();
 

@@ -1,8 +1,16 @@
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {
@@ -32,11 +40,7 @@ export async function POST(req) {
     const sourceRoadmapData = sourceRoadmapSnap.data();
 
     // Create new roadmap with "(Copy)" appended to title
-    const newRoadmapRef = adminDb
-      .collection("users")
-      .doc(userEmail)
-      .collection("roadmaps")
-      .doc();
+    const newRoadmapRef = adminDb.collection("users").doc(userEmail).collection("roadmaps").doc();
 
     const newRoadmapData = {
       ...sourceRoadmapData,

@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { adminDb, FieldValue } from "@/lib/firebase-admin";
+import { FieldValue, getAdminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 
 async function completeChapter(chapter, roadmapId, user) {
+  const adminDb = getAdminDb();
+  if (!adminDb) return;
+
   const docRef = adminDb.collection("users").doc(user.email).collection("roadmaps").doc(roadmapId);
   const docSnap = await docRef.get();
   if (docSnap.exists) {
@@ -22,14 +25,14 @@ async function completeChapter(chapter, roadmapId, user) {
         let stats = statsDoc.exists
           ? statsDoc.data()
           : {
-            xp: 0,
-            level: 1,
-            streak: 1,
-            badges: [],
-            rank: 0,
-            achievements: [],
-            lastActive: new Date().toISOString(),
-          };
+              xp: 0,
+              level: 1,
+              streak: 1,
+              badges: [],
+              rank: 0,
+              achievements: [],
+              lastActive: new Date().toISOString(),
+            };
 
         const newXP = (stats.xp || 0) + xpGained;
         const newLevel = Math.floor(newXP / 500) + 1;
@@ -87,7 +90,11 @@ async function completeChapter(chapter, roadmapId, user) {
       if (!wasCompleted) {
         try {
           const { sendCourseCompletionEmail } = await import("@/lib/brevo");
-          await sendCourseCompletionEmail(user.email, user.name, roadmap.courseTitle || "Your Roadmap");
+          await sendCourseCompletionEmail(
+            user.email,
+            user.name,
+            roadmap.courseTitle || "Your Roadmap"
+          );
         } catch (emailError) {
           console.error("Failed to send roadmap completion email:", emailError);
         }
@@ -102,6 +109,14 @@ async function completeChapter(chapter, roadmapId, user) {
 }
 
 export async function POST(req) {
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Database not available. Check server configuration." },
+      { status: 500 }
+    );
+  }
+
   try {
     const session = await getServerSession();
     if (!session?.user) {
@@ -176,14 +191,14 @@ export async function POST(req) {
           let stats = statsDoc.exists
             ? statsDoc.data()
             : {
-              xp: 0,
-              level: 1,
-              streak: 1,
-              badges: [],
-              rank: 0,
-              achievements: [],
-              lastActive: new Date().toISOString(),
-            };
+                xp: 0,
+                level: 1,
+                streak: 1,
+                badges: [],
+                rank: 0,
+                achievements: [],
+                lastActive: new Date().toISOString(),
+              };
 
           const newXP = (stats.xp || 0) + xpGained;
           const newLevel = Math.floor(newXP / 500) + 1;
@@ -239,11 +254,14 @@ export async function POST(req) {
       courseCompleted = await completeChapter(chapter, roadmap, session.user);
     }
 
-    return NextResponse.json({
-      message: "Task updated successfully",
-      courseCompleted,
-      courseId: roadmap,
-    }, { status: 200 });
+    return NextResponse.json(
+      {
+        message: "Task updated successfully",
+        courseCompleted,
+        courseId: roadmap,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Tasks API error:", error);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
