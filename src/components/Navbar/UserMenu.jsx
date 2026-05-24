@@ -31,6 +31,7 @@ import {
   User,
   Sun,
   Moon,
+  BarChart3,
 } from "lucide-react";
 import PremiumGoogleTranslate from "../PremiumGoogleTranslate";
 
@@ -99,6 +100,13 @@ const UserMenu = ({
             <Link href="/gamification" className="flex items-center gap-2">
               <Trophy className="h-4 w-4" />
               Achievements
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem asChild>
+            <Link href="/analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Study Analytics
             </Link>
           </DropdownMenuItem>
 

@@ -140,6 +140,7 @@ const Navbar = () => {
     { href: "/roadmap", label: "My Courses", icon: Home, description: "Your learning dashboard" },
     { href: "/courses", label: "Browse Courses", icon: BookOpen, description: "Explore all courses" },
     { href: "/code-editor", label: "Code Editor", icon: Code2, description: "Practice coding" },
+    { href: "/analytics", label: "Study Analytics", icon: BarChart3, description: "Track your study patterns" },
   ];
 
   const moreMenuItems = [

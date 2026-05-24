@@ -9,8 +9,10 @@ import {
 import CalendarHeatmap from "react-calendar-heatmap";
 import "react-calendar-heatmap/dist/styles.css";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useStudyTime } from "@/contexts/studyTime";
 
 export default function StatsCard({ userId }) {
+  const { dailyLogs } = useStudyTime();
   const [stats, setStats] = useState({
     totalXP: 0,
     level: 1,
@@ -18,10 +20,16 @@ export default function StatsCard({ userId }) {
     coursesCompleted: 0,
     chaptersCompleted: 0,
     quizzesPassed: 0,
-    hoursStudied: 0,
     activityData: [],
   });
   const [loading, setLoading] = useState(true);
+
+  // Calculate active hours studied reactively (tracked study time vs XP fallback)
+  const totalSeconds = Object.values(dailyLogs || {}).reduce((acc, sec) => acc + sec, 0);
+  const realHoursStudied = Math.round((totalSeconds / 3600) * 10) / 10;
+  const hoursStudied = realHoursStudied > 0 
+    ? realHoursStudied 
+    : Math.round((stats.totalXP || 0) * 0.5 / 60 * 10) / 10;
 
   useEffect(() => {
     if (userId) {
@@ -44,9 +52,6 @@ export default function StatsCard({ userId }) {
         return acc + (r.chapters?.filter(c => c.completed)?.length || 0);
       }, 0) || 0;
 
-      // Calculate hours studied (estimate: 1 XP ≈ 0.5 minutes of study)
-      const hoursStudied = Math.round((statsData.xp || 0) * 0.5 / 60 * 10) / 10;
-
       // Generate activity data for heatmap (last 365 days)
       const activityData = generateActivityData(statsData.achievements || []);
 
@@ -62,7 +67,6 @@ export default function StatsCard({ userId }) {
         coursesCompleted: completedCourses,
         chaptersCompleted: totalChapters,
         quizzesPassed,
-        hoursStudied,
         activityData,
       });
     } catch (error) {
@@ -146,7 +150,7 @@ export default function StatsCard({ userId }) {
           <StatItem
             icon={Clock}
             label="Hours Studied"
-            value={stats.hoursStudied}
+            value={hoursStudied}
             suffix="hrs"
             color="blue"
           />

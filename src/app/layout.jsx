@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import LoaderProvider from "@/components/ui/Custom/ToastLoader";
 import { AuthProvider } from "@/contexts/auth";
 import { XpProvider } from "@/contexts/xp";
+import { StudyTimeProvider } from "@/contexts/studyTime";
 import { NightModeProvider } from "@/contexts/nightMode";
 import { NotificationProvider } from "@/contexts/notifications";
 import OfflineIndicator from "@/components/OfflineIndicator";
@@ -65,17 +66,19 @@ export default function RootLayout({ children }) {
       <body className={`${robotoSans.variable} ${robotoMono.variable} antialiased`}>
         <AuthProvider>
           <XpProvider>
-            <NightModeProvider>
-              <NotificationProvider>
-                <LoaderProvider>
-                  <Navbar />
-                  <main className="pt-16 relative">{children}</main>
-                  <OfflineIndicator />
-                  <NotificationChecker />
-                  <Toaster richColors />
-                </LoaderProvider>
-              </NotificationProvider>
-            </NightModeProvider>
+            <StudyTimeProvider>
+              <NightModeProvider>
+                <NotificationProvider>
+                  <LoaderProvider>
+                    <Navbar />
+                    <main className="pt-16 relative">{children}</main>
+                    <OfflineIndicator />
+                    <NotificationChecker />
+                    <Toaster richColors />
+                  </LoaderProvider>
+                </NotificationProvider>
+              </NightModeProvider>
+            </StudyTimeProvider>
           </XpProvider>
         </AuthProvider>
         <Analytics />

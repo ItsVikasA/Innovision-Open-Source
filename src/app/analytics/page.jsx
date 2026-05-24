@@ -1,26 +1,54 @@
 "use client";
+
 import { useAuth } from "@/contexts/auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import AnalyticsDashboard from "@/components/dashboard/AnalyticsDashboard";
+import StudyAnalyticsDashboard from "@/components/dashboard/StudyAnalyticsDashboard";
+import { BarChart3 } from "lucide-react";
+import { PageBackground, GridPattern, PageHeader, ScrollReveal } from "@/components/ui/PageWrapper";
 
-export default function AnalyticsPage() {
+export default function StudyAnalyticsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (!loading && !user) {
       router.push("/login");
     }
-  }, [status, router]);
+  }, [user, loading, router]);
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center relative">
+        <PageBackground />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 
-  return <AnalyticsDashboard instructorId={session.user.email} />;
+  return (
+    <div className="min-h-screen bg-background relative">
+      <PageBackground variant="profile" />
+      <GridPattern opacity={0.02} />
+
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 relative z-10 pt-6">
+        <ScrollReveal>
+          <PageHeader
+            icon={BarChart3}
+            iconColor="text-blue-500"
+            title="Study Time Analytics"
+            description="Understand your daily study commitment, adjust personal learning targets, and track consistency."
+          />
+        </ScrollReveal>
+
+        <ScrollReveal delay={100}>
+          <StudyAnalyticsDashboard />
+        </ScrollReveal>
+      </div>
+    </div>
+  );
 }
