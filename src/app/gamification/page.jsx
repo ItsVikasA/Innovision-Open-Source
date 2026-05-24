@@ -1,13 +1,15 @@
 "use client";
 import { useAuth } from "@/contexts/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, TrendingUp, Target, Brain, Sparkles } from "lucide-react";
+import { Trophy, TrendingUp, Target, Brain, Sparkles, Globe } from "lucide-react";
 import GamificationDashboard from "@/components/gamification/GamificationDashboard";
 import Leaderboard from "@/components/gamification/Leaderboard";
 import DailyChallenges from "@/components/gamification/DailyChallenges";
 import StreakCalendar from "@/components/gamification/StreakCalendar";
 import XPChart from "@/components/gamification/XPChart";
 import SkillTree from "@/components/gamification/SkillTree";
+import CommunityEvents from "@/components/gamification/CommunityEvents";
+import CommunityProgress from "@/components/gamification/CommunityProgress";
 import { PageBackground, GridPattern, PageHeader, ScrollReveal } from "@/components/ui/PageWrapper";
 
 export default function GamificationPage() {
@@ -55,11 +57,16 @@ export default function GamificationPage() {
                 <Brain className="h-3 w-3 mr-1" />
                 Skills
               </TabsTrigger>
+              <TabsTrigger value="events" className="flex-1 min-w-20 text-sm data-[state=active]:bg-background">
+                <Globe className="h-3 w-3 mr-1" />
+                Events
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-0">
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3">
+                <div className="lg:col-span-3 space-y-4">
+                  <CommunityProgress userId={user.email} />
                   <GamificationDashboard userId={user.email} />
                 </div>
 
@@ -95,6 +102,10 @@ export default function GamificationPage() {
               <div className="max-w-4xl mx-auto">
                 <SkillTree />
               </div>
+            </TabsContent>
+
+            <TabsContent value="events" className="space-y-0">
+              <CommunityEvents userId={user.email} />
             </TabsContent>
           </Tabs>
         </ScrollReveal>
