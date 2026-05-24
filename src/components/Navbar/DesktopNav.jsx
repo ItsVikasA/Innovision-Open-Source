@@ -40,26 +40,17 @@ const DesktopNav = ({
           ))}
         </div>
       ) : (
-        // Landing page nav - pill style buttons with text
+        // Landing page nav - pill style buttons with text (uses href links)
         <div className="flex items-center gap-0.5 px-2 py-1.5 rounded-full border border-border/50 bg-card/80 backdrop-blur-md shadow-sm">
           {landingNavItems.map((item) => (
             <Button
-              key={item.id || item.href}
+              key={item.href}
               variant="ghost"
               size="sm"
-              asChild={!!item.href}
-              onClick={() => {
-                if (item.id) {
-                  document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" });
-                }
-              }}
+              asChild
               className="text-sm font-light text-foreground hover:bg-muted hover:text-foreground rounded-full h-8 px-4 transition-colors"
             >
-              {item.href ? (
-                <Link href={item.href}>{item.label}</Link>
-              ) : (
-                <span className="cursor-pointer">{item.label}</span>
-              )}
+              <Link href={item.href}>{item.label}</Link>
             </Button>
           ))}
         </div>

@@ -149,12 +149,12 @@ const Navbar = () => {
     { href: "/contact", label: "Contact", icon: MessageSquare, description: "Get in touch" },
   ];
 
-  // Landing page navigation
+  // ✅ UPDATED: landing page navigation items now use href with hash
   const landingNavItems = [
-    { id: "features", label: "Features" },
-    { id: "how-it-works", label: "How It Works" },
-    { id: "faq", label: "FAQ" },
-    { id: "contact", label: "Contact" },
+    { label: "Features", href: "/#features" },
+    { label: "How It Works", href: "/#how-it-works" },
+    { label: "FAQ", href: "/#faq" },
+    { label: "Contact", href: "/#contact" },
   ];
 
   return (
@@ -235,7 +235,6 @@ const Navbar = () => {
                 </Tooltip>
               </>
             )}
-
 
             {user && <NotificationBell />}
 
