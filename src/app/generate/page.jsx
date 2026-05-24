@@ -73,6 +73,11 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("custom");
   const [openCollege, setOpenCollege] = useState(false);
   const [premiumStatus, setPremiumStatus] = useState({ isPremium: false, courseCount: 0, maxCourses: 3 });
+
+  // ── Autocomplete state ──────────────────────────────────────────────
+  const [topicSuggestions, setTopicSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  // ───────────────────────────────────────────────────────────────────
   const [engineeringData, setEngineeringData] = useState({
     college: "",
     branch: "",
@@ -461,6 +466,65 @@ Return valid JSON only.`;
     }
   };
 
+  // ── Autocomplete topics dataset ────────────────────────────────────
+  const AUTOCOMPLETE_TOPICS = [
+    // Web & Frontend
+    "Web Development", "Frontend Development", "Backend Development", "Full Stack Development",
+    "React", "Next.js", "Vue.js", "Angular", "Svelte", "Astro",
+    "Node.js", "Express.js", "Fastify", "NestJS",
+    "JavaScript", "TypeScript", "HTML", "CSS", "Tailwind CSS", "Sass", "Bootstrap",
+    "Web APIs", "REST APIs", "GraphQL", "tRPC", "WebSockets",
+    "Web Security", "Authentication", "JWT Authentication", "OAuth", "HTTPS",
+    // Languages
+    "Python", "Java", "C", "C++", "C#", "Go Programming", "Rust Programming",
+    "Kotlin", "Swift", "PHP", "Ruby", "Scala", "Dart", "Elixir", "Haskell",
+    // CS Fundamentals
+    "Data Structures", "Algorithms", "Arrays", "Linked Lists", "Stacks", "Queues",
+    "Trees", "Graphs", "Hash Tables", "Heaps", "Dynamic Programming", "Recursion",
+    "Sorting Algorithms", "Searching Algorithms", "Time Complexity", "Space Complexity",
+    "Object Oriented Programming", "Functional Programming", "Design Patterns",
+    "System Design", "Software Engineering", "Computer Architecture",
+    // Math
+    "Algebra", "Trigonometry", "Geometry", "Calculus", "Linear Algebra",
+    "Probability", "Statistics", "Number Theory", "Discrete Mathematics",
+    "Differential Equations", "Numerical Methods",
+    // AI / ML / Data
+    "Machine Learning", "Deep Learning", "Artificial Intelligence", "Neural Networks",
+    "Natural Language Processing", "Computer Vision", "Reinforcement Learning",
+    "Data Science", "Data Analysis", "Data Engineering", "Feature Engineering",
+    "Pandas", "NumPy", "Matplotlib", "Scikit-learn", "TensorFlow", "PyTorch", "Keras",
+    "Large Language Models", "Prompt Engineering", "Generative AI",
+    // DevOps & Cloud
+    "DevOps", "Docker", "Kubernetes", "CI/CD", "GitHub Actions", "Jenkins",
+    "AWS", "Azure", "Google Cloud", "Linux", "Shell Scripting", "Terraform",
+    "Ansible", "Monitoring", "Observability", "Site Reliability Engineering",
+    // Mobile
+    "Android Development", "iOS Development", "Flutter", "React Native",
+    "SwiftUI", "Jetpack Compose", "Mobile UI Design",
+    // Databases
+    "SQL", "MySQL", "PostgreSQL", "MongoDB", "NoSQL Databases", "Firebase",
+    "Redis", "Elasticsearch", "SQLite", "Database Design", "Database Optimization",
+    // Systems & Networks
+    "Operating Systems", "Computer Networks", "Networking", "TCP/IP",
+    "Database Management Systems", "Distributed Systems", "Microservices",
+    "Message Queues", "Kafka", "RabbitMQ",
+    // Cybersecurity
+    "Cybersecurity", "Ethical Hacking", "Penetration Testing", "Cryptography",
+    "Network Security", "Application Security", "OWASP", "Secure Coding",
+    // Other
+    "Blockchain", "Smart Contracts", "Solidity", "Web3",
+    "Game Development", "Unity", "Unreal Engine",
+    "UI/UX Design", "Figma", "Accessibility",
+    "Technical Writing", "Open Source Contribution",
+  ];
+
+  const filterTopics = (input) => {
+    if (!input.trim()) return [];
+    const lower = input.toLowerCase();
+    return AUTOCOMPLETE_TOPICS.filter((t) => t.toLowerCase().includes(lower)).slice(0, 8);
+  };
+  // ───────────────────────────────────────────────────────────────────
+
   const knowledgeLevelOptions = [
     {
       value: "beginner",
@@ -571,11 +635,48 @@ Return valid JSON only.`;
                           <FormLabel className="flex items-center gap-2">Concept to Learn</FormLabel>
                           <FormDescription>What main topic would you like to learn?</FormDescription>
                           <FormControl>
-                            <Input
-                              className={"focus-visible:ring-blue-200 focus-visible:border-blue-400 bg-background/50 mt-2"}
-                              placeholder="e.g., Trigonometry, Web development"
-                              {...field}
-                            />
+                            {/* ── Autocomplete wrapper — only this div is new ── */}
+                            <div className="relative mt-2">
+                              <Input
+                                className="focus-visible:ring-blue-200 focus-visible:border-blue-400 bg-background/50"
+                                placeholder="e.g., Trigonometry, Web development"
+                                {...field}
+                                onChange={(e) => {
+                                  field.onChange(e);
+                                  setTopicSuggestions(filterTopics(e.target.value));
+                                  setShowSuggestions(true);
+                                }}
+                                onFocus={() => {
+                                  if (field.value) {
+                                    setTopicSuggestions(filterTopics(field.value));
+                                    setShowSuggestions(true);
+                                  }
+                                }}
+                                onBlur={() => {
+                                  // Delay so click on suggestion registers first
+                                  setTimeout(() => setShowSuggestions(false), 150);
+                                }}
+                                autoComplete="off"
+                              />
+                              {showSuggestions && topicSuggestions.length > 0 && (
+                                <ul className="absolute z-50 w-full mt-1 rounded-md border border-border bg-popover shadow-md overflow-hidden">
+                                  {topicSuggestions.map((suggestion) => (
+                                    <li
+                                      key={suggestion}
+                                      onMouseDown={(e) => e.preventDefault()} // prevent input blur before click
+                                      onClick={() => {
+                                        field.onChange(suggestion);
+                                        setShowSuggestions(false);
+                                        setTopicSuggestions([]);
+                                      }}
+                                      className="px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                                    >
+                                      {suggestion}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
                           </FormControl>
                         </FormItem>
                       )}
