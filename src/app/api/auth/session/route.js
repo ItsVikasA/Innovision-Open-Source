@@ -6,6 +6,11 @@ import { getAdminDb } from "@/lib/firebase-admin";
 export async function POST(req) {
   try {
     const { idToken } = await req.json();
+
+    if (idToken && idToken.length > 4000) {
+      return NextResponse.json({ success: false, error: "Invalid token length" }, { status: 400 });
+    }
+
     const cookieStore = await cookies();
 
     if (idToken) {
@@ -38,7 +43,9 @@ export async function POST(req) {
             }).catch(() => { });
           }
         }
-      } catch (_) { }
+      } catch (err) {
+        console.error("Error verifying ID token or creating notification:", err);
+      }
 
       return NextResponse.json({ success: true });
     } else {

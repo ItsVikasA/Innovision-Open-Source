@@ -11,8 +11,8 @@ export async function POST(request) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const { prompt } = await request.json();
 
-    if (!prompt) {
-      return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+    if (!prompt || prompt.length > 2000) {
+      return NextResponse.json({ error: "Prompt is required and must be less than 2,000 characters" }, { status: 400 });
     }
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
