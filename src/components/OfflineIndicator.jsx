@@ -28,7 +28,7 @@ export default function OfflineIndicator() {
   return (
     <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 ${isOnline ? 'bg-blue-500' : 'bg-red-500'
       } text-white`}>
-      {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+      {isOnline ? <Wifi className="w-4 h-4" aria-hidden="true" /> : <WifiOff className="w-4 h-4" aria-hidden="true" />}
       <span>{syncing ? 'Syncing...' : isOnline ? 'Back online' : 'Offline mode'}</span>
     </div>
   );
