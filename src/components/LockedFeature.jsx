@@ -21,7 +21,7 @@ export default function LockedFeature({
     <Card className="bg-linear-to-br from-yellow-500/10 to-orange-500/10 border-2 border-yellow-500/30 max-w-md w-full mx-auto">
       <CardContent className="pt-6 text-center">
         <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Lock className="h-8 w-8 text-yellow-600" />
+          <Lock className="h-8 w-8 text-yellow-600" aria-hidden="true" />
         </div>
         <h3 className="font-bold text-xl mb-2">Premium Feature</h3>
         <p className="text-muted-foreground mb-4">
@@ -34,7 +34,7 @@ export default function LockedFeature({
           onClick={() => router.push("/premium")}
           className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
         >
-          <Crown className="h-4 w-4 mr-2" />
+          <Crown className="h-4 w-4 mr-2" aria-hidden="true" />
           Upgrade to Premium - ₹100/month
         </Button>
       </CardContent>
