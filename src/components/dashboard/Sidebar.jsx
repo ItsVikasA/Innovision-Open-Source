@@ -157,7 +157,8 @@ const Sidebar = ({ user, rank, difficultyLevel, leaderboard, onUserUpdate }) => 
                                             className="p-2 rounded-md border hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                             title={link.label}
                                         >
-                                            <Icon className="h-4 w-4" />
+                                            <span className="sr-only">{link.label}</span>
+                                            <Icon className="h-4 w-4" aria-hidden="true" />
                                         </a>
                                     );
                                 })}
