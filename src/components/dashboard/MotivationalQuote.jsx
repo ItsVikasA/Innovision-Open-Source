@@ -120,10 +120,10 @@ export default function MotivationalQuote({ variant = "default" }) {
       <div className="relative p-8">
         <div className="flex flex-col items-center text-center gap-6">
           <div className="p-3 rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 shadow-xl shadow-blue-500/20 ring-4 ring-blue-500/10">
-            <Quote className="h-6 w-6 text-white" />
+            <Quote className="h-6 w-6 text-white" aria-hidden="true" />
           </div>
 
-          <div className="space-y-4 max-w-2xl">
+          <div className="space-y-4 max-w-2xl" aria-live="polite">
             <p className="text-xl md:text-2xl font-light tracking-tight leading-relaxed italic text-foreground/90">
               "{quote.text}"
             </p>
