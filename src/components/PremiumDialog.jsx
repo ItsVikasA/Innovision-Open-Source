@@ -20,7 +20,7 @@ export default function PremiumDialog({ open, onOpenChange, feature = "this feat
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-yellow-600" />
+            <Crown className="h-5 w-5 text-yellow-600" aria-hidden="true" />
             Premium Feature Required
           </AlertDialogTitle>
           <AlertDialogDescription>
