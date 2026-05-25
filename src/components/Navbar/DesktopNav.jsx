@@ -15,7 +15,7 @@ const DesktopNav = ({
   isActiveLink,
 }) => {
   return (
-    <nav className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
+    <nav aria-label="Main Navigation" className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
       {user ? (
         // Logged in users - show ALL 11 nav items with icons only
         <div className="flex items-center gap-0.5 px-2 py-1.5 rounded-full border border-border/50 bg-card/80 backdrop-blur-md shadow-sm">
