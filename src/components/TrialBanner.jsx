@@ -42,7 +42,7 @@ export default function TrialBanner({ onStatusChange }) {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                <Clock className="h-5 w-5 text-white" />
+                <Clock className="h-5 w-5 text-white" aria-hidden="true" />
               </div>
               <div>
                 <h3 className="font-bold text-lg">Free Trial Active</h3>
@@ -55,7 +55,7 @@ export default function TrialBanner({ onStatusChange }) {
               onClick={() => router.push("/premium")}
               className="bg-blue-500 hover:bg-blue-600 text-white"
             >
-              <Crown className="h-4 w-4 mr-2" />
+              <Crown className="h-4 w-4 mr-2" aria-hidden="true" />
               Upgrade Now
             </Button>
           </div>
@@ -72,7 +72,7 @@ export default function TrialBanner({ onStatusChange }) {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5 text-black" />
+                <AlertTriangle className="h-5 w-5 text-black" aria-hidden="true" />
               </div>
               <div>
                 <h3 className="font-bold text-lg">Free Trial Expired</h3>
