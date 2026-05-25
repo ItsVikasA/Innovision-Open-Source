@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BarChart3, Wifi, Brain, Video, BookOpen, Crown, Download, Sparkles, Zap } from "lucide-react";
+import { BarChart3, Wifi, Brain, Video, BookOpen, Crown, Download, Sparkles, Zap, FileText } from "lucide-react";
 import { PageBackground, GridPattern, PageHeader, ScrollReveal, StaggerChildren, HoverCard } from "@/components/ui/PageWrapper";
 
 export default function FeaturesPage() {
@@ -103,6 +103,16 @@ export default function FeaturesPage() {
       href: "/features/projects",
       color: "bg-teal-500/10",
       borderColor: "hover:border-teal-500/50",
+      premium: true,
+      badge: "Premium"
+    },
+    {
+      title: "Smart Resume & ATS Optimizer",
+      description: "Track your ATS progression, label role-specific drafts, and get AI recommendations to unlock your dream role.",
+      icon: <FileText className="w-10 h-10 text-amber-500" />,
+      href: "/resume",
+      color: "bg-amber-500/10",
+      borderColor: "hover:border-amber-500/50",
       premium: true,
       badge: "Premium"
     }

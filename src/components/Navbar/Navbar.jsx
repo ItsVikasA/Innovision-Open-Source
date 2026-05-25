@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   Zap,
+  FileText,
 } from "lucide-react";
 import { Sun, Moon } from "lucide-react";
 import Image from "next/image";
@@ -144,6 +145,7 @@ const Navbar = () => {
 
   const moreMenuItems = [
     { href: "/features", label: "Features", icon: Trophy, description: "Platform features" },
+    { href: "/resume", label: "Resume Manager", icon: FileText, description: "ATS Score Tracker & Versions" },
     { href: "/gamification", label: "Achievements", icon: Zap, description: "Badges & rewards" },
     { href: "/demo", label: "Demo", icon: BarChart3, description: "See how it works" },
     { href: "/contact", label: "Contact", icon: MessageSquare, description: "Get in touch" },
