@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createNotification } from "@/lib/create-notification";
+import { buildDailyQuestState, mergeDailyQuestProgress } from "@/lib/daily-quests";
 
 export async function GET(request) {
   try {
@@ -167,6 +168,11 @@ export async function POST(request) {
     };
 
     await userRef.update(updates);
+    await syncDailyQuestProgress(adminDb, userId, {
+      action,
+      xpGained,
+      maintainedStreak: learningActions.includes(action),
+    });
 
     // Fire notifications for new badges and level-ups
     if (adminDb && userId) {
@@ -212,6 +218,80 @@ export async function POST(request) {
     console.error("Error updating stats:", error);
     return NextResponse.json({ error: "Failed to update stats" }, { status: 500 });
   }
+}
+
+async function syncDailyQuestProgress(adminDb, userId, { action, xpGained, maintainedStreak }) {
+  const today = new Date().toISOString().split("T")[0];
+  const dailyQuestRef = adminDb
+    .collection("users")
+    .doc(userId)
+    .collection("dailyQuests")
+    .doc(today);
+
+  const dailyQuestDoc = await dailyQuestRef.get();
+  const existingProgress = dailyQuestDoc.exists ? dailyQuestDoc.data() : buildDailyQuestState(today);
+  const mergedProgress = mergeDailyQuestProgress(today, existingProgress);
+
+  const progressUpdates = [];
+
+  if (xpGained > 0) {
+    progressUpdates.push({ type: "xp_earned", increment: xpGained });
+  }
+
+  if (maintainedStreak) {
+    progressUpdates.push({ type: "streak_maintained", increment: 1 });
+  }
+
+  switch (action) {
+    case "complete_chapter":
+      progressUpdates.push({ type: "chapters_completed", increment: 1 });
+      break;
+    case "complete_lesson":
+      progressUpdates.push({ type: "lessons_completed", increment: 1 });
+      break;
+    case "perfect_quiz":
+      progressUpdates.push({ type: "perfect_quizzes", increment: 1 });
+      progressUpdates.push({ type: "quizzes_completed", increment: 1 });
+      break;
+    case "view_course":
+      progressUpdates.push({ type: "courses_viewed", increment: 1 });
+      break;
+    case "generate_course":
+      progressUpdates.push({ type: "courses_generated", increment: 1 });
+      break;
+    default:
+      break;
+  }
+
+  if (progressUpdates.length === 0) {
+    if (!dailyQuestDoc.exists) {
+      await dailyQuestRef.set(existingProgress);
+    }
+    return;
+  }
+
+  const quests = mergedProgress.quests.map((quest) => {
+    const increment = progressUpdates
+      .filter((update) => update.type === quest.type)
+      .reduce((total, update) => total + update.increment, 0);
+
+    if (!increment || quest.completed) {
+      return quest;
+    }
+
+    const nextProgress = Math.min(quest.progress + increment, quest.target);
+
+    return {
+      ...quest,
+      progress: nextProgress,
+      completed: nextProgress >= quest.target,
+    };
+  });
+
+  await dailyQuestRef.set({
+    ...mergedProgress,
+    quests,
+  }, { merge: true });
 }
 
 function checkBadges(stats, action) {

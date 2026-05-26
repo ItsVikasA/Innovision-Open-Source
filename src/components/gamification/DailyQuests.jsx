@@ -3,11 +3,12 @@
 import { useState, useEffect, useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AnimatedProgress } from "@/components/ui/animated-progress";
 import {
   BookOpen, BookMarked, GraduationCap, Sparkles, Zap, Crown,
   Trophy, ClipboardCheck, Flame, Compass, Wand2, Clock, Timer,
-  Gift, CheckCircle2, Star
+  Gift, CheckCircle2, Star, RefreshCw, AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import xpContext from "@/contexts/xp";
@@ -23,6 +24,7 @@ export default function DailyQuests({ userId }) {
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(null);
   const [totalXPEarned, setTotalXPEarned] = useState(0);
+  const [error, setError] = useState("");
   const { getXp } = useContext(xpContext);
 
   useEffect(() => {
@@ -32,16 +34,31 @@ export default function DailyQuests({ userId }) {
   }, [userId]);
 
   const fetchQuests = async () => {
+    setLoading(true);
+    setError("");
+
     try {
       const res = await fetch(`/api/gamification/daily-quests?userId=${userId}`);
+
+      if (!res.ok) {
+        throw new Error("Failed to load daily quests");
+      }
+
       const data = await res.json();
 
       if (data.quests) {
         setQuests(data.quests);
         setTotalXPEarned(data.totalXPEarned || 0);
+        return;
       }
+
+      setQuests([]);
+      setTotalXPEarned(0);
     } catch (error) {
       console.error("Error fetching quests:", error);
+      setError(error.message || "Failed to load daily quests");
+      setQuests([]);
+      setTotalXPEarned(0);
     } finally {
       setLoading(false);
     }
@@ -62,7 +79,7 @@ export default function DailyQuests({ userId }) {
 
       const data = await res.json();
 
-      if (data.success) {
+      if (res.ok && data.success) {
         // Fire confetti
         confetti({
           particleCount: 50,
@@ -80,7 +97,7 @@ export default function DailyQuests({ userId }) {
         setTotalXPEarned(prev => prev + data.xpAwarded);
 
         // Refresh XP context
-        getXp();
+        await getXp();
       } else {
         toast.error(data.error || "Failed to claim reward");
       }
@@ -115,6 +132,49 @@ export default function DailyQuests({ userId }) {
               <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
             ))}
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Gift className="h-5 w-5 text-purple-500" />
+            Daily Quests
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button variant="outline" onClick={fetchQuests} className="w-full sm:w-auto">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (quests.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Gift className="h-5 w-5 text-purple-500" />
+            Daily Quests
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-10">
+          <Gift className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
+          <p className="font-medium">No quests available right now.</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Check back in a bit for your next set of challenges.
+          </p>
         </CardContent>
       </Card>
     );

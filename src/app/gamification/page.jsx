@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, TrendingUp, Target, Brain, Sparkles } from "lucide-react";
 import GamificationDashboard from "@/components/gamification/GamificationDashboard";
 import Leaderboard from "@/components/gamification/Leaderboard";
-import DailyChallenges from "@/components/gamification/DailyChallenges";
+import DailyQuests from "@/components/gamification/DailyQuests";
 import StreakCalendar from "@/components/gamification/StreakCalendar";
 import XPChart from "@/components/gamification/XPChart";
 import SkillTree from "@/components/gamification/SkillTree";
@@ -83,7 +83,7 @@ export default function GamificationPage() {
             <TabsContent value="challenges" className="space-y-0">
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div className="lg:col-span-3">
-                  <DailyChallenges userId={user.email} />
+                  <DailyQuests userId={user.email} />
                 </div>
                 <div className="lg:col-span-2">
                   <Leaderboard currentUserId={user.email} />

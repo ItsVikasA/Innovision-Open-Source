@@ -1,56 +1,11 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
-
-// Daily quest templates - rotates based on day
-const QUEST_TEMPLATES = [
-  // Learning quests
-  { id: "complete_chapter", title: "Chapter Champion", description: "Complete 1 chapter", target: 1, xpReward: 25, icon: "BookOpen", type: "chapters_completed" },
-  { id: "complete_2_chapters", title: "Double Down", description: "Complete 2 chapters", target: 2, xpReward: 50, icon: "BookMarked", type: "chapters_completed" },
-  { id: "complete_lesson", title: "Lesson Learner", description: "Complete 3 lessons", target: 3, xpReward: 20, icon: "GraduationCap", type: "lessons_completed" },
-
-  // XP quests
-  { id: "earn_50_xp", title: "XP Hunter", description: "Earn 50 XP today", target: 50, xpReward: 15, icon: "Sparkles", type: "xp_earned" },
-  { id: "earn_100_xp", title: "XP Master", description: "Earn 100 XP today", target: 100, xpReward: 30, icon: "Zap", type: "xp_earned" },
-  { id: "earn_200_xp", title: "XP Legend", description: "Earn 200 XP today", target: 200, xpReward: 50, icon: "Crown", type: "xp_earned" },
-
-  // Quiz quests
-  { id: "perfect_quiz", title: "Perfect Score", description: "Get 100% on a quiz", target: 1, xpReward: 35, icon: "Trophy", type: "perfect_quizzes" },
-  { id: "complete_quiz", title: "Quiz Taker", description: "Complete 2 quizzes", target: 2, xpReward: 20, icon: "ClipboardCheck", type: "quizzes_completed" },
-
-  // Engagement quests
-  { id: "login_streak", title: "Consistent Learner", description: "Maintain your streak", target: 1, xpReward: 10, icon: "Flame", type: "streak_maintained" },
-  { id: "view_course", title: "Explorer", description: "View 2 different courses", target: 2, xpReward: 15, icon: "Compass", type: "courses_viewed" },
-  { id: "generate_course", title: "Creator", description: "Generate a new course", target: 1, xpReward: 40, icon: "Wand2", type: "courses_generated" },
-
-  // Time-based quests
-  { id: "study_15min", title: "Quick Study", description: "Study for 15 minutes", target: 15, xpReward: 20, icon: "Clock", type: "study_minutes" },
-  { id: "study_30min", title: "Dedicated Learner", description: "Study for 30 minutes", target: 30, xpReward: 40, icon: "Timer", type: "study_minutes" },
-];
-
-// Get 3 random quests for the day (seeded by date for consistency)
-function getDailyQuests(dateStr) {
-  const seed = dateStr.split("-").reduce((acc, num) => acc + parseInt(num), 0);
-  const shuffled = [...QUEST_TEMPLATES].sort((a, b) => {
-    const hashA = (seed * a.id.length) % 100;
-    const hashB = (seed * b.id.length) % 100;
-    return hashA - hashB;
-  });
-
-  // Pick 3 quests from different types
-  const types = new Set();
-  const selected = [];
-  for (const quest of shuffled) {
-    if (!types.has(quest.type) && selected.length < 3) {
-      types.add(quest.type);
-      selected.push(quest);
-    }
-  }
-  return selected;
-}
+import { getAdminDb } from "@/lib/firebase-admin";
+import { buildDailyQuestState, mergeDailyQuestProgress } from "@/lib/daily-quests";
 
 // GET - Fetch user's daily quests
 export async function GET(request) {
   try {
+    const adminDb = getAdminDb();
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
 
@@ -58,8 +13,11 @@ export async function GET(request) {
       return NextResponse.json({ error: "userId required" }, { status: 400 });
     }
 
+    if (!adminDb) {
+      return NextResponse.json({ error: "Gamification backend unavailable" }, { status: 503 });
+    }
+
     const today = new Date().toISOString().split("T")[0];
-    const questTemplates = getDailyQuests(today);
 
     // Get user's quest progress for today
     const userQuestsRef = adminDb
@@ -73,34 +31,17 @@ export async function GET(request) {
 
     // Initialize progress if not exists
     if (!userProgress.quests) {
-      userProgress = {
-        date: today,
-        quests: questTemplates.map(q => ({
-          ...q,
-          progress: 0,
-          completed: false,
-          claimed: false,
-        })),
-        totalXPEarned: 0,
-      };
+      userProgress = buildDailyQuestState(today);
       await userQuestsRef.set(userProgress);
     }
 
-    // Merge template data with progress (in case templates changed)
-    const quests = questTemplates.map((template, idx) => {
-      const saved = userProgress.quests?.find(q => q.id === template.id) || userProgress.quests?.[idx];
-      return {
-        ...template,
-        progress: saved?.progress || 0,
-        completed: saved?.completed || false,
-        claimed: saved?.claimed || false,
-      };
-    });
+    const mergedProgress = mergeDailyQuestProgress(today, userProgress);
+    const quests = mergedProgress.quests;
 
     return NextResponse.json({
       date: today,
       quests,
-      totalXPEarned: userProgress.totalXPEarned || 0,
+      totalXPEarned: mergedProgress.totalXPEarned,
       allCompleted: quests.every(q => q.completed),
       allClaimed: quests.every(q => q.claimed),
     });
@@ -113,11 +54,16 @@ export async function GET(request) {
 // POST - Update quest progress or claim reward
 export async function POST(request) {
   try {
+    const adminDb = getAdminDb();
     const body = await request.json();
     const { userId, action, questId, progressIncrement, progressType } = body;
 
     if (!userId) {
       return NextResponse.json({ error: "userId required" }, { status: 400 });
+    }
+
+    if (!adminDb) {
+      return NextResponse.json({ error: "Gamification backend unavailable" }, { status: 503 });
     }
 
     const today = new Date().toISOString().split("T")[0];
@@ -185,13 +131,30 @@ export async function POST(request) {
       });
 
       // Award XP to user's main stats
-      const userStatsRef = adminDb.collection("users").doc(userId).collection("gamification").doc("stats");
+      const userStatsRef = adminDb.collection("gamification").doc(userId);
       const statsDoc = await userStatsRef.get();
-      const currentXP = statsDoc.exists ? (statsDoc.data().xp || 0) : 0;
+      const currentStats = statsDoc.exists ? statsDoc.data() : {};
+      const currentXP = currentStats.xp || 0;
+      const updatedXP = currentXP + quest.xpReward;
 
       await userStatsRef.set({
-        xp: currentXP + quest.xpReward,
+        ...currentStats,
+        xp: updatedXP,
+        level: Math.max(currentStats.level || 1, Math.floor(updatedXP / 500) + 1),
+        streak: currentStats.streak || 1,
+        badges: currentStats.badges || [],
+        rank: currentStats.rank || 0,
+        achievements: [
+          ...(currentStats.achievements || []),
+          {
+            title: `${quest.title} Claimed!`,
+            description: quest.description,
+            xp: quest.xpReward,
+            timestamp: new Date().toISOString(),
+          },
+        ],
         lastUpdated: new Date().toISOString(),
+        lastActive: new Date().toISOString(),
       }, { merge: true });
 
       return NextResponse.json({
