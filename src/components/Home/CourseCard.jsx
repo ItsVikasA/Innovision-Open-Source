@@ -11,7 +11,7 @@ import ArchiveCourse from "./ArchiveCourse";
 import DuplicateCourse from "./DuplicateCourse";
 
 const CourseCard = ({ course, onDelete, onArchive, isSelectable, isSelected, onSelect }) => {
-  const { id, courseTitle, courseDescription, chapterCount, difficulty, chapters, archived } = course;
+  const { id, courseTitle, courseDescription, chapterCount, difficulty, knowledgeLevel, chapters, archived } = course;
 
   // Calculate progress percentage
   const calculateProgress = () => {
@@ -60,6 +60,34 @@ const CourseCard = ({ course, onDelete, onArchive, isSelectable, isSelected, onS
         return "Balanced";
     }
   };
+
+  // Knowledge-level badge helpers
+  const getKnowledgeLevelConfig = (level) => {
+    switch (level) {
+      case "beginner":
+        return {
+          emoji: "🟢",
+          label: "Beginner",
+          color: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
+        };
+      case "intermediate":
+        return {
+          emoji: "🟡",
+          label: "Intermediate",
+          color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
+        };
+      case "advanced":
+        return {
+          emoji: "🔴",
+          label: "Advanced",
+          color: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+        };
+      default:
+        return null;
+    }
+  };
+
+  const knowledgeLevelConfig = getKnowledgeLevelConfig(knowledgeLevel);
 
   return (
     <Card className={`w-[320px] h-70 relative group hover:shadow-lg transition-all duration-300 ${isSelected ? 'border-blue-500 ring-2 ring-blue-500/20' : 'hover:border-blue-500/50'
@@ -152,8 +180,16 @@ const CourseCard = ({ course, onDelete, onArchive, isSelectable, isSelected, onS
           </div>
         </div>
 
-        {/* Difficulty Badge */}
-        <div className="flex items-center gap-2">
+        {/* Difficulty & Knowledge-Level Badges */}
+        <div className="flex items-center flex-wrap gap-2">
+          {knowledgeLevelConfig && (
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${knowledgeLevelConfig.color}`}
+              title="Difficulty Level"
+            >
+              {knowledgeLevelConfig.emoji} {knowledgeLevelConfig.label}
+            </span>
+          )}
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getDifficultyColor(
               difficulty

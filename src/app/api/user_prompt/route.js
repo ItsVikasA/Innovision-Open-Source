@@ -137,6 +137,7 @@ Topic: ${prompt}
         ...parsed,
         createdAt: Date.now(),
         difficulty,
+        knowledgeLevel: user_prompt.knowledgeLevel || "beginner",
         process: "completed",
       },
       id,

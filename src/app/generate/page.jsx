@@ -72,6 +72,8 @@ export default function Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("custom");
   const [openCollege, setOpenCollege] = useState(false);
+  const [curriculumDifficulty, setCurriculumDifficulty] = useState("beginner");
+  const [engineeringDifficulty, setEngineeringDifficulty] = useState("beginner");
   const [premiumStatus, setPremiumStatus] = useState({ isPremium: false, courseCount: 0, maxCourses: 3 });
   const [engineeringData, setEngineeringData] = useState({
     college: "",
@@ -182,17 +184,28 @@ export default function Page() {
 
     setIsSubmitting(true);
 
+    const curriculumLevelInstructions = {
+      beginner:
+        "Use simplified language and relatable analogies. Focus on foundational concepts and avoid jargon. Suitable for a student with no prior knowledge.",
+      intermediate:
+        "Assume the student has basic familiarity. Include practical examples and balanced theory with exercises.",
+      advanced:
+        "Provide in-depth explanations, explore complex edge cases, and assume the student already knows the basics.",
+    };
+
     const streamInfo = curriculumData.stream ? ` (${curriculumData.stream} stream)` : "";
     const prompt = `Generate a comprehensive curriculum course for ${curriculumData.subject
-      } for ${curriculumData.classLevel.replace("_", " ")}${streamInfo} (${curriculumData.board} board). 
-        Cover these topics: ${filledTopics.join(", ")}. 
+      } for ${curriculumData.classLevel.replace("_", " ")}${streamInfo} (${curriculumData.board} board).
+        Difficulty Level: ${curriculumDifficulty}
+        Difficulty Instructions: ${curriculumLevelInstructions[curriculumDifficulty]}
+        Cover these topics: ${filledTopics.join(", ")}.
         Include detailed explanations, examples, and age-appropriate learning activities.`;
 
     try {
       let res = await fetch("/api/user_prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, difficulty: "balanced" }),
+        body: JSON.stringify({ prompt, difficulty: "balanced", knowledgeLevel: curriculumDifficulty }),
       });
       const roadmapData = await res.json();
       const id = roadmapData.id;
@@ -272,16 +285,27 @@ export default function Page() {
 
     setIsSubmitting(true);
 
+    const engineeringLevelInstructions = {
+      beginner:
+        "Use simplified language, step-by-step explanations, and avoid heavy jargon. Suitable for a first-year student encountering these concepts for the first time.",
+      intermediate:
+        "Assume the student has completed foundational coursework. Include practical implementation examples and real-world engineering applications.",
+      advanced:
+        "Assume strong domain knowledge. Dive into advanced theory, optimizations, research-level topics, and engineering best practices.",
+    };
+
     const prompt = `Generate a comprehensive engineering course for ${engineeringData.subject} in ${engineeringData.branch
-      }, ${engineeringData.semester} at ${engineeringData.college}. 
-        Cover these modules: ${filledModules.join(", ")}. 
+      }, ${engineeringData.semester} at ${engineeringData.college}.
+        Difficulty Level: ${engineeringDifficulty}
+        Difficulty Instructions: ${engineeringLevelInstructions[engineeringDifficulty]}
+        Cover these modules: ${filledModules.join(", ")}.
         Include detailed explanations, examples, and practical applications for each module.`;
 
     try {
       let res = await fetch("/api/user_prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, difficulty: "balanced" }),
+        body: JSON.stringify({ prompt, difficulty: "balanced", knowledgeLevel: engineeringDifficulty }),
       });
       const roadmapData = await res.json();
       const id = roadmapData.id;
@@ -366,7 +390,7 @@ export default function Page() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       concept: "",
-      knowledgeLevel: "",
+      knowledgeLevel: "beginner",
       timeCommitment: "1-2-hours",
       difficultyLevel: "",
       completionTime: "1-week",
@@ -395,8 +419,18 @@ export default function Page() {
         return;
       }
 
-      const prompt = `Generate a structured learning roadmap for "${data.concept}" 
+      const knowledgeLevelInstructions = {
+        beginner:
+          "Use simplified language, relatable analogies, and focus on foundational concepts. Avoid jargon. Make the content approachable for someone with no prior knowledge.",
+        intermediate:
+          "Assume basic familiarity with the topic. Use practical examples and real-world applications. Balance theory with hands-on practice.",
+        advanced:
+          "Provide deep technical depth, explore edge cases, and assume the learner already knows the basics. Cover advanced topics, best practices, and nuanced insights.",
+      };
+
+      const prompt = `Generate a structured learning roadmap for "${data.concept}"
 Level: ${data.knowledgeLevel}
+Difficulty Instructions: ${knowledgeLevelInstructions[data.knowledgeLevel]}
 Style: ${data.difficultyLevel === "in-depth" ? "In-Depth" : data.difficultyLevel === "fast" ? "Fast-Paced" : "Balanced"}
 Daily time: ${data.timeCommitment.replace("-", "–")}
 Complete in: ${data.completionTime.replace("-", " ")}
@@ -410,6 +444,7 @@ Return valid JSON only.`;
         body: JSON.stringify({
           prompt,
           difficulty: data.difficultyLevel,
+          knowledgeLevel: data.knowledgeLevel,
         }),
       });
 
@@ -464,18 +499,18 @@ Return valid JSON only.`;
   const knowledgeLevelOptions = [
     {
       value: "beginner",
-      label: "Beginner",
-      description: "New to the topic",
+      label: "🟢 Beginner",
+      description: "Simplified language & analogies",
     },
     {
       value: "intermediate",
-      label: "Intermediate",
-      description: "Some prior knowledge",
+      label: "🟡 Intermediate",
+      description: "Practical examples",
     },
     {
       value: "advanced",
-      label: "Advanced",
-      description: "Deep understanding",
+      label: "🔴 Advanced",
+      description: "Technical depth & edge cases",
     },
   ];
 
@@ -873,6 +908,36 @@ Return valid JSON only.`;
                     </Button>
                   </div>
 
+                  {/* Difficulty Level Selector */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Flag className="h-4 w-4" />
+                      Difficulty Level
+                    </label>
+                    <p className="text-xs text-muted-foreground">How complex should the generated content be?</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: "beginner", label: "🟢 Beginner", description: "Simplified & foundational" },
+                        { value: "intermediate", label: "🟡 Intermediate", description: "Practical examples" },
+                        { value: "advanced", label: "🔴 Advanced", description: "Deep technical depth" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setCurriculumDifficulty(opt.value)}
+                          className={`p-3 border rounded-xl w-36 cursor-pointer transition-all duration-300 text-center ${
+                            curriculumDifficulty === opt.value
+                              ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400 scale-[1.02]"
+                              : "border-border/50 hover:bg-accent/60 hover:border-blue-400/50"
+                          }`}
+                        >
+                          <div className="font-semibold text-sm">{opt.label}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{opt.description}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <Button onClick={handleCurriculumSubmit} className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? "Generating Course..." : "Generate Curriculum Course"}
                   </Button>
@@ -1059,6 +1124,36 @@ Return valid JSON only.`;
                       onChange={(e) => setEngineeringData((prev) => ({ ...prev, pdfFile: e.target.files[0] }))}
                       className="mt-2"
                     />
+                  </div>
+
+                  {/* Difficulty Level Selector */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Flag className="h-4 w-4" />
+                      Difficulty Level
+                    </label>
+                    <p className="text-xs text-muted-foreground">How complex should the generated content be?</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: "beginner", label: "🟢 Beginner", description: "Step-by-step basics" },
+                        { value: "intermediate", label: "🟡 Intermediate", description: "Practical examples" },
+                        { value: "advanced", label: "🔴 Advanced", description: "Advanced theory & best practices" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setEngineeringDifficulty(opt.value)}
+                          className={`p-3 border rounded-xl w-36 cursor-pointer transition-all duration-300 text-center ${
+                            engineeringDifficulty === opt.value
+                              ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400 scale-[1.02]"
+                              : "border-border/50 hover:bg-accent/60 hover:border-blue-400/50"
+                          }`}
+                        >
+                          <div className="font-semibold text-sm">{opt.label}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{opt.description}</div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <Button onClick={handleEngineeringSubmit} className="w-full bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300" disabled={isSubmitting}>
