@@ -1,17 +1,25 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { cookies } from "next/headers";
+import { verifyIdToken } from "@/lib/auth-server";
 
+/**
+ * Extract and verify user from request using Firebase Admin SDK
+ * This securely validates JWT tokens and prevents token forgery attacks
+ */
 async function getUserFromRequest() {
     try {
         const cookieStore = await cookies();
         const sessionCookie = cookieStore.get("session")?.value;
         if (!sessionCookie) return null;
 
-        const payload = JSON.parse(atob(sessionCookie.split(".")[1]));
-        if (!payload?.email) return null;
-        return { email: payload.email, uid: payload.uid || payload.sub };
-    } catch {
+        // Verify the token signature using Firebase Admin SDK
+        const decodedToken = await verifyIdToken(sessionCookie);
+        if (!decodedToken) return null;
+
+        return { email: decodedToken.email, uid: decodedToken.uid };
+    } catch (error) {
+        console.error("Error extracting user from request:", error);
         return null;
     }
 }
