@@ -10,6 +10,7 @@ import { NotificationProvider } from "@/contexts/notifications";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import NotificationChecker from "@/components/NotificationChecker";
 import { Analytics } from "@vercel/analytics/next";
+import SmoothScrollProvider from "@/components/SmoothScrollProvider";
 
 const robotoSans = Roboto({
   variable: "--font-roboto-sans",
@@ -62,8 +63,9 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/InnoVision_LOGO-removebg-preview.png" />
         <link rel="apple-touch-icon" href="/InnoVision_LOGO-removebg-preview.png" />
       </head>
-      <body className={`${robotoSans.variable} ${robotoMono.variable} antialiased`}>
-        <AuthProvider>
+     <body className={`${robotoSans.variable} ${robotoMono.variable} antialiased`}>
+  <SmoothScrollProvider>
+    <AuthProvider>
           <XpProvider>
             <NightModeProvider>
               <NotificationProvider>
@@ -77,8 +79,9 @@ export default function RootLayout({ children }) {
               </NotificationProvider>
             </NightModeProvider>
           </XpProvider>
-        </AuthProvider>
-        <Analytics />
+            </AuthProvider>
+  </SmoothScrollProvider>
+  <Analytics />
       </body>
     </html>
   );
