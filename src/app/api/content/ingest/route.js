@@ -1,10 +1,29 @@
 import { NextResponse } from "next/server";
+import { ingestContent } from "@/lib/ingestion-service";
+import { detectFileType } from "@/lib/text-extractor";
+import { createNotification } from "@/lib/create-notification";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export async function POST(request) {
   try {
+    let userId = "anonymous";
+
+    try {
+      const authHeader = request.headers.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const { getAuth } = await import("firebase-admin/auth");
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = await getAuth().verifyIdToken(token);
+        userId = decoded.email || decoded.uid;
+      }
+    } catch (authError) {
+      console.log("[DEBUG] Auth verification failed, using anonymous:", authError.message);
+    }
+
+    console.log("[DEBUG] Content ingestion userId:", userId);
+
     const formData = await request.formData();
-    const file = formData.get('file');
-    const type = formData.get('type');
+    const file = formData.get("file");
 
     if (!file) {
       return NextResponse.json(
@@ -13,50 +32,50 @@ export async function POST(request) {
       );
     }
 
-    // Get file details
+    // Validate file type
+    const fileType = detectFileType(file.name);
+    if (!fileType) {
+      return NextResponse.json(
+        {
+          error: `Unsupported file format: "${file.name}". Supported formats: PDF, TXT, EPUB`,
+        },
+        { status: 400 }
+      );
+    }
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const fileSize = buffer.length;
-    const fileName = file.name;
+    const result = await ingestContent(buffer, file.name, fileSize, userId);
 
-    // Simulate content processing
-    // In a real implementation, you would:
-    // 1. Extract text from PDF/video
-    // 2. Chunk the content
-    // 3. Generate embeddings
-    // 4. Store in vector database
-    // 5. Build knowledge graph
-
-    // Mock processing based on file type
-    let chunks = 0;
-    switch (type) {
-      case 'pdf':
-        chunks = Math.floor(fileSize / 1000); // ~1 chunk per KB
-        break;
-      case 'textbook':
-        chunks = Math.floor(fileSize / 500); // ~1 chunk per 500 bytes
-        break;
-      default:
-        chunks = Math.floor(fileSize / 1000);
+    if (userId && userId !== "anonymous") {
+      const adminDb = getAdminDb();
+      console.log("[DEBUG] Creating ingestion notification with link:", `/ingested-course/${result.courseId}`);
+      createNotification(adminDb, {
+        userId,
+        title: "Course Created from File!",
+        body: `"${result.title}" with ${result.chapterCount} chapters is ready to explore.`,
+        type: "progress",
+        link: `/ingested-course/${result.courseId}`,
+      }).catch(() => { });
     }
-
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
 
     return NextResponse.json({
       success: true,
-      fileName,
-      fileSize,
-      type,
-      chunks: Math.max(1, chunks),
-      message: "Content ingested successfully"
+      courseId: result.courseId,
+      title: result.title,
+      description: result.description,
+      chapterCount: result.chapterCount,
+      totalWords: result.totalWords,
+      estimatedReadingTime: result.estimatedReadingTime,
+      chapters: result.chapters,
+      message: `Course "${result.title}" created with ${result.chapterCount} chapters!`,
     });
-
   } catch (error) {
     console.error("Content ingestion error:", error);
-    return NextResponse.json(
-      { error: "Failed to ingest content" },
-      { status: 500 }
-    );
+
+    const message = error.message || "Failed to ingest content";
+    const status = message.includes("Unsupported") || message.includes("too large") ? 400 : 500;
+
+    return NextResponse.json({ error: message }, { status });
   }
 }

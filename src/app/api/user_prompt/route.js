@@ -4,10 +4,11 @@ import { adminDb, FieldValue } from "@/lib/firebase-admin";
 import { nanoid } from "nanoid";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { canGenerateCourse } from "@/lib/premium";
+import { createNotification } from "@/lib/create-notification";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
+  model: "gemini-2.0-flash",
   generationConfig: {
     temperature: 0.7,
     topP: 0.8,
@@ -23,14 +24,26 @@ const model = genAI.getGenerativeModel({
   ],
 });
 
-async function updateDatabase(details, id, user, retries = 3) {
+async function updateDatabase(details, id, user, retries = 3, context = {}) {
   const docRef = adminDb.collection("users").doc(user.email).collection("roadmaps").doc(id);
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await docRef.set({ ...details, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
       return true;
     } catch (error) {
-      console.error(`DB Attempt ${attempt} failed:`, error);
+      console.error(`DB Attempt ${attempt} failed:`, {
+        userId: user.email,
+        roadmapId: id,
+        attempt,
+        maxRetries: retries,
+        operation: context.operation || 'updateDatabase',
+        prompt: context.prompt,
+        error: {
+          message: error.message,
+          code: error.code,
+          stack: error.stack
+        }
+      });
       if (attempt === retries) return false;
       await new Promise((res) => setTimeout(res, 1000 * attempt));
     }
@@ -86,14 +99,25 @@ Topic: ${prompt}
     }
 
     if (parsed.error === "unsuitable") {
-      await updateDatabase(
+      const dbSuccess = await updateDatabase(
         {
           message: "This topic is not suitable for a structured course.",
           process: "unsuitable",
         },
         id,
-        session.user
+        session.user,
+        3,
+        { operation: 'unsuitable_topic', prompt }
       );
+
+      if (!dbSuccess) {
+        console.error("Database update failed for unsuitable topic:", {
+          userId: session.user.email,
+          roadmapId: id,
+          prompt,
+          operation: 'unsuitable_topic'
+        });
+      }
       return;
     }
 
@@ -116,8 +140,23 @@ Topic: ${prompt}
         process: "completed",
       },
       id,
-      session.user
+      session.user,
+      3,
+      { operation: 'course_completion', prompt }
     );
+
+    // Create notification for completion
+    try {
+      await createNotification(adminDb, {
+        userId: session.user.email,
+        title: "Course Ready!",
+        body: `Your generated course is ready.`,
+        type: "progress",
+        link: `/roadmap/${id}`,
+      });
+    } catch (notifError) {
+      console.warn("Failed to create course generation notification:", notifError);
+    }
 
     // Award 10 XP for generating a course
     try {
@@ -128,14 +167,14 @@ Topic: ${prompt}
         let stats = statsDoc.exists
           ? statsDoc.data()
           : {
-              xp: 0,
-              level: 1,
-              streak: 1,
-              badges: [],
-              rank: 0,
-              achievements: [],
-              lastActive: new Date().toISOString(),
-            };
+            xp: 0,
+            level: 1,
+            streak: 1,
+            badges: [],
+            rank: 0,
+            achievements: [],
+            lastActive: new Date().toISOString(),
+          };
 
         const newXP = (stats.xp || 0) + xpGained;
         const newLevel = Math.floor(newXP / 500) + 1;
@@ -164,28 +203,69 @@ Topic: ${prompt}
       console.error("Failed to award XP for course generation:", xpError);
     }
   } catch (error) {
-    console.error("Gemini generation failed:", error);
+    console.error("Gemini generation failed:", {
+      userId: session.user.email,
+      roadmapId: id,
+      prompt,
+      operation: 'gemini_generation',
+      error: {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+        stack: error.stack
+      }
+    });
 
     let userMessage = "There was an error while generating your roadmap.";
-    if (error.message?.includes("SAFETY")) {
+    let detectedCondition = 'unknown';
+
+    if (error.message?.includes("API key") || error.message?.includes("API_KEY")) {
+      userMessage = "API key error. Please contact support or try again later.";
+      detectedCondition = 'api_key_error';
+    } else if (error.message?.includes("SAFETY")) {
       userMessage = "Content was blocked by safety filters. Try simpler wording.";
+      detectedCondition = 'safety_filter';
     } else if (error.message?.includes("quota") || error.status === 429) {
       userMessage = "Rate limit reached. Please wait a minute and try again.";
+      detectedCondition = 'rate_limit';
+    } else if (error.message?.includes("Invalid JSON")) {
+      userMessage = "AI returned invalid format. Please try again.";
+      detectedCondition = 'invalid_json';
     } else if (error.message?.includes("token") || error.message?.includes("maximum")) {
       userMessage = "Topic too long. Try fewer modules or shorter names.";
-    } else if (error.message?.includes("JSON")) {
-      userMessage = "AI returned invalid format. Please try again.";
+      detectedCondition = 'token_limit';
     }
 
-    await updateDatabase(
+    console.error("Error condition detected:", {
+      userId: session.user.email,
+      roadmapId: id,
+      prompt,
+      detectedCondition,
+      userMessage
+    });
+
+    const dbSuccess = await updateDatabase(
       {
         message: userMessage,
         process: "error",
         errorDetails: error.message,
       },
       id,
-      session.user
+      session.user,
+      3,
+      { operation: 'error_handling', prompt, detectedCondition }
     );
+
+    if (!dbSuccess) {
+      console.error("Database update failed during error handling:", {
+        userId: session.user.email,
+        roadmapId: id,
+        prompt,
+        operation: 'error_handling',
+        detectedCondition,
+        originalError: error.message
+      });
+    }
   }
 }
 
@@ -212,7 +292,7 @@ export async function POST(req) {
     const eligibility = await canGenerateCourse(session.user.email);
     if (!eligibility.canGenerate) {
       return NextResponse.json(
-        { 
+        {
           message: eligibility.reason,
           isPremium: eligibility.isPremium,
           courseCount: eligibility.courseCount,
@@ -224,9 +304,21 @@ export async function POST(req) {
 
     const roadmapId = nanoid(20);
 
-    const dbSuccess = await updateDatabase({ process: "pending", createdAt: Date.now() }, roadmapId, session.user);
+    const dbSuccess = await updateDatabase(
+      { process: "pending", createdAt: Date.now() },
+      roadmapId,
+      session.user,
+      3,
+      { operation: 'initialize_roadmap', prompt: user_prompt.prompt }
+    );
 
     if (!dbSuccess) {
+      console.error("Failed to initialize roadmap:", {
+        userId: session.user.email,
+        roadmapId,
+        prompt: user_prompt.prompt,
+        operation: 'initialize_roadmap'
+      });
       return NextResponse.json({ message: "Failed to initialize roadmap" }, { status: 500 });
     }
 

@@ -6,9 +6,11 @@ import { AnimatedProgress, CircularProgress } from "@/components/ui/animated-pro
 import { Trophy, Flame, Award, Crown, Medal } from "lucide-react";
 import * as Icons from "lucide-react";
 import xpContext from "@/contexts/xp";
+import GamificationDashboardSkeleton from "@/components/skeletons/GamificationDashboardSkeleton";
 
 export default function GamificationDashboard({ userId }) {
   const { xp } = useContext(xpContext); // Use XP from context for consistency
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     level: 1,
     streak: 0,
@@ -40,6 +42,7 @@ export default function GamificationDashboard({ userId }) {
           rank: 0,
           achievements: [],
         });
+        setLoading(false);
         return;
       }
 
@@ -51,6 +54,7 @@ export default function GamificationDashboard({ userId }) {
         rank: data.rank || 0,
         achievements: data.achievements || [],
       });
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching stats:", error);
       setStats({
@@ -60,16 +64,22 @@ export default function GamificationDashboard({ userId }) {
         rank: 0,
         achievements: [],
       });
+      setLoading(false);
     }
   };
 
   const xpToNextLevel = 500;
-  const xpProgress = (xp % 500) / 5;
+  const safeXp = typeof xp === 'number' ? xp : 0;
+  const xpProgress = (safeXp % 500) / 5;
+
+  if (loading) {
+    return <GamificationDashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-4">
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Level Card */}
         <Card className="col-span-1">
           <CardHeader className="pb-2">
@@ -80,7 +90,7 @@ export default function GamificationDashboard({ userId }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.level}</div>
-            <p className="text-xs text-muted-foreground">{xp} XP</p>
+            <p className="text-xs text-muted-foreground">{safeXp} XP</p>
           </CardContent>
         </Card>
 
@@ -107,7 +117,7 @@ export default function GamificationDashboard({ userId }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-500">#{stats.rank || "N/A"}</div>
+            <div className="text-2xl font-bold text-blue-500">{stats.rank ? `#${stats.rank}` : "Unranked"}</div>
             <p className="text-xs text-muted-foreground">global</p>
           </CardContent>
         </Card>
@@ -138,9 +148,9 @@ export default function GamificationDashboard({ userId }) {
           </div>
         </CardHeader>
         <CardContent>
-          <AnimatedProgress 
-            value={xpProgress} 
-            color="xp" 
+          <AnimatedProgress
+            value={xpProgress}
+            color="xp"
             size="md"
             glow
             delay={300}
@@ -154,16 +164,15 @@ export default function GamificationDashboard({ userId }) {
           <CardTitle className="text-sm">Badge Collection</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+          <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
             {BADGES.map((badge) => {
               const earned = stats.badges?.includes(badge.id);
               const IconComponent = Icons[badge.icon];
               return (
                 <div
                   key={badge.id}
-                  className={`p-2 border rounded text-center transition-all ${
-                    earned ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-950" : "opacity-40 grayscale"
-                  }`}
+                  className={`p-2 border rounded text-center transition-all ${earned ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-950" : "opacity-40 grayscale"
+                    }`}
                   title={`${badge.name}: ${badge.description}`}
                 >
                   {IconComponent && <IconComponent className="h-6 w-6 mx-auto text-yellow-500" />}
@@ -185,7 +194,7 @@ export default function GamificationDashboard({ userId }) {
             <div className="space-y-2">
               {stats.achievements.slice(0, 3).map((achievement, idx) => (
                 <div key={idx} className="flex items-center gap-2 p-2 border rounded">
-                  <Medal className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+                  <Medal className="h-4 w-4 text-yellow-500 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{achievement.title}</div>
                     <div className="text-xs text-muted-foreground truncate">{achievement.description}</div>

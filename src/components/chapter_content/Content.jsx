@@ -1,12 +1,13 @@
+import React from 'react';
 import MarkDown from "../MarkDown";
 import { Clock } from "lucide-react";
 
 // Calculate reading time for a single topic
 const calculateTopicReadingTime = (topic) => {
     if (!topic || !topic.content) return 1;
-    
+
     let text = topic.title || "";
-    
+
     if (Array.isArray(topic.content)) {
         topic.content.forEach(item => {
             if (typeof item.content === "string") {
@@ -16,18 +17,18 @@ const calculateTopicReadingTime = (topic) => {
             }
         });
     }
-    
+
     // Remove HTML tags and count words
     const cleanText = text.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
     const wordCount = cleanText.split(" ").filter(word => word.length > 0).length;
-    
+
     // 200 words per minute
     return Math.max(1, Math.ceil(wordCount / 200));
 };
 
 const Content = ({ currentTopic }) => {
     const readingTime = calculateTopicReadingTime(currentTopic);
-    
+
     return (
         <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
@@ -71,13 +72,12 @@ const Content = ({ currentTopic }) => {
                             );
                         case "para":
                             return (
-                                <p
+                                <div
                                     key={index}
                                     className="mb-4 leading-relaxed"
-                                    dangerouslySetInnerHTML={{
-                                        __html: item.content,
-                                    }}
-                                ></p>
+                                >
+                                    <MarkDown content={item.content} />
+                                </div>
                             );
                         case "code":
                             return (

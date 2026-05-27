@@ -1,20 +1,25 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
-import { ChevronDown, ChevronUp, ChevronRight, Menu, X } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronRight, Menu, X, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth";
+import CertificateDialog from "@/components/certificates/CertificateDialog";
 
-export default function Sidebar({ roadmap, id, isStudioCourse, courseId }) {
+export default function Sidebar({ roadmap, id, isStudioCourse, courseId, courseTitle }) {
     const [isOverviewVisible, setIsOverviewVisible] = useState(true);
     const [expandedChapters, setExpandedChapters] = useState({});
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [chapters, setChapters] = useState([]);
     const [activeSubtopic, setActiveSubtopic] = useState(null);
     const [activeChapter, setActiveChapter] = useState(null);
+    const [certDialogOpen, setCertDialogOpen] = useState(false);
+    const { user } = useAuth();
     const query = useSearchParams();
     const router = useRouter();
+    const pathname = usePathname();
 
     const toggleChapter = (index) => {
         setExpandedChapters((prev) => ({
@@ -26,7 +31,7 @@ export default function Sidebar({ roadmap, id, isStudioCourse, courseId }) {
     const navigateToSubtopic = (chapterIndex, subtopicIndex) => {
         setActiveChapter(chapterIndex);
         setActiveSubtopic(subtopicIndex);
-        
+
         if (isStudioCourse) {
             router.push(`/studio-course/${courseId}/${chapterIndex + 1}`);
         } else {
@@ -40,27 +45,59 @@ export default function Sidebar({ roadmap, id, isStudioCourse, courseId }) {
         }
     };
 
+    const handleChapterClick = (chapterIndex) => {
+        // Expand the chapter
+        if (!expandedChapters[chapterIndex]) {
+            setExpandedChapters((prev) => ({
+                ...prev,
+                [chapterIndex]: true,
+            }));
+        }
+
+        // Navigate to the chapter (first subtopic/start)
+        setActiveChapter(chapterIndex);
+        setActiveSubtopic(0);
+
+        if (isStudioCourse) {
+            router.push(`/studio-course/${courseId}/${chapterIndex + 1}`);
+        } else {
+            router.push(`/chapter-test/${id}/${chapterIndex + 1}`);
+        }
+
+        if (window.innerWidth < 1024) {
+            setIsMobileSidebarOpen(false);
+        }
+    };
+
     useEffect(() => {
         setChapters(roadmap?.chapters || []);
-
-        const pathParts = window.location.pathname.split("/");
-        const chapterNumber = pathParts[pathParts.length - 1];
-        if (chapterNumber && !isNaN(chapterNumber)) {
-            setActiveChapter(parseInt(chapterNumber) - 1);
-        }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const subtopicParam = urlParams.get("subtopic");
-        if (subtopicParam) {
-            setActiveSubtopic(parseInt(subtopicParam));
-        }
-
-        setExpandedChapters({ [parseInt(chapterNumber) - 1]: true });
     }, [roadmap]);
 
+    // Sync active state with URL path
     useEffect(() => {
-        setActiveSubtopic(Number(query.get("subtopic")));
-    }, [query.get("subtopic")]);
+        const pathParts = pathname?.split("/") || [];
+        const chapterNumber = pathParts[pathParts.length - 1];
+
+        if (chapterNumber && !isNaN(chapterNumber)) {
+            const chapterIndex = parseInt(chapterNumber) - 1;
+            setActiveChapter(chapterIndex);
+
+            // Auto-expand the active chapter
+            setExpandedChapters(prev => ({
+                ...prev,
+                [chapterIndex]: true
+            }));
+        }
+    }, [pathname]);
+
+    useEffect(() => {
+        const subtopicParam = query.get("subtopic");
+        if (subtopicParam !== null) {
+            setActiveSubtopic(Number(subtopicParam));
+        } else {
+            setActiveSubtopic(null);
+        }
+    }, [query]);
 
     return (
         <>
@@ -78,11 +115,10 @@ export default function Sidebar({ roadmap, id, isStudioCourse, courseId }) {
                 className={`
         fixed top-16 left-0 z-40 h-screen border-r border-border
         transition-all duration-200 pb-24 ease-in-out shrink-0 custom-scroll
-        ${
-            isMobileSidebarOpen
-                ? "translate-x-0"
-                : "-translate-x-full lg:translate-x-0"
-        }
+        ${isMobileSidebarOpen
+                        ? "translate-x-0"
+                        : "-translate-x-full lg:translate-x-0"
+                    }
         w-[95vw] max-w-lg lg:w-96 p-6 bg-card overflow-y-scroll
       `}
             >
@@ -125,14 +161,14 @@ export default function Sidebar({ roadmap, id, isStudioCourse, courseId }) {
                                 >
                                     <button
                                         onClick={() =>
-                                            toggleChapter(chapterIndex)
+                                            handleChapterClick(chapterIndex)
                                         }
                                         className={cn(
                                             "w-full flex items-center justify-between p-3 text-left bg-zinc-50 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition",
                                             expandedChapters[chapterIndex] &&
-                                                "rounded-b-none",
+                                            "rounded-b-none",
                                             activeChapter === chapterIndex &&
-                                                "bg-blue-50 hover:bg-blue-100 dark:hover:bg-blue-900/50 dark:bg-blue-950/60"
+                                            "bg-blue-50 hover:bg-blue-100 dark:hover:bg-blue-900/50 dark:bg-blue-950/60"
                                         )}
                                         aria-expanded={
                                             expandedChapters[chapterIndex]
@@ -144,17 +180,25 @@ export default function Sidebar({ roadmap, id, isStudioCourse, courseId }) {
                                             </span>
                                             {chapter.chapterTitle}
                                         </span>
-                                        {expandedChapters[chapterIndex] ? (
-                                            <ChevronUp
-                                                size={18}
-                                                className="text-zinc-400"
-                                            />
-                                        ) : (
-                                            <ChevronDown
-                                                size={18}
-                                                className="text-zinc-400"
-                                            />
-                                        )}
+                                        <div
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleChapter(chapterIndex);
+                                            }}
+                                            className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full transition-colors"
+                                        >
+                                            {expandedChapters[chapterIndex] ? (
+                                                <ChevronUp
+                                                    size={18}
+                                                    className="text-zinc-400"
+                                                />
+                                            ) : (
+                                                <ChevronDown
+                                                    size={18}
+                                                    className="text-zinc-400"
+                                                />
+                                            )}
+                                        </div>
                                     </button>
 
                                     {expandedChapters[chapterIndex] && chapter.contentOutline && (
@@ -163,36 +207,35 @@ export default function Sidebar({ roadmap, id, isStudioCourse, courseId }) {
                                                 (content, subtopicIndex) => {
                                                     const isActive =
                                                         activeChapter ===
-                                                            chapterIndex &&
+                                                        chapterIndex &&
                                                         activeSubtopic ===
-                                                            subtopicIndex;
+                                                        subtopicIndex;
 
                                                     return (
                                                         <button
                                                             key={subtopicIndex}
-                                                            onClick={() =>
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
                                                                 navigateToSubtopic(
                                                                     chapterIndex,
                                                                     subtopicIndex
-                                                                )
-                                                            }
+                                                                );
+                                                            }}
                                                             className={`
                               group flex items-center w-full px-3 py-2 cursor-pointer rounded-md text-sm
                               transition-colors duration-150 ease-in-out
-                              ${
-                                  isActive
-                                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                                      : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700/50"
-                              }
+                              ${isActive
+                                                                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                                                    : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700/50"
+                                                                }
                             `}
                                                         >
                                                             <ChevronRight
                                                                 size={14}
-                                                                className={`mr-2 ${
-                                                                    isActive
-                                                                        ? "text-blue-500 dark:text-blue-400"
-                                                                        : "text-zinc-400"
-                                                                }`}
+                                                                className={`mr-2 ${isActive
+                                                                    ? "text-blue-500 dark:text-blue-400"
+                                                                    : "text-zinc-400"
+                                                                    }`}
                                                             />
                                                             <span className="truncate">
                                                                 {
@@ -210,8 +253,40 @@ export default function Sidebar({ roadmap, id, isStudioCourse, courseId }) {
                                 </div>
                             ))}
                     </nav>
+
+                    {/* Generate Certificate button — enabled only when course is 100% complete */}
+                    <div className="mt-4 pt-4 border-t border-border">
+                        <Button
+                            id="generate-certificate-btn"
+                            disabled={!roadmap?.completed}
+                            onClick={() => setCertDialogOpen(true)}
+                            className={cn(
+                                "w-full gap-2 transition-all",
+                                roadmap?.completed
+                                    ? "bg-linear-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white"
+                                    : "opacity-60 cursor-not-allowed"
+                            )}
+                        >
+                            <Award className="h-4 w-4" />
+                            {roadmap?.completed ? "Generate Certificate" : "Complete Course to Unlock"}
+                        </Button>
+                        {!roadmap?.completed && (
+                            <p className="text-xs text-muted-foreground text-center mt-2">
+                                Complete all chapters to earn your certificate
+                            </p>
+                        )}
+                    </div>
                 </div>
             </aside>
+
+            {/* Certificate dialog */}
+            <CertificateDialog
+                open={certDialogOpen}
+                onOpenChange={setCertDialogOpen}
+                userId={user?.email}
+                courseId={id || courseId}
+                courseTitle={courseTitle || roadmap?.courseTitle || roadmap?.title || ""}
+            />
         </>
     );
 }

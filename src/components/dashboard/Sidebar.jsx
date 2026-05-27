@@ -21,26 +21,26 @@ const Sidebar = ({ user, rank, difficultyLevel, leaderboard, onUserUpdate }) => 
     // Format date safely
     const formatJoinDate = (dateValue) => {
         if (!dateValue) return null;
-        
+
         try {
             // Handle Firestore Timestamp
             if (dateValue.seconds) {
                 const date = new Date(dateValue.seconds * 1000);
                 return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
             }
-            
+
             // Handle Firestore Timestamp with _seconds (serialized format)
             if (dateValue._seconds) {
                 const date = new Date(dateValue._seconds * 1000);
                 return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
             }
-            
+
             // Handle numeric timestamp (milliseconds)
             if (typeof dateValue === 'number') {
                 const date = new Date(dateValue);
                 return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
             }
-            
+
             // Handle ISO string or regular date
             const date = new Date(dateValue);
             if (isNaN(date.getTime())) {
@@ -81,7 +81,7 @@ const Sidebar = ({ user, rank, difficultyLevel, leaderboard, onUserUpdate }) => 
         { icon: GlobeIcon, url: user?.socialLinks?.website, label: "Website" }
     ].filter(link => link.url && link.url.trim() !== "");
     return (
-        <div className="space-y-6 min-w-72 md:min-h-[calc(100vh-120px)] pt-3 md:sticky top-16">
+        <div className="w-full min-w-0 space-y-6 md:min-w-72 md:min-h-[calc(100vh-120px)] pt-3 md:sticky top-16">
             <Card className="gap-3">
                 <CardHeader className="pb-2">
                     <div className="flex items-center flex-wrap gap-4">
@@ -175,8 +175,8 @@ const Sidebar = ({ user, rank, difficultyLevel, leaderboard, onUserUpdate }) => 
                     </div>
                 </CardContent>
                 <CardFooter className="pt-2">
-                    <Button 
-                        className="w-full" 
+                    <Button
+                        className="w-full"
                         size="sm"
                         onClick={() => setEditModalOpen(true)}
                     >
@@ -213,7 +213,7 @@ const Sidebar = ({ user, rank, difficultyLevel, leaderboard, onUserUpdate }) => 
             </Card>
 
             {/* Edit Profile Modal */}
-            <EditProfileModal 
+            <EditProfileModal
                 open={editModalOpen}
                 onOpenChange={setEditModalOpen}
                 user={user}

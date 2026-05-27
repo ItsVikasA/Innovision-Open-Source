@@ -20,7 +20,7 @@ export function NightModeProvider({ children }) {
     const newValue = !nightMode;
     setNightMode(newValue);
     localStorage.setItem("nightMode", String(newValue));
-    
+
     if (newValue) {
       document.documentElement.classList.add("night-mode");
     } else {
