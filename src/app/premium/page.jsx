@@ -486,90 +486,122 @@ export default function PremiumPage() {
         {/* All Features Section */}
         <ScrollReveal delay={200}>
           <div className="mb-12">
-            <h2 className="text-2xl font-bold text-center mb-8">All Premium Features</h2>
+            <h2 className="text-3xl font-bold text-center mb-8 tracking-tight">
+            All{" "}
+            <span className="bg-gradient-to-r from-yellow-400 via-orange-500 to-amber-400 bg-clip-text text-transparent transition-all duration-500 hover:brightness-110">
+            Premium </span>{" "}
+            Features</h2>
             <StaggerChildren className="grid grid-cols-2 md:grid-cols-4 gap-4" staggerDelay={50}>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <BookOpen className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-                <h4 className="font-semibold text-sm">Unlimited Courses</h4>
-                <p className="text-xs text-muted-foreground">Custom, YouTube, Studio</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out 
+               hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+              <BookOpen className=" h-8 w-8 mx-auto mb-2 text-blue-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12"/>
+              <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">
+              Unlimited Courses</h4>
+              <p  className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">
+              Custom, YouTube, Studio</p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <GraduationCap className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                <h4 className="font-semibold text-sm">Full Curriculum</h4>
-                <p className="text-xs text-muted-foreground">LKG to Class 12</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <GraduationCap className="h-8 w-8 mx-auto mb-2 text-green-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">Full Curriculum</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">
+                  LKG to Class 12
+                </p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <Building2 className="h-8 w-8 mx-auto mb-2 text-purple-500" />
-                <h4 className="font-semibold text-sm">Engineering</h4>
-                <p className="text-xs text-muted-foreground">All branches & semesters</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <Building2 className="h-8 w-8 mx-auto mb-2 text-yellow-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">Engineering</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">All branches & semesters</p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <Upload className="h-8 w-8 mx-auto mb-2 text-orange-500" />
-                <h4 className="font-semibold text-sm">Content Ingestion</h4>
-                <p className="text-xs text-muted-foreground">PDFs & textbooks</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <Upload className="h-8 w-8 mx-auto mb-2 text-purple-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">Content Ingestion</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">PDFs & textbooks</p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <Code2 className="h-8 w-8 mx-auto mb-2 text-cyan-500" />
-                <h4 className="font-semibold text-sm">Code Editor</h4>
-                <p className="text-xs text-muted-foreground">AI Website Builder</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <Code2 className="h-8 w-8 mx-auto mb-2 text-orange-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">Code Editor</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">AI Website Builder</p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <Languages className="h-8 w-8 mx-auto mb-2 text-pink-500" />
-                <h4 className="font-semibold text-sm">Translation</h4>
-                <p className="text-xs text-muted-foreground">Multi-language support</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <Languages className="h-8 w-8 mx-auto mb-2 text-pink-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">Translation</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">Multi-language support</p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <BarChart3 className="h-8 w-8 mx-auto mb-2 text-indigo-500" />
-                <h4 className="font-semibold text-sm">Analytics</h4>
-                <p className="text-xs text-muted-foreground">Performance tracking</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <BarChart3 className="h-8 w-8 mx-auto mb-2 text-blue-800  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">Analytics</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">Performance tracking</p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <Brain className="h-8 w-8 mx-auto mb-2 text-red-500" />
-                <h4 className="font-semibold text-sm">AI Personalization</h4>
-                <p className="text-xs text-muted-foreground">Smart recommendations</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <Brain className="h-8 w-8 mx-auto mb-2 text-red-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">AI Personalization</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">Smart recommendations</p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <Wifi className="h-8 w-8 mx-auto mb-2 text-teal-500" />
-                <h4 className="font-semibold text-sm">Offline Learning</h4>
-                <p className="text-xs text-muted-foreground">Unlimited downloads</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <Wifi className="h-8 w-8 mx-auto mb-2 text-yellow-200  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">Offline Learning</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">Unlimited downloads</p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <Video className="h-8 w-8 mx-auto mb-2 text-rose-500" />
-                <h4 className="font-semibold text-sm">Multimodal</h4>
-                <p className="text-xs text-muted-foreground">Audio & video scripts</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <Video className="h-8 w-8 mx-auto mb-2 text-violet-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">Multimodal</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">Audio & video scripts </p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <Trophy className="h-8 w-8 mx-auto mb-2 text-amber-500" />
-                <h4 className="font-semibold text-sm">Gamification</h4>
-                <p className="text-xs text-muted-foreground">XP, badges, streaks</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <Trophy className="h-8 w-8 mx-auto mb-2 text-orange-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">Gamification</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">XP, badges, streaks</p>
               </Card>
             </HoverCard>
             <HoverCard>
-              <Card className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50">
-                <Calendar className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
-                <h4 className="font-semibold text-sm">LMS Integration</h4>
-                <p className="text-xs text-muted-foreground">Moodle & Canvas</p>
+              <Card className="group p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 transition-all  duration-500  ease-out  
+              hover:-translate-y-2  hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30">
+                <Calendar className="h-8 w-8 mx-auto mb-2 text-green-500  transition-all duration-500 ease-out
+                     group-hover:scale-125  group-hover:rotate-12" />
+                <h4 className="font-semibold text-sm  transition-colors duration-300  group-hover:text-primary">LMS Integration</h4>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">Moodle & Canvas</p>
               </Card>
             </HoverCard>
             </StaggerChildren>
