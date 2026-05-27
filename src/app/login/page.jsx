@@ -75,7 +75,7 @@ export default function SignIn() {
                 <h2 className="text-2xl sm:text-3xl font-light text-foreground mb-2">
                   Sign in to InnoVision
                 </h2>
-                <p className="text-muted-foreground font-light text-sm">
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   Continue your learning journey
                 </p>
               </div>
@@ -111,14 +111,20 @@ export default function SignIn() {
               </div>
 
               {/* Terms */}
-              <div className="mt-8 space-y-3 text-muted-foreground text-center">
-                <p className="text-xs font-light">
+              <div className="mt-8 space-y-3 text-center">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-6">
                   By proceeding, you agree to our{" "}
-                  <a href="/terms" className="underline hover:text-foreground transition-colors">
+                  <a
+                    href="/terms"
+                    className="underline underline-offset-2 hover:text-black dark:hover:text-white transition-colors"
+                  >
                     Terms of Use
                   </a>{" "}
                   and{" "}
-                  <a href="/privacy" className="underline hover:text-foreground transition-colors">
+                  <a
+                    href="/privacy"
+                    className="underline underline-offset-2 hover:text-black dark:hover:text-white transition-colors"
+                  >
                     Privacy Policy
                   </a>
                   .
