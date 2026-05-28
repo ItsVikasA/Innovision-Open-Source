@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "@/lib/auth-server";
 import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const openai = new OpenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -184,7 +185,7 @@ export async function GET(request) {
     }
 }
 
-// POST - Handle feedback
+// POST - Handle feedback or generate personalized recommendations
 export async function POST(request) {
     try {
         const session = await getServerSession();
@@ -192,23 +193,82 @@ export async function POST(request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { courseId, feedbackType } = await request.json(); // feedbackType: "not_interested" or "already_know"
-        if (!courseId) {
-            return NextResponse.json({ error: "Course ID required" }, { status: 400 });
+        const body = await request.json();
+        
+        // Case 1: Feedback flow (if body contains courseId or feedbackType)
+        if (body.courseId || body.feedbackType) {
+            const { courseId, feedbackType } = body;
+            if (!courseId) {
+                return NextResponse.json({ error: "Course ID required" }, { status: 400 });
+            }
+
+            const userEmail = session.user.email;
+            await adminDb.collection("users").doc(userEmail).collection("recommendationFeedback").doc(courseId).set({
+                type: feedbackType,
+                timestamp: Date.now()
+            });
+
+            // Trigger a refresh (invalidate cache)
+            await adminDb.collection("users").doc(userEmail).collection("recommendations").doc("state").delete();
+
+            return NextResponse.json({ success: true });
         }
 
-        const userEmail = session.user.email;
-        await adminDb.collection("users").doc(userEmail).collection("recommendationFeedback").doc(courseId).set({
-            type: feedbackType,
-            timestamp: Date.now()
+        // Case 2: Personalized recommendations flow
+        const { completedCourses = [], xp = 0, badges = [] } = body;
+
+        if (!process.env.GEMINI_API_KEY) {
+            return NextResponse.json({ error: "Gemini API key is not configured" }, { status: 500 });
+        }
+
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash",
+            generationConfig: {
+                temperature: 0.7,
+                responseMimeType: "application/json",
+            },
         });
 
-        // Trigger a refresh (invalidate cache)
-        await adminDb.collection("users").doc(userEmail).collection("recommendations").doc("state").delete();
+        const prompt = `
+        You are a smart educational counselor. Recommend 3 to 5 personalized course topics that the user should generate and study next on InnoVision.
+        
+        Analyze the user's current progress:
+        - Completed Courses: ${JSON.stringify(completedCourses)}
+        - Current XP Level: ${xp} XP
+        - Earned Badges: ${JSON.stringify(badges)}
 
-        return NextResponse.json({ success: true });
+        Provide next course recommendations that represent either a logical progression (e.g., from beginner to intermediate, or moving to advanced techniques of the same topic) or highly relevant complementary subjects.
+
+        Return ONLY a JSON array of objects, where each object has EXACTLY these fields:
+        - "title": The title of the recommended course (e.g., 'Advanced React Patterns' or 'Data Analysis with Pandas')
+        - "difficulty": The difficulty level ('Beginner', 'Intermediate', or 'Advanced')
+        - "reason": A short, compelling explanation (1-2 sentences) of why this course is recommended for the user based on their history, XP, and badges.
+        - "estimated_duration": Estimated duration to complete the course (e.g., '2 weeks', '1 month', '3 weeks')
+        `;
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+
+        let recommendations;
+        try {
+            recommendations = JSON.parse(responseText);
+        } catch (e) {
+            const cleanText = responseText
+                .replace(/^```json\s?/, "")
+                .replace(/^```\s?/, "")
+                .replace(/\s?```$/, "")
+                .trim();
+            recommendations = JSON.parse(cleanText);
+        }
+
+        if (!Array.isArray(recommendations)) {
+            throw new Error("Gemini response is not an array");
+        }
+
+        return NextResponse.json({ success: true, recommendations });
     } catch (error) {
-        console.error("Feedback error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        console.error("Feedback/Recommendation POST error:", error);
+        return NextResponse.json({ error: "Internal server error", details: error.message }, { status: 500 });
     }
 }

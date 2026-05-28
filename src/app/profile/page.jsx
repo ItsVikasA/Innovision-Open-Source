@@ -22,6 +22,7 @@ import BadgeGallery from "@/components/profile/BadgeGallery";
 import Bookmarks from "@/components/profile/Bookmarks";
 import StatsCard from "@/components/profile/StatsCard";
 import StudyReminders from "@/components/settings/StudyReminders";
+import RecommendationCards from "@/components/dashboard/RecommendationCards";
 import { Download, Database, Shield, FileText, Crown, Lock } from "lucide-react";
 import TrialBanner from "@/components/TrialBanner";
 import PremiumDialog from "@/components/PremiumDialog";
@@ -293,6 +294,9 @@ export default function ProfilePage() {
 
                   {/* Learning Stats Dashboard */}
                   {user?.email && <StatsCard userId={user.email} />}
+
+                  {/* AI Recommendations */}
+                  <RecommendationCards />
 
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2">
