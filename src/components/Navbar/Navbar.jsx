@@ -313,3 +313,102 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+import React, { useState } from "react";
+
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const navbarStyle = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "15px 20px",
+    backgroundColor: "white",
+    position: "relative",
+    borderBottom: "1px solid #eee",
+  };
+
+  const logoStyle = {
+    fontSize: "20px",
+    fontWeight: "bold",
+  };
+
+  const hamburgerStyle = {
+    display: "flex",
+    flexDirection: "column",
+    cursor: "pointer",
+    gap: "4px",
+  };
+
+  const barStyle = {
+    width: "25px",
+    height: "3px",
+    backgroundColor: "black",
+  };
+
+  const navLinksStyle = {
+    display: isOpen ? "flex" : "none",
+    flexDirection: "column",
+    position: "absolute",
+    top: "60px",
+    right: "20px",
+    backgroundColor: "white",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+    padding: "10px",
+    gap: "10px",
+    minWidth: "150px",
+  };
+
+  const desktopLinksStyle = {
+    display: "flex",
+    gap: "20px",
+    listStyle: "none",
+  };
+
+  const linkStyle = {
+    textDecoration: "none",
+    color: "black",
+  };
+
+  // Simple screen check (not perfect but works basic level)
+  const isMobile = window.innerWidth <= 768;
+
+  return (
+    <nav style={navbarStyle}>
+      {/* Logo */}
+      <div style={logoStyle}>MyApp</div>
+
+      {/* Desktop Menu */}
+      {!isMobile && (
+        <ul style={desktopLinksStyle}>
+          <li><a style={linkStyle} href="#home">Home</a></li>
+          <li><a style={linkStyle} href="#features">Features</a></li>
+          <li><a style={linkStyle} href="#about">About</a></li>
+          <li><a style={linkStyle} href="#contact">Contact</a></li>
+        </ul>
+      )}
+
+      {/* Mobile Hamburger */}
+      {isMobile && (
+        <>
+          <div style={hamburgerStyle} onClick={() => setIsOpen(!isOpen)}>
+            <span style={barStyle}></span>
+            <span style={barStyle}></span>
+            <span style={barStyle}></span>
+          </div>
+
+          {/* Mobile Menu */}
+          <div style={navLinksStyle}>
+            <a style={linkStyle} href="#home">Home</a>
+            <a style={linkStyle} href="#features">Features</a>
+            <a style={linkStyle} href="#about">About</a>
+            <a style={linkStyle} href="#contact">Contact</a>
+          </div>
+        </>
+      )}
+    </nav>
+  );
+};
+
+export default Navbar;
