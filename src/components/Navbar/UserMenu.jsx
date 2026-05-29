@@ -26,13 +26,11 @@ import {
   LogOut,
   Trophy,
   Crown,
-  MoonStar,
   Settings,
   User,
-  Sun,
-  Moon,
 } from "lucide-react";
 import PremiumGoogleTranslate from "../PremiumGoogleTranslate";
+import { ThemeMenuOptions } from "./ThemeToggle";
 
 /**
  * User menu dropdown component with profile, settings, and logout.
@@ -42,10 +40,6 @@ const UserMenu = ({
   isPremium,
   xp,
   streak,
-  theme,
-  nightMode,
-  toggleTheme,
-  toggleNightMode,
   signOutUser,
 }) => {
   return (
@@ -126,25 +120,7 @@ const UserMenu = ({
           </div>
           <DropdownMenuSeparator className="sm:hidden" />
 
-          <div className="px-2 py-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Night Mode</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleNightMode}
-                aria-label={nightMode ? "Disable night mode" : "Enable night mode"}
-              >
-                <MoonStar className={`h-4 w-4 ${nightMode ? 'fill-amber-500' : ''}`} />
-              </Button>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Theme</span>
-              <Button variant="ghost" size="sm" onClick={toggleTheme} className="h-8 w-8 p-0" aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}>
-                {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
+          <ThemeMenuOptions />
 
           <DropdownMenuSeparator />
 

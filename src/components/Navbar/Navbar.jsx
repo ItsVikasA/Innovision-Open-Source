@@ -13,17 +13,14 @@ import {
   Youtube,
   BookOpen,
   Crown,
-  MoonStar,
   Home,
   MessageSquare,
   Menu,
   X,
   Zap,
 } from "lucide-react";
-import { Sun, Moon } from "lucide-react";
 import Image from "next/image";
 import xpContext from "@/contexts/xp";
-import { useNightMode } from "@/contexts/nightMode";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth";
@@ -34,32 +31,19 @@ import DesktopNav from "./DesktopNav";
 import MobileMenu from "./MobileMenu";
 import UserMenu from "./UserMenu";
 import NotificationBell from "./NotificationBell";
+import ThemeToggle from "./ThemeToggle";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
-  const [theme, setTheme] = useState("light");
   const [streak, setStreak] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { xp, show, changed } = useContext(xpContext);
-  const { nightMode, toggleNightMode } = useNightMode();
   const pathname = usePathname();
 
   const isActiveLink = (href) => {
     return pathname === href || (href === "/roadmap" && pathname === "/");
   };
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "light";
-    setTheme(savedTheme);
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -77,19 +61,6 @@ const Navbar = () => {
       document.documentElement.style.overflow = originalHtmlOverflow;
     };
   }, [mobileMenuOpen]);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
-    }
-  };
 
   useEffect(() => {
     if (user?.email) {
@@ -239,28 +210,7 @@ const Navbar = () => {
 
             {user && <NotificationBell />}
 
-            {/* Theme Toggle - Always visible */}
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-muted text-foreground" aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}>
-              {theme === "light" ? <Moon className="h-4 w-4 sm:h-4 sm:w-4" /> : <Sun className="h-4 w-4 sm:h-4 sm:w-4" />}
-            </Button>
-
-            {/* Night Mode - Always visible */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleNightMode}
-                  className={`h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-muted ${nightMode ? 'text-amber-400' : 'text-foreground'}`}
-                  aria-label={nightMode ? "Disable night mode" : "Enable night mode"}
-                >
-                  <MoonStar className={`h-4 w-4 sm:h-4 sm:w-4 ${nightMode ? 'fill-amber-400' : ''}`} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-background border-border">
-                <p className="font-light text-foreground">Night Mode (Blue Light Filter)</p>
-              </TooltipContent>
-            </Tooltip>
+            <ThemeToggle />
 
             {/* User Menu or Login */}
             {user ? (
@@ -269,10 +219,6 @@ const Navbar = () => {
                 isPremium={isPremium}
                 xp={xp}
                 streak={streak}
-                theme={theme}
-                nightMode={nightMode}
-                toggleTheme={toggleTheme}
-                toggleNightMode={toggleNightMode}
                 signOutUser={signOutUser}
               />
             ) : (

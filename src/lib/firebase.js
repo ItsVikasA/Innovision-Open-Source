@@ -12,9 +12,29 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID,
 };
 
-// Initialize Firebase only if not already initialized
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
-const auth = getAuth(app);
+function hasRequiredConfig() {
+  return ["apiKey", "projectId", "appId"].every((key) => {
+    const value = firebaseConfig[key];
+    return typeof value === "string" && value.trim().length > 0;
+  });
+}
 
-export { db, auth };
+let app = null;
+let db = null;
+let auth = null;
+
+if (hasRequiredConfig()) {
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    db = getFirestore(app);
+    auth = getAuth(app);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("Firebase client initialization failed:", error?.message || error);
+    }
+  }
+} else if (process.env.NODE_ENV === "development") {
+  console.warn("Firebase env variables missing. Auth and Firestore are disabled locally.");
+}
+
+export { db, auth, app };

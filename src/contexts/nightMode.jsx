@@ -1,13 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 const NightModeContext = createContext();
 
 export function NightModeProvider({ children }) {
   const [nightMode, setNightMode] = useState(false);
 
-  // Load saved night mode preference
   useEffect(() => {
     const saved = localStorage.getItem("nightMode");
     if (saved === "true") {
@@ -16,20 +15,22 @@ export function NightModeProvider({ children }) {
     }
   }, []);
 
-  const toggleNightMode = () => {
-    const newValue = !nightMode;
-    setNightMode(newValue);
-    localStorage.setItem("nightMode", String(newValue));
-
-    if (newValue) {
+  const applyReadingMode = useCallback((enabled) => {
+    setNightMode(enabled);
+    localStorage.setItem("nightMode", String(enabled));
+    if (enabled) {
       document.documentElement.classList.add("night-mode");
     } else {
       document.documentElement.classList.remove("night-mode");
     }
-  };
+  }, []);
+
+  const toggleNightMode = () => applyReadingMode(!nightMode);
 
   return (
-    <NightModeContext.Provider value={{ nightMode, toggleNightMode }}>
+    <NightModeContext.Provider
+      value={{ nightMode, toggleNightMode, setReadingMode: applyReadingMode }}
+    >
       {children}
     </NightModeContext.Provider>
   );

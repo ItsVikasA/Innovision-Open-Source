@@ -10,61 +10,68 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
-
   useEffect(() => {
-    let unsubscribe;
+    if (!auth) {
+      setLoading(false);
+      return undefined;
+    }
 
-    unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          // 1. Sync session cookie FIRST
-          const idToken = await firebaseUser.getIdToken();
-          const response = await fetch("/api/auth/session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idToken }),
-          });
-
-          if (!response.ok) {
-            console.error("AUTH_CONTEXT: Failed to sync session cookie");
-          }
-
-          // 2. Fetch additional user data from Firestore
-          const userRef = doc(db, "users", firebaseUser.email);
-          const userSnap = await getDoc(userRef);
-
-          // 3. ONLY set the user state after cookie is (attempted to be) synced
-          if (userSnap.exists()) {
-            setUser({
-              ...firebaseUser,
-              ...userSnap.data(),
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (firebaseUser) => {
+        if (firebaseUser) {
+          try {
+            const idToken = await firebaseUser.getIdToken();
+            const response = await fetch("/api/auth/session", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ idToken }),
             });
-          } else {
+
+            if (!response.ok) {
+              console.error("AUTH_CONTEXT: Failed to sync session cookie");
+            }
+
+            if (db) {
+              const userRef = doc(db, "users", firebaseUser.email);
+              const userSnap = await getDoc(userRef);
+
+              if (userSnap.exists()) {
+                setUser({
+                  ...firebaseUser,
+                  ...userSnap.data(),
+                });
+              } else {
+                setUser(firebaseUser);
+              }
+            } else {
+              setUser(firebaseUser);
+            }
+          } catch (error) {
+            console.error("AUTH_CONTEXT: error during sync/fetch", error);
             setUser(firebaseUser);
           }
-        } catch (error) {
-          console.error("AUTH_CONTEXT: error during sync/fetch", error);
-          setUser(firebaseUser); // Fallback to basic user
+        } else {
+          await fetch("/api/auth/session", {
+            method: "DELETE",
+          });
+          setUser(null);
         }
-      } else {
-        // Clear session cookie
-        await fetch("/api/auth/session", {
-          method: "DELETE",
-        });
-        setUser(null);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("AUTH_CONTEXT: Firebase auth unavailable", error);
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
 
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
+    return () => unsubscribe();
   }, []);
 
   const googleSignIn = async () => {
+    if (!auth) {
+      throw new Error("Firebase is not configured. Add credentials to .env to enable sign-in.");
+    }
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
@@ -77,6 +84,9 @@ export function AuthProvider({ children }) {
   };
 
   const githubSignIn = async () => {
+    if (!auth) {
+      throw new Error("Firebase is not configured. Add credentials to .env to enable sign-in.");
+    }
     const provider = new GithubAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
@@ -88,11 +98,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-
   const logout = async () => {
     try {
-      await signOut(auth);
-      // Clear session cookie
+      if (auth) {
+        await signOut(auth);
+      }
       await fetch("/api/auth/session", { method: "DELETE" });
       setUser(null);
     } catch (error) {
@@ -102,6 +112,7 @@ export function AuthProvider({ children }) {
   };
 
   const saveUserToFirestore = async (user, providerName) => {
+    if (!db) return;
     try {
       const userRef = doc(db, "users", user.email);
       const userSnap = await getDoc(userRef);
@@ -132,9 +143,8 @@ export function AuthProvider({ children }) {
   };
 
   const getToken = async () => {
-    const u = auth.currentUser;
-    if (!u) return null;
-    return await u.getIdToken();
+    if (!auth?.currentUser) return null;
+    return auth.currentUser.getIdToken();
   };
 
   return (
