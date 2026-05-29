@@ -123,27 +123,35 @@ export default function MotivationalQuote({ variant = "default" }) {
             <Quote className="h-6 w-6 text-white" />
           </div>
 
-          <div className="space-y-4 max-w-2xl">
-            <p className="text-xl md:text-2xl font-light tracking-tight leading-relaxed italic text-foreground/90">
-              "{quote.text}"
-            </p>
-            <div className="flex flex-col items-center gap-4 pt-2">
-              <div className="h-px w-12 bg-linear-to-r from-transparent via-border to-transparent" />
-              <p className="text-sm font-medium tracking-widest uppercase text-muted-foreground/80">
-                {quote.author}
-              </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={changeQuote}
-                disabled={isChanging}
-                className="mt-2 rounded-full h-10 w-10 p-0 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/5 transition-all"
-                aria-label="Refresh quote"
-              >
-                <RefreshCw className={`h-4 w-4 ${isChanging ? "animate-spin" : ""}`} />
-              </Button>
-            </div>
-          </div>
+          <div
+  className="space-y-4 max-w-2xl"
+  aria-live="polite"
+>
+  <p className="text-xl md:text-2xl font-light tracking-tight leading-relaxed italic text-foreground/90">
+    "{quote.text}"
+  </p>
+
+  <div className="flex flex-col items-center gap-4 pt-2">
+    <div className="h-px w-12 bg-linear-to-r from-transparent via-border to-transparent" />
+
+    <p className="text-sm font-medium tracking-widest uppercase text-muted-foreground/80">
+      {quote.author}
+    </p>
+
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={changeQuote}
+      disabled={isChanging}
+      className="mt-2 rounded-full h-10 w-10 p-0 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/5 transition-all"
+      aria-label="Refresh quote"
+    >
+      <RefreshCw
+        className={`h-4 w-4 ${isChanging ? "animate-spin" : ""}`}
+      />
+    </Button>
+  </div>
+</div>
         </div>
       </div>
     </Card>
