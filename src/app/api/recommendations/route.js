@@ -192,12 +192,19 @@ export async function POST(request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { courseId, feedbackType } = await request.json(); // feedbackType: "not_interested" or "already_know"
+        const { courseId, feedbackType } = await request.json(); // feedbackType: "not_interested", "already_know", or "refresh"
+        const userEmail = session.user.email;
+
+        // Handle refresh action: invalidate cache and return
+        if (feedbackType === "refresh") {
+            await adminDb.collection("users").doc(userEmail).collection("recommendations").doc("state").delete();
+            return NextResponse.json({ success: true });
+        }
+
         if (!courseId) {
             return NextResponse.json({ error: "Course ID required" }, { status: 400 });
         }
 
-        const userEmail = session.user.email;
         await adminDb.collection("users").doc(userEmail).collection("recommendationFeedback").doc(courseId).set({
             type: feedbackType,
             timestamp: Date.now()

@@ -66,6 +66,9 @@ const RecommendedCourses = ({ query = "" }) => {
                 }
                 toast.success(feedbackType === "not_interested" ? "We'll show you fewer courses like this." : "Got it! We'll update your recommendations.");
                 setRecommendations(prev => prev.filter(r => r.id !== courseId));
+            } else {
+                const err = await response.json().catch(() => ({}));
+                toast.error(err.error || "Failed to update recommendations");
             }
         } catch (error) {
             toast.error("Failed to update recommendations");
