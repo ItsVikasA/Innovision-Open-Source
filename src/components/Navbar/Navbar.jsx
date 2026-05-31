@@ -160,7 +160,7 @@ const Navbar = () => {
   return (
     <>
       <header className="h-16 w-full border-b fixed top-0 left-0 bg-background/80 backdrop-blur-xl z-[100] border-border">
-        <div className="h-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between">
+        <div className="h-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 flex items-center gap-2 lg:gap-4 min-w-0">
           {/* Logo - Left */}
           <Link
             href={user ? `/roadmap` : "/"}
@@ -181,7 +181,7 @@ const Navbar = () => {
           />
 
           {/* Right Section */}
-          <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
+          <div className="ml-auto flex items-center gap-0.5 sm:gap-2 shrink-0 min-w-0">
             {user && (
               <>
                 {/* Premium Badge */}
@@ -287,7 +287,7 @@ const Navbar = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-muted text-foreground"
+              className="lg:hidden h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-muted text-foreground"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >

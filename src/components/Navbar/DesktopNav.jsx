@@ -15,10 +15,10 @@ const DesktopNav = ({
   isActiveLink,
 }) => {
   return (
-    <nav className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
+    <nav className="hidden lg:flex flex-1 min-w-0 items-center justify-center">
       {user ? (
         // Logged in users - show ALL 11 nav items with icons only
-        <div className="flex items-center gap-0.5 px-2 py-1.5 rounded-full border border-border/50 bg-card/80 backdrop-blur-md shadow-sm">
+        <div className="flex max-w-full items-center gap-0.5 px-2 py-1.5 rounded-full border border-border/50 bg-card/80 backdrop-blur-md shadow-sm overflow-hidden">
           {[...createMenuItems, ...learnMenuItems, ...moreMenuItems].map((item) => (
             <Tooltip key={item.href}>
               <TooltipTrigger asChild>
@@ -41,7 +41,7 @@ const DesktopNav = ({
         </div>
       ) : (
         // Landing page nav - pill style buttons with text
-        <div className="flex items-center gap-0.5 px-2 py-1.5 rounded-full border border-border/50 bg-card/80 backdrop-blur-md shadow-sm">
+        <div className="flex max-w-full items-center gap-0.5 px-2 py-1.5 rounded-full border border-border/50 bg-card/80 backdrop-blur-md shadow-sm overflow-hidden">
           {landingNavItems.map((item) => (
             <Button
               key={item.id || item.href}
