@@ -82,6 +82,106 @@ const ExportCourse = ({ courseId, courseTitle }) => {
         return false;
       };
 
+      const renderLines = (text, { indent = 0, fontSize = 10, font = "helvetica", style = "normal", color = [0, 0, 0], gap = lineHeight } = {}) => {
+        if (!text && text !== 0) return;
+
+        doc.setFontSize(fontSize);
+        doc.setFont(font, style);
+        doc.setTextColor(...color);
+
+        const availableWidth = maxWidth - indent;
+        const lines = doc.splitTextToSize(String(text), availableWidth);
+
+        lines.forEach((line) => {
+          checkPageBreak(gap + 2);
+          doc.text(line, margin + indent, yPosition);
+          yPosition += gap;
+        });
+      };
+
+      const renderBulletList = (items, indent = 5) => {
+        if (!Array.isArray(items) || items.length === 0) return;
+
+        items.forEach((item) => {
+          if (item == null || item === "") return;
+
+          if (typeof item === "string" || typeof item === "number") {
+            renderLines(`• ${item}`, { indent, gap: lineHeight });
+            return;
+          }
+
+          if (typeof item === "object" && !Array.isArray(item)) {
+            if (item.type) {
+              renderContentBlock(item);
+              return;
+            }
+
+            if (item.title || item.name) {
+              renderLines(item.title || item.name, { indent, fontSize: 11, font: "helvetica", style: "bold", color: [118, 75, 162], gap: 7 });
+            }
+
+            if (item.content) {
+              renderContentValue(item.content, indent + 5);
+            }
+          }
+        });
+      };
+
+      const renderContentValue = (value, indent = 0) => {
+        if (value == null || value === "") return;
+
+        if (typeof value === "string" || typeof value === "number") {
+          renderLines(value, { indent, gap: lineHeight });
+          yPosition += 1;
+          return;
+        }
+
+        if (Array.isArray(value)) {
+          const isSimpleList = value.every((item) => typeof item === "string" || typeof item === "number");
+          if (isSimpleList) {
+            renderBulletList(value, indent + 5);
+            yPosition += 2;
+            return;
+          }
+
+          value.forEach((item) => renderContentValue(item, indent));
+          return;
+        }
+
+        if (typeof value === "object") {
+          if (value.type && value.content !== undefined) {
+            renderContentBlock(value);
+            return;
+          }
+
+          if (value.title || value.name) {
+            renderLines(value.title || value.name, { indent, fontSize: 11, font: "helvetica", style: "bold", color: [118, 75, 162], gap: 7 });
+          }
+
+          if (value.description) {
+            renderLines(value.description, { indent, gap: lineHeight });
+          }
+
+          if (value.content !== undefined) {
+            renderContentValue(value.content, indent);
+          }
+        }
+      };
+
+      const renderSection = (title, value, { indent = 0, titleColor = [102, 126, 234] } = {}) => {
+        if (value == null || value === "" || (Array.isArray(value) && value.length === 0)) return;
+
+        checkPageBreak(18);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...titleColor);
+        doc.text(title, margin + indent, yPosition);
+        yPosition += 8;
+
+        renderContentValue(value, indent + 5);
+        yPosition += 4;
+      };
+
       // Title Page
       doc.setFontSize(28);
       doc.setFont("helvetica", "bold");
@@ -201,35 +301,45 @@ const ExportCourse = ({ courseId, courseTitle }) => {
 
           // Learning Objectives
           if (chapterData.learningObjectives && chapterData.learningObjectives.length > 0) {
-            checkPageBreak(15);
-            doc.setFontSize(12);
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(102, 126, 234);
-            doc.text("Learning Objectives:", margin, yPosition);
-            yPosition += 8;
+            renderSection("Learning Objectives", chapterData.learningObjectives);
+          }
 
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(0, 0, 0);
-            chapterData.learningObjectives.forEach((objective) => {
-              checkPageBreak();
-              const lines = doc.splitTextToSize(`• ${objective}`, maxWidth - 5);
-              lines.forEach((line) => {
-                doc.text(line, margin + 5, yPosition);
-                yPosition += lineHeight;
-              });
-            });
-            yPosition += 8;
+          if (chapterData.chapterDescription) {
+            renderSection("Chapter Overview", chapterData.chapterDescription, { titleColor: [100, 100, 100] });
+          }
+
+          if (chapterData.introduction) {
+            renderSection("Introduction", chapterData.introduction, { titleColor: [100, 100, 100] });
+          }
+
+          if (chapterData.mainContent) {
+            renderSection("Main Content", chapterData.mainContent);
+          }
+
+          if (chapterData.keyPoints && chapterData.keyPoints.length > 0) {
+            renderSection("Key Points", chapterData.keyPoints);
+          }
+
+          if (chapterData.examples && chapterData.examples.length > 0) {
+            renderSection("Examples", chapterData.examples);
+          }
+
+          if (chapterData.otherResources && chapterData.otherResources.length > 0) {
+            renderSection("Other Resources", chapterData.otherResources);
+          }
+
+          if (chapterData.contentOutline && chapterData.contentOutline.length > 0) {
+            renderSection("Content Outline", chapterData.contentOutline);
+          }
+
+          if (chapterData.content) {
+            renderSection("Chapter Content", chapterData.content);
           }
 
           // Subtopics (Main Content)
           if (chapterData.subtopics && chapterData.subtopics.length > 0) {
-            console.log("Subtopics structure:", chapterData.subtopics[0]);
-
             chapterData.subtopics.forEach((subtopic, subIndex) => {
               checkPageBreak(15);
-
-              console.log(`Subtopic ${subIndex + 1}:`, subtopic);
 
               // Subtopic title
               doc.setFontSize(12);
@@ -246,27 +356,71 @@ const ExportCourse = ({ courseId, courseTitle }) => {
               const content = subtopic.content || subtopic.description || "";
 
               if (content) {
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal");
-                doc.setTextColor(0, 0, 0);
-
                 const renderContentBlock = (block) => {
-                  if (typeof block === 'string') {
-                    const lines = doc.splitTextToSize(block, maxWidth);
-                    lines.forEach((line) => {
-                      checkPageBreak();
-                      doc.text(line, margin, yPosition);
-                      yPosition += lineHeight;
+                  if (block == null || block === "") return;
+
+                  if (typeof block === 'string' || typeof block === 'number') {
+                    const sections = String(block).split('```');
+
+                    sections.forEach((section, sectionIndex) => {
+                      const isCodeBlock = sectionIndex % 2 === 1;
+                      if (isCodeBlock) {
+                        const code = section.replace(/```[a-z]*\n|```/g, '').trim();
+                        const codeLines = code.split('\n');
+
+                        doc.setFont("courier", "normal");
+                        doc.setFontSize(9);
+                        doc.setTextColor(50, 50, 50);
+
+                        codeLines.forEach((line) => {
+                          checkPageBreak(8);
+                          doc.setFillColor(248, 248, 248);
+                          doc.rect(margin, yPosition - 4, maxWidth, 6, 'F');
+
+                          if (line.length > 80) {
+                            const codeParts = doc.splitTextToSize(line, maxWidth - 6);
+                            codeParts.forEach((part) => {
+                              checkPageBreak(6);
+                              doc.setFillColor(248, 248, 248);
+                              doc.rect(margin, yPosition - 4, maxWidth, 6, 'F');
+                              doc.text(part, margin + 2, yPosition);
+                              yPosition += 5;
+                            });
+                          } else {
+                            doc.text(line, margin + 2, yPosition);
+                            yPosition += 5;
+                          }
+                        });
+
+                        yPosition += 4;
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(10);
+                        doc.setTextColor(0, 0, 0);
+                      } else {
+                        const paragraphs = section.split('\n\n');
+                        paragraphs.forEach((p) => {
+                          if (p.trim()) {
+                            renderLines(p.trim(), { gap: lineHeight });
+                          }
+                        });
+                        yPosition += 2;
+                      }
                     });
-                    yPosition += 2;
-                  } else if (typeof block === 'object') {
+                    return;
+                  }
+
+                  if (Array.isArray(block)) {
+                    block.forEach(renderContentBlock);
+                    return;
+                  }
+
+                  if (typeof block === 'object') {
                     const type = block.type;
                     const blockContent = block.content;
 
                     if (!blockContent) return;
 
                     if (type === 'code') {
-                      // Handle code blocks
                       const code = typeof blockContent === 'string' ? blockContent.replace(/```[a-z]*\n|```/g, '') : JSON.stringify(blockContent, null, 2);
                       const codeLines = code.split('\n');
 
@@ -293,59 +447,30 @@ const ExportCourse = ({ courseId, courseTitle }) => {
                           yPosition += 5;
                         }
                       });
+
                       yPosition += 4;
                       doc.setFont("helvetica", "normal");
                       doc.setFontSize(10);
                       doc.setTextColor(0, 0, 0);
                     } else if (type === 'points' || Array.isArray(blockContent)) {
-                      const points = Array.isArray(blockContent) ? blockContent : [blockContent];
-                      points.forEach((point) => {
-                        checkPageBreak();
-                        const lines = doc.splitTextToSize(`• ${point}`, maxWidth - 5);
-                        lines.forEach((line) => {
-                          doc.text(line, margin + 5, yPosition);
-                          yPosition += lineHeight;
-                        });
-                      });
+                      renderBulletList(Array.isArray(blockContent) ? blockContent : [blockContent], 5);
                       yPosition += 2;
                     } else if (type?.startsWith('header')) {
                       doc.setFont("helvetica", "bold");
-                      const lines = doc.splitTextToSize(blockContent, maxWidth);
-                      lines.forEach((line) => {
-                        checkPageBreak();
-                        doc.text(line, margin, yPosition);
-                        yPosition += lineHeight + 2;
-                      });
+                      renderLines(blockContent, { fontSize: 12, style: "bold", color: [118, 75, 162], gap: lineHeight + 2 });
                       doc.setFont("helvetica", "normal");
                     } else {
-                      // Paragraph or default
-                      const lines = doc.splitTextToSize(blockContent, maxWidth);
-                      lines.forEach((line) => {
-                        checkPageBreak();
-                        doc.text(line, margin, yPosition);
-                        yPosition += lineHeight;
-                      });
-                      yPosition += 2;
+                      renderContentValue(blockContent);
                     }
                   }
                 };
 
                 if (Array.isArray(content)) {
                   content.forEach(renderContentBlock);
+                } else if (typeof content === 'object') {
+                  renderContentValue(content);
                 } else {
-                  // Fallback for legacy string content
-                  const sections = content.split('```');
-                  sections.forEach((section, sectionIndex) => {
-                    const isCodeBlock = sectionIndex % 2 === 1;
-                    if (isCodeBlock) {
-                      renderContentBlock({ type: 'code', content: section });
-                    } else {
-                      const paragraphs = section.split('\n\n');
-                      paragraphs.forEach((p) => {
-                        if (p.trim()) renderContentBlock(p);
-                      });
-                    }
-                  });
+                  renderContentBlock(content);
                 }
               }
 
