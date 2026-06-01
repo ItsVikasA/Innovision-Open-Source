@@ -41,7 +41,7 @@ This guide explains how to set up and use the premium subscription system with R
 
 ### Step 2: Update Environment Variables
 
-Open your `.env` file and replace the placeholder values:
+Open your `.env.local` file (copy from [`.env.example`](../../.env.example)) and replace the placeholder values:
 
 ```env
 # Razorpay credentials

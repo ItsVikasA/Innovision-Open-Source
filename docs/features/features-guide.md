@@ -88,7 +88,7 @@ Navigate to `/gamification` to view your progress.
 
 #### 1. **XP & Leveling System**
 - Earn XP for completing activities
-- Level up every 1000 XP
+- Level up every 500 XP
 - Visual progress bars
 - Level badges
 
@@ -124,11 +124,14 @@ Three leaderboard types:
 
 | Action | XP Earned |
 |--------|-----------|
-| Complete Chapter | 100 XP |
-| Complete Course | 500 XP |
-| Perfect Quiz Score | 200 XP |
-| Daily Login | 50 XP |
-| Help Another Student | 75 XP |
+| View Course | 10 XP |
+| Generate Course | 10 XP |
+| Complete Lesson | 5 XP |
+| Complete Chapter | 5 XP |
+| Complete Course | 50 XP |
+| Correct Answer | 2 XP |
+| Perfect Quiz Score | 2 XP |
+| Help Another Student | 15 XP |
 
 ### How to Use
 

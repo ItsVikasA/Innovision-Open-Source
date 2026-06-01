@@ -250,8 +250,8 @@
 ## Support & Documentation
 
 ### User Guides:
-- `PREMIUM_SETUP_GUIDE.md` - Setup instructions
-- `TRANSLATION_FEATURE.md` - Translation trial details
+- [Premium setup](setup.md) - Setup instructions
+- [Translation](translation.md) - Translation trial details
 - This file - Complete feature breakdown
 
 ### API Documentation:

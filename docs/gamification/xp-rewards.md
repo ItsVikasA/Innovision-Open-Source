@@ -4,18 +4,19 @@
 
 ### Course Activities
 - **View Course**: 10 XP
-- **Complete Lesson**: 50 XP
-- **Complete Chapter**: 100 XP
-- **Complete Course**: 500 XP
+- **Generate Course**: 10 XP
+- **Complete Lesson**: 5 XP
+- **Complete Chapter**: 5 XP
+- **Complete Course**: 50 XP
 
 ### Quiz & Questions
 - **Correct Answer (MCQ)**: 2 XP per question ✨
 - **Correct Answer (Fill in the Blank)**: 2 XP per question ✨
 - **Correct Answer (Match the Following)**: 2 XP per correct match ✨
-- **Perfect Quiz Score**: 200 XP (bonus for 100%)
+- **Perfect Quiz Score**: 2 XP (bonus for 100%)
 
 ### Social
-- **Help Student**: 75 XP
+- **Help Student**: 15 XP
 
 ## How It Works
 
@@ -79,9 +80,9 @@ Total: 6 XP earned (3 correct matches)
 ```
 View Course → +10 XP
 Answer 5 MCQs (all correct) → +10 XP
-Complete Chapter → +100 XP
+Complete Chapter → +5 XP
 
-Total: 120 XP earned
+Total: 25 XP earned
 ```
 
 ## Testing

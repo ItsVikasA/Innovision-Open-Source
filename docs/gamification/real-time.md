@@ -44,11 +44,13 @@
 view_course → +10 XP
 
 // When you complete activities
-complete_lesson → +50 XP
-complete_chapter → +100 XP
-perfect_quiz → +200 XP
-complete_course → +500 XP
-help_student → +75 XP
+complete_lesson → +5 XP
+complete_chapter → +5 XP
+perfect_quiz → +2 XP
+complete_course → +50 XP
+help_student → +15 XP
+generate_course → +10 XP
+correct_answer → +2 XP
 ```
 
 ### Streak Logic

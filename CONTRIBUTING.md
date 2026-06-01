@@ -140,7 +140,7 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
 # Google Gemini API
-NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
+GEMINI_API_KEY=your_gemini_api_key
 
 # NextAuth
 NEXTAUTH_SECRET=your_nextauth_secret
@@ -180,6 +180,7 @@ InnoVision/
 │   ├── contexts/         # React context providers
 │   ├── hooks/            # Custom React hooks
 │   └── lib/              # Utility functions and configurations
+├── docs/                 # Detailed documentation
 ├── public/               # Static assets
 ├── README.md             # Project documentation
 └── package.json          # Dependencies and scripts
@@ -448,8 +449,10 @@ Update documentation when:
 
 ### Documentation Files
 
-- **README.md**: Project overview and setup
+- **README.md**: Project overview, quick start, and documentation index
+- **docs/**: Detailed guides (setup, features, premium, gamification, guides)
 - **CONTRIBUTING.md**: This file
+- **SECURITY.md**: Security policy
 - **Code comments**: Inline documentation
 - **JSDoc**: Function documentation
 

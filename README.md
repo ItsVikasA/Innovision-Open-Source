@@ -321,6 +321,50 @@ NEXTAUTH_SECRET=your-nextauth-secret
 NEXTAUTH_URL=http://localhost:3000
 ```
 
+See [`.env.example`](.env.example) and [Firebase setup](docs/setup/firebase.md) for the canonical variable names used in this repository.
+
+---
+
+## Documentation
+
+Full guides live in [`docs/`](docs/). Start with the [documentation hub](docs/README.md).
+
+### Setup
+
+- [Local development & features hub](docs/setup/local-development.md)
+- [Firebase setup](docs/setup/firebase.md)
+
+### Features
+
+- [Feature overview](docs/features/overview.md)
+- [Features guide (Studio, gamification, accessibility)](docs/features/features-guide.md)
+- [Curriculum-based courses](docs/features/curriculum.md)
+- [Advanced features implementation (developers)](docs/features/implementation.md)
+
+### Premium
+
+- [Premium setup (Razorpay)](docs/premium/setup.md)
+- [Premium vs free features](docs/premium/features.md)
+- [Translation trial & premium gating](docs/premium/translation.md)
+
+### Gamification
+
+- [Gamification overview](docs/gamification/README.md)
+- [XP rewards](docs/gamification/xp-rewards.md)
+- [Streaks](docs/gamification/streaks.md)
+- [Real-time updates](docs/gamification/real-time.md)
+- [Testing gamification](docs/gamification/testing.md)
+
+### Guides
+
+- [Student Q&A (with answers)](docs/guides/student-questions.md)
+- [Student question bank](docs/guides/student-questions-bank.md)
+
+### Contributing & security
+
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+
 ---
 
 ## Project Structure
@@ -347,8 +391,6 @@ InnoVision/
 │   │   ├── demo/              # Demo page
 │   │   ├── features/          # Advanced features hub
 │   │   │   ├── analytics/     # Learning analytics
-│   │   │   ├── daily-goals/   # Daily goal tracking
-│   │   │   ├── flashcards/    # Flashcard system
 │   │   │   ├── lms/           # LMS integration
 │   │   │   ├── multimodal/    # Multimodal content
 │   │   │   ├── offline/       # Offline learning
@@ -380,6 +422,7 @@ InnoVision/
 │   ├── contexts/              # React contexts (Auth, XP, NightMode)
 │   ├── hooks/                 # Custom React hooks
 │   └── lib/                   # Utilities (Firebase, Auth, notifications)
+├── docs/                      # Detailed documentation
 ├── .env.local                 # Environment variables
 ├── next.config.mjs            # Next.js configuration
 └── package.json               # Dependencies
@@ -394,19 +437,22 @@ InnoVision/
 |----------|--------|-------------|
 | `/api/roadmap/all` | GET | Get all user courses |
 | `/api/roadmap/[id]` | GET | Get specific course |
-| `/api/generate` | POST | Generate new course |
-| `/api/youtube/generate` | POST | Generate course from YouTube |
-| `/api/studio/create` | POST | Create studio course |
+| `/api/ai/generate` | POST | Generate new course |
+| `/api/youtube/generate-course` | POST | Generate course from YouTube |
+| `/api/studio/courses` | GET/POST | List or create studio courses |
+| `/api/studio/save` | POST | Save studio course draft |
+| `/api/studio/publish` | POST | Publish studio course |
 
 ---
 
 ### Gamification
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/gamification/stats` | GET/POST | Get/Update user stats & award XP |
-| `/api/gamification/streak` | GET/POST | Get/Update streak |
-| `/api/gamification/badges` | GET | Get user badges |
+| `/api/gamification/stats` | GET/POST | Get/update stats; POST awards XP |
 | `/api/gamification/leaderboard` | GET | Get leaderboard |
+| `/api/gamification/award-badge` | POST | Award badges |
+| `/api/gamification/daily-quests` | GET | Daily quests |
+| `/api/gamification/xp-history` | GET | XP history for charts |
 
 ---
 
@@ -463,11 +509,7 @@ InnoVision contributes to the following UN SDGs:
 
 ## Contributing
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, [Conventional Commits](https://www.conventionalcommits.org/), and pull request requirements.
 
 ---
 
