@@ -141,7 +141,7 @@ const UserMenu = ({
             <div className="flex items-center justify-between">
               <span className="text-sm">Theme</span>
               <Button variant="ghost" size="sm" onClick={toggleTheme} className="h-8 w-8 p-0" aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}>
-                {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {theme === "light" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
             </div>
           </div>

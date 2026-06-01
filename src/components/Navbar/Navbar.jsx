@@ -241,7 +241,7 @@ const Navbar = () => {
 
             {/* Theme Toggle - Always visible */}
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-muted text-foreground" aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}>
-              {theme === "light" ? <Moon className="h-4 w-4 sm:h-4 sm:w-4" /> : <Sun className="h-4 w-4 sm:h-4 sm:w-4" />}
+              {theme === "light" ? <Sun className="h-4 w-4 sm:h-4 sm:w-4" /> : <Moon className="h-4 w-4 sm:h-4 sm:w-4" />}
             </Button>
 
             {/* Night Mode - Always visible */}
