@@ -62,7 +62,8 @@ InnoVision is a cutting-edge AI-powered learning platform that dynamically gener
 | Trophy | Features | Platform features |
 | Zap | Achievements | Badges & rewards |
 | BarChart | Demo | See how it works |
-| Message | Contact | Get in touch |
+<!-- Fix: Corrected invalid Lucide icon name 'Message' to 'Mail' for Contact navigation item -->
+| Mail | Contact | Get in touch |
 
 ---
 
