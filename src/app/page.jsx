@@ -1,9 +1,13 @@
 "use client";
-import Landing from "@/components/Landing/Landing";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth";
 import { useEffect, useState } from "react";
 import Loading from "./loading";
+
+const Landing = dynamic(() => import("@/components/Landing/Landing"), {
+  loading: () => <Loading />,
+});
 
 const thoughts = [
   "The brain uses 20% of your body's energy.",
