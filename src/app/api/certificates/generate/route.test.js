@@ -1,14 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from './route';
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
 import { getDoc, getDocs, addDoc } from 'firebase/firestore';
 
 // Mock dependencies
-vi.mock('@/lib/firebase', () => ({
-  db: {},
-}));
-
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(),
   doc: vi.fn(),
@@ -18,6 +13,48 @@ vi.mock('firebase/firestore', () => ({
   where: vi.fn(),
   addDoc: vi.fn(),
   serverTimestamp: vi.fn(() => new Date()),
+}));
+
+let lastCallType = "doc";
+const chainable = {
+  collection: vi.fn(() => {
+    lastCallType = "collection";
+    return chainable;
+  }),
+  doc: vi.fn(() => {
+    lastCallType = "doc";
+    return chainable;
+  }),
+  where: vi.fn(() => {
+    lastCallType = "collection";
+    return chainable;
+  }),
+  get: vi.fn(async () => {
+    let result;
+    if (lastCallType === "doc") {
+      result = await getDoc();
+    } else {
+      result = await getDocs();
+    }
+    if (result && typeof result.exists === "function") {
+      const existsVal = result.exists();
+      Object.defineProperty(result, "exists", {
+        get: () => existsVal,
+        configurable: true,
+      });
+    }
+    return result;
+  }),
+  add: vi.fn(async (data) => {
+    return await addDoc(null, data);
+  })
+};
+
+vi.mock('@/lib/firebase-admin', () => ({
+  getAdminDb: vi.fn(() => chainable),
+  FieldValue: {
+    serverTimestamp: vi.fn(() => new Date()),
+  },
 }));
 
 vi.mock('next/server', () => ({
