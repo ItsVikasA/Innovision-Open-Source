@@ -401,36 +401,39 @@ How did you test this?
 
 ## Testing
 
+### Automated Testing
+
+We use **Vitest** for running unit and integration tests. All new features and API handlers should include corresponding test suites (using `.test.js` or `.test.jsx` file extensions) to prevent regressions.
+
+To run the test suite locally:
+
+```bash
+# Run all tests once
+npm run test
+
+# Run tests in watch/development mode
+npm run test:watch
+```
+
+Before pushing changes:
+1. Ensure all tests in `src/` pass successfully.
+2. If you modify database-dependent files, ensure mock services in Vitest are updated accordingly.
+
+### Branch Isolation and Naming
+
+To ensure clean and mergeable contributions, we enforce strict branch isolation:
+- **One Topic Per Branch**: Solve exactly one focused problem per branch.
+- **Naming Pattern**: Use lowercase, hyphen-separated names starting with a descriptor type:
+  - `feat/feature-name` (e.g., `feat/connectivity-toast-banner`)
+  - `fix/bug-name` (e.g., `fix/global-error-handling-fallback`)
+  - `docs/doc-name` (e.g., `docs/improve-contributing-guide`)
+  - `refactor/refactor-name` (e.g., `refactor/custom-media-query-hook`)
+  - `security/security-patch` (e.g., `security/http-security-headers`)
+  - `test/test-suite-name` (e.g., `test/fix-certificate-api-mocks`)
+
 ### Manual Testing
 
-Before submitting, test:
-
-1. **Authentication**: Login/logout functionality
-2. **Navigation**: All routes work correctly
-3. **Responsive Design**: Mobile, tablet, desktop views
-4. **Dark Mode**: Toggle between light/dark themes
-5. **Features**: Test the specific feature you modified
-
----
-
-### Browser Testing
-
-Test on:
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
----
-
-### Mobile Testing
-
-- iOS Safari
-- Chrome Mobile
-- Responsive mode in DevTools
-
----
+Before submitting, verify manually:
 
 ## Documentation
 
