@@ -180,6 +180,27 @@ const MarkDown = ({ content }) => {
             </li>
           );
         },
+        a({ href, children }) {
+          const isSafe = href && (
+            href.startsWith("http://") || 
+            href.startsWith("https://") || 
+            href.startsWith("mailto:") || 
+            href.startsWith("tel:") || 
+            href.startsWith("/") || 
+            href.startsWith("#")
+          );
+          const safeHref = isSafe ? href : "#";
+          return (
+            <a 
+              href={safeHref} 
+              target={safeHref.startsWith("http") ? "_blank" : "_self"} 
+              rel="noopener noreferrer" 
+              className="text-primary hover:underline font-medium"
+            >
+              {children}
+            </a>
+          );
+        },
         code({ node, inline, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || "");
           const codeString = String(children).trim();
