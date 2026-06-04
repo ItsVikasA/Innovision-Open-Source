@@ -449,17 +449,22 @@ export default function page() {
                             </div>
                         </div>
                     ) : completedCourses.length === 0 ? (
-                        <div className="w-full text-center py-16 text-muted-foreground">
+                        <div className="w-full max-w-md mx-auto text-center py-12 px-6 bg-card/30 backdrop-blur-sm border border-border/80 rounded-2xl shadow-xl hover:border-blue-500/20 transition-all duration-300">
                             <div className="flex flex-col items-center">
-                                <BookOpen className="h-12 w-12 mb-4 opacity-50" />
-                                <p className="text-lg font-medium">
-                                    You don't have any courses yet
+                                <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 text-blue-500 animate-pulse">
+                                    <BookOpen className="h-8 w-8" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-foreground mb-1">
+                                    No courses generated yet
+                                </h3>
+                                <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
+                                    Start your learning journey by requesting a custom AI roadmap on any topic.
                                 </p>
-                                <p className="text-sm mt-2">
-                                    Start by generating your first roadmap
-                                </p>
-                                <Link href="/generate" className="mt-4">
-                                    <Button>Create Course</Button>
+                                <Link href="/generate">
+                                    <Button className="px-6 gap-2 font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">
+                                        <Plus className="h-4 w-4" />
+                                        Generate First Course
+                                    </Button>
                                 </Link>
                             </div>
                         </div>
