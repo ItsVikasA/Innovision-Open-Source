@@ -1,36 +1,41 @@
-## Which issue does this PR close?
+## 💡 Rationale & Context
+<!-- Provide a clear description of the problem solved by this pull request. If already detailed in a linked issue, summarize the changes. -->
 
-<!--
-We generally require a GitHub issue to be filed for all bug fixes and enhancements and this helps us generate change logs for our releases. You can link an issue to this PR using the GitHub syntax. For example `Closes #123` indicates that this PR will close issue #123.
--->
+Closes #
 
-- Closes #.
+## 🛠️ Proposed Changes
+<!-- Detail each major file edit, refactor, API endpoint addition, or dependency change. -->
 
-## Rationale for this change
+### Core Updates
+- 
+- 
 
-<!--
- Why are you proposing this change? If this is already explained clearly in the issue then this section is not needed.
- Explaining clearly why changes are proposed helps reviewers understand your changes and offer better suggestions for fixes.  
--->
+### Code Quality & Standards Compliance
+- [ ] Strictly follows component-level single responsibility principles
+- [ ] No temporary placeholders, inline styles, or console.logs remain in production code
+- [ ] Compliant with existing ESLint and Prettier configurations
 
-## What changes are included in this PR?
+## 🧪 Verification & Testing Plan
+<!-- All PRs should ideally be verified both automatically and manually. Detail your testing process here. -->
 
-<!--
-There is no need to duplicate the description in the issue here but it is sometimes worth providing a summary of the individual changes in this PR.
--->
+### Automated Test Output
+- [ ] Running `npm run test` executes successfully.
+- **Test execution logs snippet:**
+  ```text
+  [paste relevant test pass output here]
+  ```
 
-## Are these changes tested?
+### Manual Verification Checklist
+- [ ] Verified responsiveness on Mobile, Tablet, and Desktop viewports.
+- [ ] Verified light/dark theme color contrast and readability.
+- [ ] Checked accessibility attributes (aria-labels, focus states, semantic landmarks).
 
-<!--
-We typically require tests for all PRs in order to:
-1. Prevent the code from being accidentally broken by subsequent changes
-2. Serve as another way to document the expected behavior of the code
+## 📸 Screenshots or Recordings (UI changes only)
+<!-- Please embed screenshots/videos demonstrating visual enhancements, loading states, or responsiveness. -->
+| Light Theme | Dark Theme |
+| --- | --- |
+| | |
 
-If tests are not included in your PR, please explain why (for example, are they covered by existing tests)?
--->
-
-## Are there any user-facing changes?
-
-<!--
-If there are user-facing changes then we may require documentation to be updated before approving the PR.
--->
+## ⚠️ Potential Side Effects or Breaking Changes
+> [!WARNING]
+> List any configuration changes, new environment variables, or database migrations needed.
