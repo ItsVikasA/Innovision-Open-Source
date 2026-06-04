@@ -10,13 +10,18 @@ const Hero = () => {
   const { colors, animations, effects, typography, components, stats, trustBadges, featureHighlights } = landingTheme;
 
   return (
-    <section className="relative w-full min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden px-4">
+    <section 
+      aria-labelledby="hero-heading"
+      className="relative w-full min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden px-4"
+    >
       {/* Gradient orbs */}
       <div
+        aria-hidden="true"
         className={`absolute ${effects.gradient.orb1.position} ${effects.gradient.orb1.size} ${effects.gradient.orb1.color} rounded-full ${effects.blur["3xl"]} animate-pulse`}
         style={{ animationDuration: effects.gradient.orb1.duration }}
       />
       <div
+        aria-hidden="true"
         className={`absolute ${effects.gradient.orb2.position} ${effects.gradient.orb2.size} ${effects.gradient.orb2.color} rounded-full ${effects.blur["3xl"]} animate-pulse`}
         style={{ animationDuration: effects.gradient.orb2.duration, animationDelay: effects.gradient.orb2.delay }}
       />
@@ -54,7 +59,7 @@ const Hero = () => {
           </div>
 
           {/* Main heading with gradient */}
-          <h1 className={`${typography.hero.title} mb-4 sm:mb-6`}>
+          <h1 id="hero-heading" className={`${typography.hero.title} mb-4 sm:mb-6`}>
             <span
               className="block text-foreground animate-fade-in"
               style={{ animationDelay: animations.delay.heading }}
