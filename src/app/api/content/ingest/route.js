@@ -17,10 +17,8 @@ export async function POST(request) {
         userId = decoded.email || decoded.uid;
       }
     } catch (authError) {
-      console.log("[DEBUG] Auth verification failed, using anonymous:", authError.message);
+      // Auth failed, continue as anonymous
     }
-
-    console.log("[DEBUG] Content ingestion userId:", userId);
 
     const formData = await request.formData();
     const file = formData.get("file");
@@ -49,7 +47,6 @@ export async function POST(request) {
 
     if (userId && userId !== "anonymous") {
       const adminDb = getAdminDb();
-      console.log("[DEBUG] Creating ingestion notification with link:", `/ingested-course/${result.courseId}`);
       createNotification(adminDb, {
         userId,
         title: "Course Created from File!",

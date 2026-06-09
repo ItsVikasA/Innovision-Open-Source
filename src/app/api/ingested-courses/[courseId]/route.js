@@ -73,7 +73,7 @@ export async function GET(request, { params }) {
                 }
             }
         } catch (err) {
-            console.log("[DEBUG] Auth check failed in course detail API:", err.message);
+            // Auth check failed, continue without userId
         }
 
         // Fetch progress if userId is available
