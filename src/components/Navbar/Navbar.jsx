@@ -19,7 +19,6 @@ import {
   Menu,
   X,
   Zap,
-  Users,
 } from "lucide-react";
 import { Sun, Moon } from "lucide-react";
 import Image from "next/image";
@@ -148,7 +147,6 @@ const Navbar = () => {
     { href: "/gamification", label: "Achievements", icon: Zap, description: "Badges & rewards" },
     { href: "/demo", label: "Demo", icon: BarChart3, description: "See how it works" },
     { href: "/contact", label: "Contact", icon: MessageSquare, description: "Get in touch" },
-    { href: "/study-rooms", label: "Study Rooms", icon: Users, description: "Collaborative study" },
   ];
 
   // Landing page navigation
