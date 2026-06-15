@@ -227,35 +227,35 @@ export default function ProfilePage() {
                     >
                       <TabsTrigger value="overview" className="flex-none px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-300">
                         <Trophy className="h-4 w-4 mr-2" />
-                        <span>Overview</span>
+                        Overview
                       </TabsTrigger>
                       <TabsTrigger value="progress" className="flex-none px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-300">
                         <TrendingUp className="h-4 w-4 mr-2" />
-                        <span>Progress</span>
+                        Progress
                       </TabsTrigger>
                       <TabsTrigger value="courses" className="flex-none px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-300">
                         <BookOpen className="h-4 w-4 mr-2" />
-                        <span>Courses</span>
+                        Courses
                       </TabsTrigger>
                       <TabsTrigger value="activity" className="flex-none px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-300">
                         <Calendar className="h-4 w-4 mr-2" />
-                        <span>Activity</span>
+                        Activity
                       </TabsTrigger>
                       <TabsTrigger value="compete" className="flex-none px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-300">
                         <Trophy className="h-4 w-4 mr-2" />
-                        <span>Compete</span>
+                        Compete
                       </TabsTrigger>
                       <TabsTrigger value="certificates" className="flex-none px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-300">
                         <Award className="h-4 w-4 mr-2" />
-                        <span>Certificates</span>
+                        Certificates
                       </TabsTrigger>
                       <TabsTrigger value="research" className="flex-none px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-300">
                         <Database className="h-4 w-4 mr-2" />
-                        <span>Research</span>
+                        Research
                       </TabsTrigger>
                       <TabsTrigger value="settings" className="flex-none px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-300">
                         <Settings className="h-4 w-4 mr-2" />
-                        <span>Settings</span>
+                        Settings
                       </TabsTrigger>
                     </TabsList>
 
@@ -401,7 +401,7 @@ export default function ProfilePage() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Database className="h-5 w-5 text-blue-500" />
-                          <span>Interaction Dataset</span>
+                          Interaction Dataset
                         </CardTitle>
                         <CardDescription>
                           Anonymized user interaction data including clicks, time spent, and navigation patterns
@@ -430,7 +430,7 @@ export default function ProfilePage() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <TrendingUp className="h-5 w-5 text-green-500" />
-                          <span>Outcome Dataset</span>
+                          Outcome Dataset
                         </CardTitle>
                         <CardDescription>
                           Learning outcomes, quiz scores, completion rates, and performance metrics
@@ -460,7 +460,7 @@ export default function ProfilePage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Shield className="h-5 w-5 text-green-500" />
-                        <span>Data Privacy & Anonymization</span>
+                        Data Privacy & Anonymization
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -501,7 +501,7 @@ export default function ProfilePage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Award className="h-5 w-5 text-yellow-500" />
-                      <span>My Certificates</span>
+                      My Certificates
                     </CardTitle>
                     <CardDescription>
                       View and download your course completion certificates

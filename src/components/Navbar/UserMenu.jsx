@@ -91,14 +91,14 @@ const UserMenu = ({
           <DropdownMenuItem asChild>
             <Link href="/profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span>Profile</span>
+              Profile
             </Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
             <Link href="/gamification" className="flex items-center gap-2">
               <Trophy className="h-4 w-4" />
-              <span>Achievements</span>
+              Achievements
             </Link>
           </DropdownMenuItem>
 
@@ -106,7 +106,7 @@ const UserMenu = ({
             <DropdownMenuItem asChild>
               <Link href="/premium" className="flex items-center gap-2 text-yellow-600">
                 <Crown className="h-4 w-4" />
-                <span>Upgrade to Pro</span>
+                Upgrade to Pro
               </Link>
             </DropdownMenuItem>
           )}
@@ -159,7 +159,7 @@ const UserMenu = ({
             <AlertDialogTrigger asChild>
               <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
                 <LogOut className="h-4 w-4 mr-2" />
-                <span>Logout</span>
+                Logout
               </DropdownMenuItem>
             </AlertDialogTrigger>
             <AlertDialogContent>
