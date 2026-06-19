@@ -15,14 +15,21 @@ export async function getServerSession() {
     }
 
     // The session cookie contains the Firebase ID token
-    // For now, we'll decode it client-side style
-    // In production, you should verify it with Firebase Admin SDK
     const idToken = sessionCookie.value;
 
-    // For now, we'll extract user info from the token payload
-    // This is a simplified approach - ideally use Firebase Admin to verify
     try {
-      const payload = JSON.parse(atob(idToken.split(".")[1]));
+      const parts = idToken.split(".");
+
+      // Validate JWT format
+      if (parts.length !== 3) {
+        console.error("Invalid JWT format");
+        return null;
+      }
+
+      const payload = JSON.parse(
+        atob(parts[1])
+      );
+
       return {
         user: {
           email: payload.email,
