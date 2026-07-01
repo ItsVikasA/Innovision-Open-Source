@@ -15,7 +15,7 @@ export async function POST(req) {
 
   const invite = inviteSnap.data();
 
-if (invite.toEmail !== user.email){
+  if (invite.toEmail !== session.user.email) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
