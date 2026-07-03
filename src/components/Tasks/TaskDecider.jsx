@@ -1,6 +1,7 @@
 import FillUps from "./FillUps";
 import Quiz from "./Quiz";
 import Match from "./Match";
+import CodeReorderTask from "./CodeReorderTask";
 
 const TaskDecider = ({ task, roadmapId, chapterNumber, onCourseComplete }) => {
     return (
@@ -11,6 +12,8 @@ const TaskDecider = ({ task, roadmapId, chapterNumber, onCourseComplete }) => {
                 <Quiz task={task} roadmapId={roadmapId} chapterNumber={chapterNumber} onCourseComplete={onCourseComplete} />
             ) : task.type === "match-the-following" ? (
                 <Match task={task} roadmapId={roadmapId} chapterNumber={chapterNumber} onCourseComplete={onCourseComplete} />
+            ) : task.type === "code-reorder" ? (
+                <CodeReorderTask task={task} roadmapId={roadmapId} chapterNumber={chapterNumber} onCourseComplete={onCourseComplete} />
             ) : (
                 ""
             )}

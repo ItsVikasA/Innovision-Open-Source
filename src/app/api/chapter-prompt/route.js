@@ -95,7 +95,7 @@ VISUAL LEARNING (MERMAID) RULES:
 3. KEEP IT SMALL: Diagrams must be under 8 nodes for mobile readability.
 4. SAFE SYNTAX: Use simple graph TD or graph LR. Do NOT use quotes, parentheses, or special characters inside node labels. Do not wrap the string in markdown backticks.
 
-Ensure text explanations remain your primary focus. Visuals are only enhancements. Also generate tasks (upto 3) (multiple-choice|fill-in-the-blank|match-the-following). Ensure valid JSON string values only.`;
+Ensure text explanations remain your primary focus. Visuals are only enhancements. Also generate tasks (upto 3) (multiple-choice|fill-in-the-blank|match-the-following|code-reorder). For code-reorder tasks, include 'lines' (array of code lines in correct logical order), 'language' (programming language code for syntax highlighting), and 'question' (what the code is supposed to do). Ensure valid JSON string values only.`;
 
     const result = await generateWithFallback(prompt, systemInstruction);
     const responseText = result.response.text();

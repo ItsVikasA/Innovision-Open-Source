@@ -264,17 +264,12 @@ export const XpProvider = ({ children }) => {
       // Mock XP fetch
       return;
     }
-
     try {
-<<<<<<< HEAD
-      const res = await fetch(`/api/gamification/stats?userId=${user.email}`);
+      const res = await fetch("/api/gamification/stats");
       if (!res.ok) {
         console.warn(`[Gamification API] Error ${res.status} fetching stats`);
         return;
       }
-=======
-      const res = await fetch("/api/gamification/stats");
->>>>>>> upstream/main
       const data = await res.json();
 
       if (data && typeof data.xp === "number") {
