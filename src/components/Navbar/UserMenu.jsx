@@ -55,7 +55,7 @@ const UserMenu = ({
         <TooltipTrigger asChild>
           <Link href="/profile" className="relative hidden sm:block">
             <Avatar className="h-8 w-8 sm:h-9 sm:w-9 ring-2 ring-transparent hover:ring-blue-500/50 transition-all cursor-pointer">
-              <AvatarImage src={user?.image || "/default-avatar.png"} alt={user?.name} />
+              <AvatarImage src={user?.image || "/default-avatar.svg"} alt={user?.name} />
               <AvatarFallback className="bg-linear-to-br from-blue-500 to-cyan-500 text-white text-sm font-light">
                 {user?.name?.[0]?.toUpperCase() || "U"}
               </AvatarFallback>

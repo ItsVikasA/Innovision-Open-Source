@@ -87,7 +87,7 @@ const Sidebar = ({ user, rank, difficultyLevel, leaderboard, onUserUpdate }) => 
                     <div className="flex items-center flex-wrap gap-4">
                         {user.image ? (
                             <img
-                                src={user.image || "/default-avatar.png"}
+                                src={user.image || "/default-avatar.svg"}
                                 width={64}
                                 height={64}
                                 alt="Avatar"

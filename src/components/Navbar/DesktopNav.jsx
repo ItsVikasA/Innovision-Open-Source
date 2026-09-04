@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { usePathname, useRouter } from "next/navigation";
 
 /**
  * Desktop navigation component for logged-in users and landing page.
@@ -14,6 +15,22 @@ const DesktopNav = ({
   landingNavItems,
   isActiveLink,
 }) => {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const navigateToLandingSection = (item) => {
+    if (!item.id) {
+      router.push(item.href);
+      return;
+    }
+
+    if (pathname === "/") {
+      document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      router.push(item.href);
+    }
+  };
+
   return (
     <nav className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
       {user ? (
@@ -47,19 +64,12 @@ const DesktopNav = ({
               key={item.id || item.href}
               variant="ghost"
               size="sm"
-              asChild={!!item.href}
               onClick={() => {
-                if (item.id) {
-                  document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" });
-                }
+                navigateToLandingSection(item);
               }}
               className="text-sm font-light text-foreground hover:bg-muted hover:text-foreground rounded-full h-8 px-4 transition-colors"
             >
-              {item.href ? (
-                <Link href={item.href}>{item.label}</Link>
-              ) : (
-                <span className="cursor-pointer">{item.label}</span>
-              )}
+              {item.label}
             </Button>
           ))}
         </div>

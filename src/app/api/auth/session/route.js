@@ -3,12 +3,18 @@ import { NextResponse } from "next/server";
 import { createNotification } from "@/lib/create-notification";
 import { getAdminDb } from "@/lib/firebase-admin";
 
+const JWT_PATTERN = /^[A-Za-z0-9_-]+={0,2}\.[A-Za-z0-9_-]+={0,2}\.[A-Za-z0-9_-]+={0,2}$/;
+
 export async function POST(req) {
   try {
     const { idToken } = await req.json();
 
     if (idToken && idToken.length > 4000) {
       return NextResponse.json({ success: false, error: "Invalid token length" }, { status: 400 });
+    }
+
+    if (idToken && !JWT_PATTERN.test(idToken)) {
+      return NextResponse.json({ success: false, error: "Invalid token format" }, { status: 400 });
     }
 
     const cookieStore = await cookies();

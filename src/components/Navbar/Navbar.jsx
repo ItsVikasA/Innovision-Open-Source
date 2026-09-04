@@ -153,10 +153,10 @@ const Navbar = () => {
 
   // Landing page navigation
   const landingNavItems = [
-    { id: "features", label: "Features" },
-    { id: "how-it-works", label: "How It Works" },
-    { id: "faq", label: "FAQ" },
-    { id: "contact", label: "Contact" },
+    { id: "features", href: "/#features", label: "Features" },
+    { id: "how-it-works", href: "/#how-it-works", label: "How It Works" },
+    { id: "faq", href: "/#faq", label: "FAQ" },
+    { id: "contact", href: "/contact", label: "Contact" },
   ];
 
   return (

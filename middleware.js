@@ -3,6 +3,22 @@ import { NextResponse } from "next/server";
 import requestIp from "request-ip";
 import { limiters, getTier } from "@/lib/rate-limit";
 
+const JWT_PATTERN = /^[A-Za-z0-9_-]+={0,2}\.[A-Za-z0-9_-]+={0,2}\.[A-Za-z0-9_-]+={0,2}$/;
+
+function decodeJwtPayload(token) {
+  if (typeof token !== "string" || !JWT_PATTERN.test(token)) {
+    return null;
+  }
+
+  const payloadSegment = token.split(".")[1];
+  const paddedPayload = payloadSegment.padEnd(
+    payloadSegment.length + ((4 - (payloadSegment.length % 4)) % 4),
+    "="
+  );
+  const base64 = paddedPayload.replace(/-/g, "+").replace(/_/g, "/");
+  return JSON.parse(atob(base64));
+}
+
 /**
  * Build a rate-limit key for the request.
  *
@@ -29,14 +45,10 @@ function buildKey(req) {
   // Attempt user-based key from session cookie.
   // Mirrors getServerSession() in src/lib/auth-server.js exactly —
   // pure JWT payload decode via atob().  No Firebase Admin, no network.
-  // NOTE: JWT payloads are base64url, not standard base64.  atob() works
-  // for most tokens in practice but is technically incorrect.  If the
-  // token format ever changes, update BOTH this function AND
-  // getServerSession() together to prevent divergence.
   try {
     const sessionCookie = req.cookies.get("session");
     if (sessionCookie?.value) {
-      const payload = JSON.parse(atob(sessionCookie.value.split(".")[1]));
+      const payload = decodeJwtPayload(sessionCookie.value);
       if (payload?.email) {
         return `user:${payload.email}`; // per-user, not per-IP
       }
