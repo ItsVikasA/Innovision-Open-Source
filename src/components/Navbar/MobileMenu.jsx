@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 /**
  * Mobile navigation menu component.
@@ -17,6 +17,20 @@ const MobileMenu = ({
   isActiveLink,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
+
+  const navigateToLandingSection = (item) => {
+    if (!item.id) {
+      router.push(item.href);
+      return;
+    }
+
+    if (pathname === "/") {
+      document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      router.push(item.href);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -92,11 +106,7 @@ const MobileMenu = ({
                       key={item.id || item.href}
                       onClick={() => {
                         setIsOpen(false);
-                        if (item.id) {
-                          document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" });
-                        } else if (item.href) {
-                          router.push(item.href);
-                        }
+                        navigateToLandingSection(item);
                       }}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground w-full text-left font-light"
                     >
